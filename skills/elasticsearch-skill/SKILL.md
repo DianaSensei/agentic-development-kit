@@ -1,0 +1,56 @@
+---
+name: elasticsearch-skill
+description: Kiến thức chuyên sâu Elasticsearch — thiết kế index/mapping, analyzer, Query DSL, aggregation, chiến lược reindex, shard/replica. Dùng khi feature cần tìm kiếm full-text hoặc phân tích/aggregation dữ liệu lớn.
+---
+
+# Elasticsearch
+
+## Discover
+Xác nhận project đã dùng ES qua dependency (`spring-data-elasticsearch` hoặc client trực
+tiếp), đọc index/mapping hiện có, version ES đang dùng (khác biệt đáng kể giữa major
+version).
+
+## Thiết kế Index & Mapping
+- Xác định field nào cần full-text search (`text` + analyzer) vs field nào chỉ cần exact
+  match/filter/sort (`keyword`) — dùng sai kiểu gây kết quả search sai hoặc tốn tài nguyên.
+- `mapping` nên khai báo tường minh (explicit mapping), tránh dựa vào dynamic mapping cho
+  field quan trọng (dynamic mapping có thể đoán sai kiểu dữ liệu).
+- Đặt tên index theo convention có version/ngày nếu dùng chiến lược reindex qua alias (VD:
+  `products_v2`, alias `products` trỏ tới bản mới nhất).
+
+## Analyzer
+- Chọn analyzer phù hợp ngôn ngữ nội dung (standard, hoặc analyzer riêng cho tiếng Việt/
+  ngôn ngữ khác nếu cần xử lý dấu, từ ghép).
+- Custom analyzer (tokenizer + filter) nếu cần yêu cầu tìm kiếm đặc thù (synonym, ngram
+  cho autocomplete) — trình bày tradeoff về độ phức tạp/hiệu năng index nếu đề xuất custom
+  analyzer phức tạp.
+
+## Query DSL
+- Dùng đúng loại query theo nhu cầu: `match`/`multi_match` cho full-text, `term`/`terms`
+  cho exact match, `bool` để kết hợp must/should/filter (ưu tiên `filter` cho điều kiện
+  không cần tính relevance score — nhanh hơn vì được cache).
+- Tránh query kiểu wildcard/regex ở đầu chuỗi (`*abc`) — cực kỳ chậm, cân nhắc thiết kế
+  lại mapping (n-gram) nếu cần kiểu tìm kiếm này thường xuyên.
+
+## Aggregation
+- Phân biệt bucket aggregation (group by) và metric aggregation (sum/avg/min/max) — kết
+  hợp đúng thứ tự lồng nhau theo nhu cầu phân tích.
+- Cân nhắc `cardinality` (approximate distinct count) thay vì đếm chính xác nếu dataset
+  lớn và không cần độ chính xác tuyệt đối (đánh đổi tốc độ).
+
+## Reindex Strategy
+Khi cần đổi mapping (breaking change): tạo index mới, reindex dữ liệu cũ sang, chuyển
+alias sang index mới, xóa index cũ sau khi xác nhận ổn — KHÔNG sửa mapping trực tiếp trên
+index đang chạy (nhiều thay đổi mapping không cho phép sau khi tạo field).
+
+## Shard & Replica (ghi chú, tradeoff nếu ảnh hưởng lớn)
+Số shard quyết định lúc tạo index, khó đổi sau (phải reindex) — cân nhắc kỹ dựa trên dữ
+liệu dự kiến. Replica ảnh hưởng độ sẵn sàng và tốc độ đọc, không ảnh hưởng ghi.
+
+## Test
+Testcontainers Elasticsearch cho integration test — test mapping đúng kiểu dữ liệu mong
+đợi, test query trả kết quả đúng, test aggregation ra số liệu đúng.
+
+## Ranh giới
+Không tự đổi mapping của index đang chạy production mà không có kế hoạch reindex — luôn
+trình bày kế hoạch migrate mapping, chờ user duyệt nếu ảnh hưởng dữ liệu đang có.
