@@ -47,9 +47,25 @@ solution. KHÔNG sang Bước 3 khi chưa có xác nhận rõ ràng.
 ## Bước 3 — Implement + Test (loop tới khi đạt chất lượng)
 
 ### 3.1 Implement
-Làm từng task đã liệt kê. Với mỗi task, tham khảo đúng skill kỹ thuật đã ánh xạ ở Bước 0
-(dựa theo bối cảnh phát hiện — ngôn ngữ/framework/DB/UI liên quan) để đảm bảo đúng thực
-hành chuyên sâu, KHÔNG tự bịa cách làm nếu skill tương ứng đã tồn tại.
+Trước khi viết BẤT KỲ dòng code nào cho 1 phần việc thuộc phạm vi 1 skill kỹ thuật đã ánh
+xạ ở Bước 0 (VD: phần liên quan Java/Spring → `java-spring-skill`, phần liên quan DB →
+`database-skill`) — BẮT BUỘC gọi `Read` để đọc TOÀN VĂN file `SKILL.md` tương ứng NGAY LÚC
+ĐÓ, không dựa vào tên/mô tả 1 dòng đã cache ở Bước 0 để suy luận nội dung. Việc cache ở
+Bước 0 CHỈ để biết skill nào tồn tại và tên chính xác của nó — KHÔNG thay thế việc đọc nội
+dung thật khi thực sự áp dụng.
+
+**Quan trọng — không dùng lại cache từ yêu cầu TRƯỚC trong cùng session**: nếu đây là 1
+yêu cầu MỚI của user (khác yêu cầu đã xử lý trước đó trong cùng hội thoại), PHẢI `Read`
+lại từ đầu, KỂ CẢ nếu bạn "nhớ" đã đọc skill này ở lượt trước — nội dung file có thể đã
+thay đổi giữa 2 lượt (user có thể vừa sửa skill). Chỉ được coi là "đã đọc đủ" trong phạm vi
+CÙNG 1 yêu cầu/task đang xử lý liên tục, không kéo dài qua nhiều yêu cầu khác nhau.
+
+Nếu 1 task liên quan tới NHIỀU skill (VD: vừa Java/Spring vừa Database), đọc TOÀN BỘ các
+skill liên quan trước khi bắt đầu viết code cho task đó — không đọc từng phần rồi code
+xen kẽ tùy tiện.
+
+Sau khi đọc, làm task theo đúng convention/kiến thức trong file đó, KHÔNG tự bịa cách làm
+dựa trên kiến thức nền chung nếu skill tương ứng đã có hướng dẫn cụ thể khác.
 
 ### 3.2 Test
 Viết và chạy test đầy đủ theo skill kỹ thuật tương ứng (unit/integration/functional/tùy

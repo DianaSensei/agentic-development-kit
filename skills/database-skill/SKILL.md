@@ -25,8 +25,20 @@ connector-j`, `spring-data-mongodb`). Đọc schema/entity hiện có, migration
 - **Pessimistic locking** (`SELECT ... FOR UPDATE`): phù hợp khi conflict thường xuyên,
   cần đảm bảo tuần tự — cẩn thận deadlock nếu nhiều transaction lock theo thứ tự khác nhau
   (luôn lock theo 1 thứ tự nhất quán để tránh deadlock).
-- MongoDB: dùng transaction (từ 4.0+, cần replica set) chỉ khi thực sự cần multi-document
-  atomicity — ưu tiên thiết kế document tự chứa (embed) để tránh cần transaction nếu có thể.
+- **Atomic conditional UPDATE** (VD: `UPDATE product SET stock = stock - :qty WHERE id = :id
+  AND stock >= :qty`, kiểm tra `updatedRows == 0` để biết thao tác có thành công không):
+  phù hợp NHẤT cho các thao tác tăng/giảm số lượng có điều kiện (trừ tồn kho, trừ số dư,
+  giới hạn quota) — Postgres/MySQL/Oracle tự lock row trong chính câu UPDATE, không cần
+  round-trip riêng để lock (nhanh hơn pessimistic lock), không cần vòng lặp retry ở tầng
+  app (đơn giản hơn optimistic lock). Đây thường là lựa chọn TỐT NHẤT khi điều kiện kiểm
+  tra (`stock >= :qty`) có thể biểu diễn trực tiếp trong mệnh đề `WHERE` của câu UPDATE —
+  chỉ cần optimistic/pessimistic lock khi logic quá phức tạp để nhét vào 1 câu UPDATE duy
+  nhất (VD: cần đọc và validate nhiều điều kiện phụ thuộc dữ liệu khác trước khi quyết
+  định có ghi hay không).
+MongoDB: dùng transaction (từ 4.0+, cần replica set) chỉ khi thực sự cần multi-document
+atomicity — ưu tiên thiết kế document tự chứa (embed) để tránh cần transaction nếu có thể.
+Với thao tác tăng/giảm field số trong 1 document, dùng `$inc` (atomic tự nhiên của Mongo,
+tương đương tinh thần atomic conditional update ở trên).
 
 ## Indexing
 - Index đúng cột dùng trong `WHERE`/`JOIN`/`ORDER BY` thường xuyên — không index thừa (mỗi
