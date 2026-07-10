@@ -12,12 +12,17 @@ connector-j`, `spring-data-mongodb`). Đọc schema/entity hiện có, migration
 đáng kể giữa Oracle/Postgres/MySQL.
 
 ## Transaction Isolation Level
-- Mặc định: Postgres/MySQL(InnoDB) = `READ COMMITTED`, Oracle = `READ COMMITTED`. Hiểu rõ
-  hiện tượng có thể gặp ở mức mặc định: non-repeatable read, phantom read.
-- Nâng lên `REPEATABLE READ`/`SERIALIZABLE` chỉ khi nghiệp vụ thực sự cần (VD: kiểm tra
-  rồi ghi trong 1 transaction không cho phép dữ liệu đổi giữa chừng) — đánh đổi giảm
-  throughput do tăng khả năng conflict/rollback. Trình bày tradeoff nếu đề xuất nâng
-  isolation level.
+- Mặc định: Postgres = `READ COMMITTED`, Oracle = `READ COMMITTED`, **MySQL (InnoDB) =
+  `REPEATABLE READ`** (khác Postgres/Oracle — dễ nhầm). Hiểu rõ hiện tượng có thể gặp ở
+  mức mặc định: Postgres/Oracle (`READ COMMITTED`) có thể gặp non-repeatable read và
+  phantom read; MySQL (`REPEATABLE READ`) tự chặn non-repeatable read và (nhờ next-key
+  locking) phần lớn phantom read trong cùng transaction, nhưng dùng gap lock nhiều hơn nên
+  dễ deadlock/block hơn ở mức mặc định so với Postgres — cần lưu ý khi port logic
+  concurrency giữa 2 DB này.
+- Nâng lên `REPEATABLE READ`/`SERIALIZABLE` (Postgres/Oracle) chỉ khi nghiệp vụ thực sự cần
+  (VD: kiểm tra rồi ghi trong 1 transaction không cho phép dữ liệu đổi giữa chừng) — đánh
+  đổi giảm throughput do tăng khả năng conflict/rollback. Trình bày tradeoff nếu đề xuất
+  nâng isolation level.
 
 ## Concurrency Control
 - **Optimistic locking** (version column/`@Version` JPA): phù hợp khi conflict hiếm xảy
@@ -60,6 +65,23 @@ tương đương tinh thần atomic conditional update ở trên).
   (thêm cột mới, migrate dữ liệu, rồi mới bỏ cột cũ ở lần sau).
 - Migration lớn (đổi kiểu dữ liệu, đổi index trên bảng lớn) cân nhắc chạy ngoài giờ cao
   điểm, có rollback plan rõ ràng — luôn cần user duyệt trước khi áp dụng lên production.
+
+## Khi nào chọn RDBMS vs MongoDB (nếu là quyết định mới, chưa bị ràng buộc bởi hệ hiện có)
+- RDBMS: dữ liệu có quan hệ rõ ràng cần join, cần transaction ACID mạnh xuyên nhiều bảng,
+  schema tương đối ổn định.
+- MongoDB: dữ liệu semi-structured/schema thay đổi thường xuyên, truy cập tự nhiên theo
+  document (đọc/ghi 1 document là đủ, ít cần join), cần scale ghi ngang dễ dàng hơn.
+
+## Issue thường gặp trong thực tế
+- **Long-running transaction**: giữ lock lâu chặn transaction khác; ở Postgres còn chặn
+  `VACUUM` chạy đúng lúc, gây bloat table dần theo thời gian — luôn giữ transaction NGẮN,
+  không gọi I/O chậm (HTTP call, xử lý nặng) bên trong transaction boundary.
+- **Missing index âm thầm**: không có lỗi rõ ràng khi thiếu index — chỉ chậm dần khi dữ liệu
+  tăng, dễ bị bỏ sót nếu chỉ kiểm tra hiệu năng lúc data còn ít. Nên theo dõi qua slow query
+  log/`EXPLAIN` định kỳ, không chỉ 1 lần lúc launch feature.
+- **Connection pool cạn**: transaction không đóng đúng (leak connection do exception không
+  release, hoặc quên đóng) làm cạn pool (HikariCP...) — gây timeout ở request KHÁC hoàn toàn
+  không liên quan tới transaction gây leak, dễ nhầm là lỗi ở chỗ khác.
 
 ## Test
 Testcontainers cho đúng DB thật (Oracle/Postgres/MySQL/Mongo) trong integration test —

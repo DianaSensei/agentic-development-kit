@@ -10,6 +10,25 @@ Xác nhận project đã dùng ES qua dependency (`spring-data-elasticsearch` ho
 tiếp), đọc index/mapping hiện có, version ES đang dùng (khác biệt đáng kể giữa major
 version).
 
+## Khi nào phù hợp / KHÔNG phù hợp
+Phù hợp: full-text search, log analytics, aggregation trên dataset lớn cần tốc độ. **KHÔNG
+nên dùng ES làm nguồn dữ liệu chính (source of truth)** — luôn có 1 DB chính (RDBMS/Mongo)
+giữ dữ liệu gốc, ES chỉ là index phái sinh đồng bộ sang. Đồng bộ này có độ trễ (eventual
+consistency, mặc định `refresh_interval` 1s) — nếu nghiệp vụ cần đọc NGAY sau ghi với dữ
+liệu vừa ghi, không dựa vào ES cho path đó.
+
+## Issue thường gặp trong thực tế
+- **Cluster health**: `yellow` = thiếu replica (vẫn đọc/ghi được, giảm chịu lỗi), `red` =
+  thiếu primary shard (mất khả năng đọc/ghi phần dữ liệu đó, có thể mất dữ liệu) — luôn theo
+  dõi cluster health khi thiết kế số shard/replica, không chỉ set lúc đầu rồi bỏ quên.
+- **Mapping explosion**: dynamic mapping không kiểm soát (field mới tự sinh liên tục từ dữ
+  liệu không đồng nhất) có thể chạm giới hạn `index.mapping.total_fields.limit` gây lỗi ghi
+  — lý do chính để ưu tiên explicit mapping thay vì dynamic cho field quan trọng.
+- **Circuit breaker (memory)**: aggregation/sort trên field không giới hạn kích thước có thể
+  gây `CircuitBreakingException` (tràn heap) — giới hạn kích thước response, dùng
+  `search_after` thay vì `from`/`size` cho phân trang sâu (deep pagination cũng chậm dần vì
+  ES phải load + sort toàn bộ kết quả từ đầu tới offset).
+
 ## Thiết kế Index & Mapping
 - Xác định field nào cần full-text search (`text` + analyzer) vs field nào chỉ cần exact
   match/filter/sort (`keyword`) — dùng sai kiểu gây kết quả search sai hoặc tốn tài nguyên.

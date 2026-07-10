@@ -10,6 +10,26 @@ Xác nhận project đã dùng RabbitMQ qua dependency (`spring-boot-starter-amq
 exchange/queue config hiện có, đọc `api-contract-skill` nếu đã có message contract chốt
 trước — dùng đúng theo đó.
 
+## Khi nào phù hợp / KHÔNG phù hợp
+Phù hợp: task queue kinh điển, cần routing linh hoạt theo nội dung (topic/header exchange),
+cần per-message ack/priority/TTL tinh vi, throughput vừa phải. KHÔNG phù hợp nếu cần replay
+lịch sử message — RabbitMQ xóa message khỏi queue ngay khi consumer ack (không phải log bất
+biến như Kafka), nếu nghiệp vụ cần "đọc lại từ đầu" hoặc nhiều consumer group độc lập cùng
+xem toàn bộ dòng sự kiện, cân nhắc `kafka-skill` thay vì cố ép RabbitMQ.
+
+## Issue thường gặp trong thực tế
+- **Queue phình vô hạn**: consumer chậm/down lâu mà không giới hạn queue → tăng bộ nhớ broker
+  không kiểm soát — cấu hình `x-max-length`/`x-max-length-bytes` hoặc TTL message để tránh
+  out-of-memory broker khi consumer gặp sự cố.
+- **Memory/disk alarm**: khi broker đạt ngưỡng cấu hình (`vm_memory_high_watermark`), RabbitMQ
+  tự động BLOCK publisher (không nhận message mới) cho tới khi giải phóng đủ — cần alerting
+  theo dõi mức dùng bộ nhớ/đĩa TRƯỚC khi chạm ngưỡng, không phải sau khi publisher đã bị chặn.
+- **Unacked message tồn đọng**: consumer nhận message nhưng crash trước khi ack/nack — message
+  ở trạng thái "unacked" cho tới khi connection đóng (timeout hoặc consumer restart) mới được
+  requeue lại, có thể trông như "message bị treo" nếu không hiểu cơ chế này.
+- Không có đảm bảo thứ tự toàn cục — chỉ đảm bảo thứ tự trong phạm vi 1 queue với 1 consumer
+  duy nhất; nhiều consumer cùng queue (round-robin) làm mất thứ tự xử lý.
+
 ## Exchange Type
 - **Direct**: routing 1-1 rõ ràng theo routing key chính xác.
 - **Topic**: routing theo pattern (`order.*.created`) — dùng khi nhiều consumer quan tâm

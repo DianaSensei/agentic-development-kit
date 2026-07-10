@@ -38,6 +38,12 @@ từng OS), rủi ro, khả năng mở rộng sau này. KHÔNG tự chọn thay 
   khác nhau) — migration PHẢI tự chạy lúc app khởi động, có rollback plan hoặc chí ít
   không phá hỏng dữ liệu cũ nếu migration fail giữa chừng.
 
+## Issue thường gặp trong thực tế
+- **SQLite single-writer lock**: SQLite chỉ cho phép 1 writer tại 1 thời điểm — nhiều command
+  Tauri ghi đồng thời (VD: 2 sự kiện UI trigger ghi cùng lúc) dễ gặp lỗi "database is locked"
+  nếu không bật WAL mode (`PRAGMA journal_mode=WAL` — cho phép đọc song song lúc ghi) hoặc
+  không serialize các thao tác ghi ở tầng ứng dụng.
+
 ## Lưu ý đặc thù desktop/offline (khác hẳn DB server-side)
 - Không có DBA canh chừng — migration lỗi có thể khiến app user không mở được nữa, xử lý
   migration failure phải có fallback (backup file cũ trước khi migrate, hoặc catch lỗi và

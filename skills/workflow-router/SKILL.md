@@ -1,5 +1,5 @@
 ---
-name: dev-request-router
+name: workflow-router
 description: Use FIRST for ANY development-related request in natural language — new feature, bug fix, refactor, enhancement, mechanism change, "improve", "implement more", "add capability", etc. Classifies the request as feature-development, bug-fix, or refactor based on its true nature (not surface wording) — key question: does external behavior change, and if so, is it fixing a defect or adding/changing capability? Asks the user if genuinely ambiguous, then explicitly hands off to the correct workflow skill. ALWAYS invoke this before feature-development, bug-fix, or refactor directly when the request type isn't already obvious.
 ---
 

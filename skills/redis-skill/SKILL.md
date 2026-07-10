@@ -9,6 +9,29 @@ description: Kiến thức chuyên sâu Redis cho nhiều use-case — caching, 
 Xác nhận project đã dùng Redis qua dependency (`spring-boot-starter-data-redis`,
 `lettuce`/`jedis`), đọc cấu hình cluster/standalone hiện có, TTL convention đang dùng.
 
+## Khi nào phù hợp / KHÔNG phù hợp
+Phù hợp: cache, session, distributed lock ngắn hạn, queue nhẹ chấp nhận mất mát tối thiểu,
+leaderboard/counter tốc độ cao. **KHÔNG phù hợp** làm nguồn dữ liệu chính (source of truth)
+cho dữ liệu quan trọng cần durability mạnh — kể cả bật AOF/RDB, Redis vẫn "best-effort":
+RDB mất dữ liệu giữa 2 lần snapshot, AOF (`appendfsync everysec`, mặc định) có thể mất tới
+~1s dữ liệu nếu crash. Nếu nghiệp vụ không chấp nhận mất dữ liệu này, dữ liệu đó phải nằm ở
+RDBMS (`database-skill`), Redis chỉ nên là cache/tăng tốc phía trên.
+
+## Issue thường gặp trong thực tế
+- **Big key**: hash/set/sorted set quá lớn (hàng trăm nghìn field/member) làm block event
+  loop đơn luồng của Redis khi thao tác trên nó (VD: `KEYS *`, `DEL` trên key lớn) — dùng
+  `SCAN` thay `KEYS`, `UNLINK` thay `DEL` (xóa bất đồng bộ, không block).
+- **Hot key**: 1 key bị truy cập cực nhiều (viral) dồn tải vào đúng 1 node dù cluster có
+  nhiều node (do key chỉ thuộc 1 slot) — cân nhắc cache tầng ứng dụng phía trước hoặc tách
+  nhỏ key nếu gặp tình huống này.
+- **Eviction policy sai**: khi đạt `maxmemory`, policy (`allkeys-lru`/`volatile-ttl`/...)
+  quyết định key nào bị xóa trước — chọn `allkeys-lru` mà có key quan trọng KHÔNG đặt TTL
+  sẽ khiến key đó có thể bị evict ngoài ý muốn; chọn `volatile-*` nếu cần bảo vệ key không
+  TTL khỏi bị evict.
+- **Pub/Sub (kênh `PUBLISH`/`SUBSCRIBE`, khác Streams)**: KHÔNG có persistence — subscriber
+  offline lúc publish sẽ mất message vĩnh viễn, không phù hợp nếu cần đảm bảo nhận đủ (dùng
+  Streams nếu cần durability + replay).
+
 ## 1. Caching
 - **Key naming**: nhất quán convention hiện có (VD: `<domain>:<entity>:<id>`).
 - **TTL**: luôn đặt TTL rõ ràng cho cache — không cache vô thời hạn trừ khi có lý do rõ

@@ -10,6 +10,23 @@ Xác nhận project đã dùng Pub/Sub qua dependency (`spring-cloud-gcp-starter
 client library GCP), đọc topic/subscription config hiện có, đọc `api-contract-skill` nếu
 đã có message contract chốt trước.
 
+## Khi nào phù hợp
+Phù hợp nếu hạ tầng đã ở GCP — không phải quản lý broker (fully managed), tự scale theo tải,
+tích hợp tốt với Cloud Run/Functions/Dataflow. Nếu multi-cloud/on-prem, hoặc cần routing
+phức tạp như RabbitMQ, cân nhắc kỹ trước khi khóa vào Pub/Sub (vendor lock-in GCP).
+
+## Issue thường gặp trong thực tế
+- **Ordering key vẫn có thể nghẽn**: Pub/Sub xử lý tuần tự trong cùng 1 ordering key (tương
+  tự tinh thần partition Kafka nhưng đơn vị khác) — nếu 1 key quá "hot" (nhận traffic vượt
+  trội), throughput của key đó vẫn bị giới hạn dù các key khác vẫn chạy song song bình thường.
+- **Quota theo project GCP**: publish/subscribe throughput, số subscription/topic đều có
+  quota mặc định — cần kiểm tra quota trước khi thiết kế traffic lớn, không chỉ tin vào
+  "serverless nên tự scale vô hạn".
+- **Duplicate vẫn xảy ra dù bật exactly-once**: nếu subscriber crash SAU khi xử lý xong
+  side-effect nhưng TRƯỚC khi ack, Pub/Sub sẽ redeliver — exactly-once của Pub/Sub đảm bảo
+  không duplicate ở tầng nhận message, không đảm bảo side-effect chỉ chạy đúng 1 lần; vẫn
+  cần idempotent thực sự nếu side-effect quan trọng (giao dịch tài chính).
+
 ## Topic & Subscription
 - 1 topic có thể có nhiều subscription độc lập (mỗi subscription nhận đủ mọi message —
   khác Kafka consumer group cùng chia nhau message trong 1 group).

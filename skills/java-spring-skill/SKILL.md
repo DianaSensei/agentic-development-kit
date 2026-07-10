@@ -37,6 +37,19 @@ project đã dùng). Không tự đổi kiến trúc layering giữa chừng.
   giữa chừng nếu không được yêu cầu rõ ràng — đây là quyết định kiến trúc lớn, cần tradeoff
   rõ ràng và user duyệt.
 
+## Issue thường gặp trong thực tế
+- **Self-invocation làm mất hiệu lực proxy AOP**: gọi method có `@Transactional`/`@Async`/
+  `@Cacheable` từ 1 method KHÁC trong CÙNG class (`this.methodX()`) bỏ qua proxy Spring hoàn
+  toàn — annotation bị lờ đi âm thầm, không có lỗi/warning rõ ràng. Tách method đó sang bean
+  khác nếu cần annotation có hiệu lực.
+- **Bean singleton có mutable state không đồng bộ hóa**: field instance trên 1 `@Service`
+  (mặc định singleton scope) bị nhiều request cùng lúc ghi/đọc gây race condition — service
+  phải stateless (không field mutable theo request) hoặc đồng bộ hóa đúng nếu bắt buộc có state.
+- **ThreadLocal không được clear**: dùng ThreadLocal lưu context theo request (userId,
+  tenant...) mà không `remove()` sau khi xong — thread trong pool được tái sử dụng cho
+  request khác vẫn còn giá trị cũ, gây rò rỉ dữ liệu giữa các request (nghiêm trọng nếu là
+  thông tin phân quyền/tenant).
+
 ## Unit Test (JUnit5 + Mockito)
 1. Cover từng Acceptance Criteria/Edge Case ở mức business logic thuần túy.
 2. Mock mọi dependency ngoài (DB, HTTP client, message broker) — unit test không chạm
