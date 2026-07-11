@@ -30,11 +30,15 @@ chiến lược đã có (URL path/header).
 - Deadline/timeout: luôn set deadline phía client, tránh chờ vô hạn khi service downstream
   chậm/treo.
 
-## So sánh nhanh REST vs RPC (khi cần chọn, trình bày tradeoff cho user)
+## So sánh nhanh REST vs RPC (tự chọn theo ngữ cảnh, trừ khi ảnh hưởng lớn)
 
 - REST: dễ debug (curl/browser), phù hợp public API, cache HTTP tự nhiên.
 - RPC: nhanh hơn (binary + HTTP/2), type-safe qua codegen, phù hợp nội bộ nhiều service.
-  Không tự chọn thay user nếu đây là quyết định kiến trúc lớn ảnh hưởng nhiều service.
+- Tự chọn phương án phù hợp nhất theo ngữ cảnh hiện có (public-facing → REST, nội bộ
+  service-to-service hiệu năng cao → RPC), nêu ngắn gọn lý do đã chọn trong báo cáo. Chỉ
+  dừng lại hỏi user nếu đây là quyết định ảnh hưởng NHIỀU service đang chạy production
+  (đổi giao thức giao tiếp giữa các service đã tồn tại) — vì đó là thay đổi kiến trúc khó
+  đảo ngược, không phải lựa chọn cục bộ cho 1 endpoint/service mới.
 
 ## Bảo mật (OWASP API Security Top 10 — áp dụng cả REST lẫn RPC)
 
@@ -76,5 +80,8 @@ không cần file riêng".
 
 Skill này quyết định: shape dữ liệu, tên endpoint/method/topic, semantic yêu cầu,
 versioning. KHÔNG quyết định: chi tiết hạ tầng broker (partition, consumer group, ack
-mode) — thuộc skill kỹ thuật broker tương ứng. Nếu có nhiều cách thiết kế hợp lý — trình
-bày tradeoff, không tự chọn.
+mode) — thuộc skill kỹ thuật broker tương ứng. Nếu có nhiều cách thiết kế hợp lý cho 1
+contract MỚI (chưa có consumer/producer nào phụ thuộc) — tự chọn phương án tốt nhất theo
+tiêu chí rõ ràng (đơn giản, nhất quán convention hiện có, ít breaking change nhất) và nêu
+lý do trong báo cáo. Chỉ hỏi lại user khi contract đã có bên tiêu thụ thực tế và thay đổi
+sẽ breaking, hoặc khi yêu cầu gốc mơ hồ tới mức không thể suy luận đúng ý định nghiệp vụ.

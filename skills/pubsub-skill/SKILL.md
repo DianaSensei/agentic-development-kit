@@ -37,7 +37,10 @@ phức tạp như RabbitMQ, cân nhắc kỹ trước khi khóa vào Pub/Sub (ve
   batch xử lý) — dùng phổ biến cho backend service.
 - **Push**: Pub/Sub tự gọi HTTP endpoint của bạn — phù hợp serverless (Cloud Run/Functions),
   cần endpoint public/authenticated đúng cách (OIDC token verify).
-- Chọn theo hạ tầng hiện có, không tự đổi mô hình nếu ảnh hưởng lớn tới deploy.
+- Với subscription MỚI, tự chọn push hoặc pull theo hạ tầng deploy hiện có (serverless →
+  push, backend service tự quản lý tốc độ xử lý → pull) và nêu lý do. Chỉ hỏi lại khi đổi
+  mô hình của 1 subscription ĐANG CHẠY (ảnh hưởng cấu hình deploy/endpoint đang phục vụ
+  traffic thật).
 
 ## Ack Deadline & Retry
 - Ack deadline mặc định ngắn (thường 10s) — nếu xử lý lâu hơn, PHẢI extend deadline
@@ -69,5 +72,7 @@ Dùng Pub/Sub emulator (GCP cung cấp) cho integration test local — test ack/
 test dead-letter khi vượt maxDeliveryAttempts, test idempotency khi nhận trùng.
 
 ## Ranh giới
-Không tự chọn push/pull hay bật ordering/exactly-once nếu ảnh hưởng lớn tới hạ tầng —
-trình bày tradeoff, đối chiếu `api-contract-skill` đã chốt.
+Với topic/subscription MỚI, tự chọn push/pull và có bật ordering/exactly-once hay không
+theo yêu cầu đã mô tả (đối chiếu `api-contract-skill` nếu đã chốt), nêu lý do trong báo
+cáo. Chỉ trình bày tradeoff và chờ user khi thay đổi ảnh hưởng subscription ĐANG CHẠY
+production hoặc yêu cầu không đủ rõ để suy luận (VD: không rõ có cần đảm bảo thứ tự).

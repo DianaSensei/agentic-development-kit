@@ -41,7 +41,9 @@ xem toàn bộ dòng sự kiện, cân nhắc `kafka-skill` thay vì cố ép Ra
 - Queue/exchange `durable=true` cho dữ liệu quan trọng (sống sót qua restart broker).
 - Message `persistent` nếu cần đảm bảo không mất khi broker crash.
 - Cân nhắc **quorum queue** (thay vì classic mirrored queue) cho high-availability hiện đại
-  — trình bày tradeoff nếu đổi loại queue ảnh hưởng downtime.
+  — tự chọn quorum queue cho queue MỚI (mặc định khuyến nghị hiện nay). Nếu đổi loại queue
+  của 1 queue đang chạy production, hỏi trước vì việc đổi type yêu cầu tạo lại queue (không
+  đổi tại chỗ), có thể gây downtime/mất message đang chờ xử lý.
 
 ## Ack Strategy & Prefetch
 - Manual ack nếu cần đảm bảo xử lý xong mới ack (an toàn hơn nhưng cần xử lý reject/requeue
@@ -67,5 +69,7 @@ Testcontainers RabbitMQ cho integration test — test đúng ack/requeue behavio
 khi message lỗi, test idempotency khi nhận trùng.
 
 ## Ranh giới
-Không tự quyết định exchange type/queue type nếu ảnh hưởng lớn tới kiến trúc hiện có —
-trình bày tradeoff, đối chiếu `api-contract-skill` đã chốt.
+Với exchange/queue MỚI, tự chọn type phù hợp nhất theo nhu cầu routing đã mô tả (nêu lý do
+ngắn gọn), đối chiếu `api-contract-skill` nếu đã có contract chốt trước. Chỉ dừng lại
+trình bày tradeoff và chờ user khi thay đổi ảnh hưởng exchange/queue ĐANG CHẠY production
+(đổi type, đổi routing của message đang lưu thông) — vì khó đảo ngược mà không downtime.

@@ -41,8 +41,9 @@ liệu vừa ghi, không dựa vào ES cho path đó.
 - Chọn analyzer phù hợp ngôn ngữ nội dung (standard, hoặc analyzer riêng cho tiếng Việt/
   ngôn ngữ khác nếu cần xử lý dấu, từ ghép).
 - Custom analyzer (tokenizer + filter) nếu cần yêu cầu tìm kiếm đặc thù (synonym, ngram
-  cho autocomplete) — trình bày tradeoff về độ phức tạp/hiệu năng index nếu đề xuất custom
-  analyzer phức tạp.
+  cho autocomplete) — tự thiết kế và áp dụng khi yêu cầu tìm kiếm đã rõ (VD: "hỗ trợ tìm
+  gần đúng/autocomplete"), nêu ngắn gọn tradeoff độ phức tạp/hiệu năng index đã chấp nhận
+  trong báo cáo thay vì hỏi trước.
 
 ## Query DSL
 - Dùng đúng loại query theo nhu cầu: `match`/`multi_match` cho full-text, `term`/`terms`
@@ -71,5 +72,7 @@ Testcontainers Elasticsearch cho integration test — test mapping đúng kiểu
 đợi, test query trả kết quả đúng, test aggregation ra số liệu đúng.
 
 ## Ranh giới
-Không tự đổi mapping của index đang chạy production mà không có kế hoạch reindex — luôn
-trình bày kế hoạch migrate mapping, chờ user duyệt nếu ảnh hưởng dữ liệu đang có.
+Với index MỚI hoặc chưa có dữ liệu thật, tự thiết kế mapping/analyzer tốt nhất theo yêu
+cầu mà không cần hỏi. Không tự đổi mapping của index ĐANG CHẠY production có dữ liệu thật
+mà không có kế hoạch reindex — luôn trình bày kế hoạch migrate mapping, chờ user duyệt vì
+đây là thay đổi khó đảo ngược và có rủi ro downtime/mất khả năng đọc trong lúc reindex.

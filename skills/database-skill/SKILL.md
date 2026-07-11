@@ -21,8 +21,10 @@ connector-j`, `spring-data-mongodb`). Đọc schema/entity hiện có, migration
   concurrency giữa 2 DB này.
 - Nâng lên `REPEATABLE READ`/`SERIALIZABLE` (Postgres/Oracle) chỉ khi nghiệp vụ thực sự cần
   (VD: kiểm tra rồi ghi trong 1 transaction không cho phép dữ liệu đổi giữa chừng) — đánh
-  đổi giảm throughput do tăng khả năng conflict/rollback. Trình bày tradeoff nếu đề xuất
-  nâng isolation level.
+  đổi giảm throughput do tăng khả năng conflict/rollback. Với transaction/method MỚI, tự
+  chọn isolation level phù hợp theo yêu cầu nghiệp vụ và nêu lý do ngắn gọn. Chỉ hỏi lại
+  khi đề xuất nâng isolation level ảnh hưởng transaction/table ĐANG CHẠY production ở quy
+  mô lớn (nguy cơ giảm throughput hệ thống hiện có, không chỉ 1 tính năng mới).
 
 ## Concurrency Control
 - **Optimistic locking** (version column/`@Version` JPA): phù hợp khi conflict hiếm xảy
@@ -64,7 +66,9 @@ tương đương tinh thần atomic conditional update ở trên).
 - Backward-compatible ưu tiên: thêm cột nullable, không đổi kiểu cột đang dùng trực tiếp
   (thêm cột mới, migrate dữ liệu, rồi mới bỏ cột cũ ở lần sau).
 - Migration lớn (đổi kiểu dữ liệu, đổi index trên bảng lớn) cân nhắc chạy ngoài giờ cao
-  điểm, có rollback plan rõ ràng — luôn cần user duyệt trước khi áp dụng lên production.
+  điểm, có rollback plan rõ ràng — luôn cần user duyệt trước khi áp dụng lên production
+  (dữ liệu thật, khó/không thể đảo ngược nếu sai). Migration cho bảng mới/chưa có dữ liệu
+  thật thì tự viết và chạy bình thường, không cần chờ duyệt riêng.
 
 ## Khi nào chọn RDBMS vs MongoDB (nếu là quyết định mới, chưa bị ràng buộc bởi hệ hiện có)
 - RDBMS: dữ liệu có quan hệ rõ ràng cần join, cần transaction ACID mạnh xuyên nhiều bảng,
@@ -89,7 +93,10 @@ test transaction rollback đúng khi lỗi, test concurrency (2 transaction cùn
 không gây lost update.
 
 ## Ranh giới
-Không tự chọn RDBMS/NoSQL nào nếu project chưa có sẵn — nếu là quyết định mới, trình bày
-tradeoff (xem thêm nguyên tắc chọn ở phần "Data/Storage" của skill điều phối), chờ user
-quyết định. Không tự nâng isolation level hay đổi locking strategy production mà không
-giải thích rủi ro.
+Nếu project đã dùng 1 RDBMS/NoSQL cụ thể, luôn dùng đúng cái đó, không tự đổi. Nếu là
+project HOÀN TOÀN mới chưa có DB nào — đây là quyết định kiến trúc nền tảng ảnh hưởng toàn
+bộ hệ thống lâu dài, nên trình bày tradeoff (RDBMS vs MongoDB, xem phần trên) và chờ user
+quyết định thay vì tự chọn. Không tự nâng isolation level hay đổi locking strategy ảnh
+hưởng dữ liệu/transaction ĐANG CHẠY production mà không giải thích rủi ro trước — nhưng
+với code/bảng mới trong phạm vi task, tự chọn chiến lược concurrency phù hợp mà không cần
+hỏi.

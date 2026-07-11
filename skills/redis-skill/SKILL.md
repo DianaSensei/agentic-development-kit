@@ -37,8 +37,10 @@ RDBMS (`database-skill`), Redis chỉ nên là cache/tăng tốc phía trên.
 - **TTL**: luôn đặt TTL rõ ràng cho cache — không cache vô thời hạn trừ khi có lý do rõ
   ràng và cơ chế invalidation chủ động đi kèm.
 - **Invalidation strategy**: write-through (cập nhật cache ngay khi ghi DB), write-behind,
-  hoặc cache-aside (invalidate khi ghi, load lại khi đọc miss) — chọn theo mức độ chấp
-  nhận stale data của nghiệp vụ, trình bày tradeoff nếu ảnh hưởng lớn.
+  hoặc cache-aside (invalidate khi ghi, load lại khi đọc miss) — tự chọn theo mức độ chấp
+  nhận stale data của nghiệp vụ (mặc định cache-aside nếu không có tín hiệu khác, đơn giản
+  và an toàn nhất), nêu ngắn gọn lý do đã chọn. Chỉ hỏi lại nếu cache này phục vụ dữ liệu
+  nhạy cảm mà stale data có thể gây hậu quả nghiệp vụ nghiêm trọng (giá/tồn kho/số dư).
 - **Cache stampede**: cân nhắc lock hoặc jitter TTL khi nhiều request cùng miss cache 1 lúc
   (tránh tất cả cùng đánh vào DB).
 
@@ -73,5 +75,8 @@ Testcontainers Redis cho integration test — test TTL/invalidation đúng, test
 bị giữ vượt TTL, test sorted set trả đúng thứ hạng.
 
 ## Ranh giới
-Không tự chọn use-case (cache vs lock vs queue vs ranking) thay user nếu yêu cầu không rõ
-— hỏi lại mục đích cụ thể trước khi thiết kế key/cấu trúc dữ liệu Redis tương ứng.
+Nếu yêu cầu đã đủ rõ mục đích (VD: "cache kết quả API X", "khóa để tránh xử lý trùng
+đơn hàng") — tự suy ra use-case tương ứng (cache/lock/queue/ranking) và chọn cấu trúc dữ
+liệu Redis phù hợp mà không cần hỏi lại. Chỉ hỏi lại khi mô tả quá mơ hồ để suy luận đúng
+use-case (VD: "lưu tạm dữ liệu này vào Redis" không rõ có cần TTL, có cần đọc lại theo
+thứ tự, hay chỉ cần tồn tại tạm thời).

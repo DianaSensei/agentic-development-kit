@@ -22,8 +22,9 @@ test case.
 
 ## Setup cơ bản (JVM/JUnit5)
 1. Thêm `testcontainers-bom` + module tương ứng (`postgresql`, `kafka`, `rabbitmq`,
-   `elasticsearch`...) đúng version, không tự ý nâng version khác với các dependency test
-   khác trong project.
+   `elasticsearch`...) — tự chọn version mới nhất tương thích với version dependency test
+   khác đã có trong project (không cần hỏi, đây chỉ là dependency phạm vi test). Chỉ hỏi
+   lại nếu version mới yêu cầu nâng version công cụ build/JDK vượt ra ngoài phạm vi task.
 2. Dùng `@Testcontainers` + `@Container` (JUnit5 extension) thay vì tự quản lý lifecycle
    thủ công bằng `start()`/`stop()` rải rác — extension tự đảm bảo cleanup kể cả khi test
    fail.
@@ -65,8 +66,9 @@ này sang container khác (chỉ host test JVM mới thấy được port map ra
 
 ## Tích hợp CI
 - CI runner cần Docker daemon khả dụng (Docker-in-Docker, hoặc mount
-  `/var/run/docker.sock` — tuỳ chính sách bảo mật CI, không tự ý đổi cấu hình runner mà
-  không báo vì ảnh hưởng tới các job khác).
+  `/var/run/docker.sock`). Đây là thay đổi cấu hình CI dùng chung, ảnh hưởng mọi job/pipeline
+  khác chạy trên cùng runner — không tự ý đổi mà không báo; đề xuất cách cấu hình cụ thể
+  kèm lý do rồi chờ user (hoặc người quản lý CI) xác nhận trước khi áp dụng.
 - Kiểm tra resource limit CI (RAM/CPU) đủ cho số container chạy song song — nhiều
   Testcontainers module cùng lúc (Postgres + Kafka + Elasticsearch...) trên runner nhỏ dễ
   timeout do đói tài nguyên chứ không phải lỗi code.

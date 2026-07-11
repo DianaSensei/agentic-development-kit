@@ -40,17 +40,22 @@ tuning partition/consumer group) không đáng để dùng cho task-queue đơn 
 - Partition key: chọn key đảm bảo message liên quan cùng 1 entity vào cùng partition (giữ
   thứ tự xử lý đúng theo entity đó) — KHÔNG chọn key ngẫu nhiên nếu thứ tự quan trọng.
 - Số partition: cân nhắc throughput cần và số consumer instance dự kiến (partition là đơn
-  vị song song hóa tối đa) — trình bày tradeoff nếu đây là quyết định ảnh hưởng lớn.
-  **Lưu ý cứng**: Kafka KHÔNG hỗ trợ giảm số partition của 1 topic (chỉ tăng được, phải tạo
-  topic mới nếu cần giảm), và việc tăng partition sau này làm vỡ đảm bảo "cùng key luôn
-  vào cùng partition" cho key cũ (do hàm hash % partition-count đổi kết quả) — nếu thứ tự
-  theo entity quan trọng, chọn số partition dư dả ngay từ đầu thay vì tăng dần sau.
+  vị song song hóa tối đa). **Lưu ý cứng**: Kafka KHÔNG hỗ trợ giảm số partition của 1
+  topic (chỉ tăng được, phải tạo topic mới nếu cần giảm), và việc tăng partition sau này
+  làm vỡ đảm bảo "cùng key luôn vào cùng partition" cho key cũ (do hàm hash %
+  partition-count đổi kết quả) — nếu thứ tự theo entity quan trọng, chọn số partition dư
+  dả ngay từ đầu thay vì tăng dần sau. Với topic MỚI, tự chọn số partition dư dả hợp lý
+  dựa trên throughput/consumer dự kiến đã biết và nêu lý do — vì việc này khó sửa sau nên
+  chỉ hỏi lại user khi không có đủ thông tin để ước lượng throughput (không hỏi nếu chỉ vì
+  đây là "quyết định lớn" nói chung).
 
 ## Consumer Group & Rebalancing
 - Consumer group name rõ ràng theo service tiêu thụ, không dùng chung group cho nhiều
   service không liên quan (gây cạnh tranh message sai ý).
 - Cân nhắc `max.poll.records`/`session.timeout.ms` nếu xử lý message chậm gây rebalance
-  liên tục — không tự đổi config production mà không đo trước.
+  liên tục — tự đề xuất và áp dụng giá trị hợp lý dựa trên bằng chứng đo được (lag,
+  thời gian xử lý trung bình); nếu chưa có số liệu đo, giữ nguyên config production hiện
+  tại và nêu rõ cần đo trước khi đổi thay vì đoán mò.
 
 ## Delivery Semantics & Idempotency
 - At-least-once (phổ biến nhất): consumer PHẢI idempotent (dùng dedup key/kiểm tra đã xử
@@ -81,5 +86,7 @@ idempotency khi consume trùng message, test dead-letter khi xử lý lỗi. Uni
 logic thuần túy xem `java-spring-skill`.
 
 ## Ranh giới
-Không tự quyết định partition count/delivery semantic nếu đây là lần đầu thiết kế — trình
-bày tradeoff, chờ user hoặc đối chiếu `api-contract-skill` đã chốt trước.
+Với topic MỚI, tự chọn partition count/delivery semantic hợp lý nhất dựa trên thông tin đã
+biết (đối chiếu `api-contract-skill` nếu đã chốt trước), nêu rõ lựa chọn và lý do trong
+báo cáo. Chỉ trình bày tradeoff và chờ user khi thông tin không đủ để ước lượng (không rõ
+throughput/số consumer dự kiến), hoặc khi thay đổi ảnh hưởng topic ĐANG CHẠY production.

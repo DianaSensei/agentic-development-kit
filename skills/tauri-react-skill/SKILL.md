@@ -43,8 +43,11 @@ bằng chứng — API Tauri v1 và v2 khác nhau đáng kể (đặc biệt per
 - **SQL** (`tauri-plugin-sql`): connection string/migration setup, dùng đúng API async của
   plugin (`Database.load`, `execute`, `select`) — schema/migration design xem `data-
   storage-skill`.
-- Không tự thêm plugin mới ngoài phạm vi cần thiết mà không báo user (mỗi plugin thêm quyền
-  truy cập hệ thống, tăng bề mặt tấn công).
+- Plugin chuẩn cần thiết trực tiếp cho task (dialog/fs/store/sql ở trên) thì tự thêm bình
+  thường, khai báo permission tối thiểu tương ứng, chỉ nêu trong báo cáo là đã thêm. Không
+  tự thêm plugin NGOÀI phạm vi task đang làm — mỗi plugin thêm quyền truy cập hệ thống,
+  tăng bề mặt tấn công, nên việc thêm phải gắn với nhu cầu cụ thể chứ không phải "tiện thì
+  thêm".
 
 ## Đa OS (`#[cfg(target_os)]`)
 - Nếu có logic khác nhau giữa macOS/Windows/Linux (path mặc định, menu bar, tray icon,
@@ -82,8 +85,9 @@ bằng chứng — API Tauri v1 và v2 khác nhau đáng kể (đặc biệt per
 - React: test component với `invoke` đã mock (không gọi Tauri runtime thật trong unit test)
   — test cả 3 nhánh loading/error/success.
 - Nếu cần test tích hợp thật (cả Rust + WebView), ghi rõ đây là test thủ công/manual QA nếu
-  project chưa có hạ tầng E2E cho desktop (WebDriver/tauri-driver), không tự dựng hạ tầng
-  E2E mới mà không báo user (chi phí thiết lập lớn).
+  project chưa có hạ tầng E2E cho desktop (WebDriver/tauri-driver). KHÔNG tự dựng mới hạ
+  tầng E2E (chi phí thiết lập lớn, ảnh hưởng toàn bộ quy trình test của project) — đề xuất
+  kèm lý do, chờ user quyết định có đầu tư hạ tầng này không.
 
 ## Ranh giới
 Không tự quyết định cơ chế lưu trữ (SQLite vs store vs fs) — đó là `data-storage-skill`.

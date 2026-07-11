@@ -27,9 +27,12 @@ Phân loại: **ADD** (mới), **MODIFY** (đổi cấu trúc hiện có), **REM
   file người dùng thao tác trực tiếp (export/import), hoặc blob lớn không nên nhét vào
   SQLite.
 
-Với MỌI thay đổi MODIFY/REMOVE (và ADD nếu có nhiều cách hợp lý): trình bày **options** kèm
-tradeoff theo 5 trục: dung lượng, tốc độ truy xuất, quyền/bảo mật (file permission trên
-từng OS), rủi ro, khả năng mở rộng sau này. KHÔNG tự chọn thay user.
+Với **ADD** (dữ liệu mới, chưa tồn tại trên máy user nào) — tự chọn cơ chế lưu trữ phù hợp
+nhất theo 5 trục: dung lượng, tốc độ truy xuất, quyền/bảo mật (file permission trên từng
+OS), rủi ro, khả năng mở rộng sau này; nêu ngắn gọn lý do đã chọn trong báo cáo thay vì hỏi
+trước. Với **MODIFY/REMOVE** cơ chế đang lưu dữ liệu thật của user hiện có — luôn trình
+bày **options** kèm tradeoff theo 5 trục trên và chờ user quyết định, vì sai lựa chọn ở đây
+có thể làm mất dữ liệu đã lưu trên máy user (không có DBA/rollback tập trung như server).
 
 ## GIAI ĐOẠN 3 — Schema & Migration
 - SQLite: ERD Mermaid **đầy đủ** (không phải diff), đánh dấu phần mới/thay đổi.
@@ -52,8 +55,11 @@ từng OS), rủi ro, khả năng mở rộng sau này. KHÔNG tự chọn thay 
   cần thiết (VD: lưu ảnh/file lớn trực tiếp trong SQLite blob nếu `tauri-plugin-fs` phù
   hợp hơn).
 - Không có network để "backup lên cloud" mặc định — nếu nghiệp vụ cần backup/sync, đó là
-  quyết định kiến trúc lớn cần bàn riêng với user, không tự thêm.
+  quyết định kiến trúc lớn (thêm hạ tầng network/cloud mới cho 1 app vốn offline-first),
+  luôn cần bàn riêng và chờ user duyệt trước khi thêm.
 
 ## Việc KHÔNG làm
 Không viết code Rust/React thực thi (xem `tauri-react-skill`). Không tự đổi cơ chế lưu trữ
-đã phát hiện trừ khi user yêu cầu rõ hoặc không còn lựa chọn khả thi (nêu rõ lý do).
+ĐANG dùng để giữ dữ liệu thật của user trừ khi user yêu cầu rõ hoặc không còn lựa chọn khả
+thi (nêu rõ lý do) — nhưng với nhu cầu lưu trữ MỚI trong phạm vi task, tự chọn cơ chế phù
+hợp nhất mà không cần hỏi.

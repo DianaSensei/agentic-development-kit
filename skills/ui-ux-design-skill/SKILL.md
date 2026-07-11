@@ -42,9 +42,12 @@ Trước khi thiết kế màn hình cụ thể, xác định rõ: user cần th
 ít càng tốt nhưng không hy sinh rõ ràng).
 
 ## Khi có nhiều hướng thiết kế hợp lý
-Trình bày 2-3 phương án (khác nhau về layout/luồng thao tác, không chỉ khác màu sắc) kèm
-tradeoff (đơn giản hơn vs linh hoạt hơn, quen thuộc vs mới lạ) — để user chọn, không tự
-quyết định hướng thiết kế lớn.
+Với màn hình/luồng nhỏ, phạm vi rõ (thêm 1 form, 1 danh sách, 1 dialog...) — tự chọn
+phương án tốt nhất theo usability heuristics ở trên (ưu tiên quen thuộc/nhất quán với
+pattern hiện có của app hơn là sáng tạo mới), nêu ngắn gọn lý do đã chọn thay vì hỏi trước.
+Chỉ trình bày 2-3 phương án kèm tradeoff (đơn giản hơn vs linh hoạt hơn, quen thuộc vs mới
+lạ) và để user chọn khi đây là luồng/màn hình LỚN, ảnh hưởng nhiều phần khác của app hoặc
+đổi mental model người dùng đã quen — quyết định khó đảo ngược sau khi user đã quen dùng.
 
 ## Ranh giới
 Skill này thiết kế Ý TƯỞNG/layout/luồng UX — việc implement code cụ thể (component React,

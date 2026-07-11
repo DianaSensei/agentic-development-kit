@@ -26,16 +26,21 @@ project đã dùng). Không tự đổi kiến trúc layering giữa chừng.
 - Tránh N+1 (dùng `@EntityGraph`/`JOIN FETCH` nếu dùng JPA — chi tiết index/DB xem
   `database-skill`).
 - Batch xử lý khi khối lượng lớn, tránh load toàn bộ dataset vào memory.
-- Connection pool tuning (HikariCP) nếu cần, không tự đổi config mà không đo trước.
+- Connection pool tuning (HikariCP): tự đề xuất và áp dụng giá trị hợp lý dựa trên bằng
+  chứng đo được (query log, số connection đang dùng) — không đoán mò khi chưa có số liệu;
+  nếu chưa đo được, giữ nguyên config hiện tại và nêu rõ cần đo trước khi đổi.
 
 ## Khả năng scale
 - Ưu tiên stateless service để scale ngang.
-- Resilience4j: circuit breaker/retry/bulkhead/rate-limiter cho lời gọi phụ thuộc dịch vụ
-  khác — chỉ dùng nếu project đã có sẵn pattern này, không tự thêm dependency mới mà
-  không báo.
+- Resilience4j: tự áp dụng circuit breaker/retry/bulkhead/rate-limiter cho lời gọi phụ
+  thuộc dịch vụ khác nếu project đã có sẵn pattern này (dùng đúng convention hiện có,
+  không cần hỏi). Nếu project CHƯA có dependency này, tự thêm là hợp lý cho 1 call site
+  cụ thể đang cần — chỉ nêu rõ trong báo cáo là đã thêm dependency mới, không cần dừng lại
+  chờ duyệt trước.
 - Cân nhắc reactive (WebFlux) cho I/O-bound cao, nhưng KHÔNG tự chuyển từ MVC sang WebFlux
-  giữa chừng nếu không được yêu cầu rõ ràng — đây là quyết định kiến trúc lớn, cần tradeoff
-  rõ ràng và user duyệt.
+  giữa chừng nếu không được yêu cầu rõ ràng — đây là quyết định kiến trúc lớn ảnh hưởng
+  toàn bộ service (đổi runtime model, học lại cho team), khó đảo ngược nếu đã lỡ triển
+  khai — luôn trình bày tradeoff và chờ user duyệt trước khi đổi.
 
 ## Issue thường gặp trong thực tế
 - **Self-invocation làm mất hiệu lực proxy AOP**: gọi method có `@Transactional`/`@Async`/
@@ -63,6 +68,9 @@ project đã dùng). Không tự đổi kiến trúc layering giữa chừng.
    thì tự sửa trong phạm vi hợp lý rồi chạy lại.
 
 ## Ranh giới
-Không tự quyết định kiến trúc lớn (đổi MVC↔WebFlux, thêm framework mới) — trình bày
-tradeoff cho user chọn. Messaging (Kafka/RabbitMQ) → skill riêng. Thiết kế DB/schema →
-`database-skill`. Contract API → `api-contract-skill`. Review cuối → `code-review-skill`.
+Tự quyết định các lựa chọn kỹ thuật cục bộ trong phạm vi task (cấu trúc method, exception
+type, tên biến, cách chia nhỏ logic) mà không cần hỏi — đây là công việc thường ngày của
+skill này. Chỉ dừng lại trình bày tradeoff và chờ user duyệt cho quyết định kiến trúc LỚN,
+ảnh hưởng toàn service và khó đảo ngược (đổi MVC↔WebFlux, thêm framework runtime mới).
+Messaging (Kafka/RabbitMQ) → skill riêng. Thiết kế DB/schema → `database-skill`. Contract
+API → `api-contract-skill`. Review cuối → `code-review-skill`.
