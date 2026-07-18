@@ -25,10 +25,13 @@ Diễn giải lại yêu cầu bằng lời (re-verify), liệt kê giả địn
 ## Bước 2 — Đề xuất giải pháp (abstraction, tham chiếu skill kỹ thuật khi liệt kê task)
 
 1. Đọc kiến trúc/convention hiện có — đề xuất nhất quán, KHÔNG tạo kiến trúc lạ nếu không có lý do rõ ràng.
-2. Nếu có nhiều hướng hợp lý, đưa nhiều đề xuất riêng biệt, mỗi đề xuất gồm: - Sequence diagram + flow diagram (Mermaid). - Tradeoff giữa các hướng. - Acceptance Criteria (Given-When-Then) + Edge Case + Definition of Done theo phương án. - Danh sách task cần hoàn thành — với mỗi task, ghi chú skill kỹ thuật (từ bảng ánh xạ Bước 0) dự kiến sẽ tham khảo lúc thực thi, KHÔNG cần nêu chi tiết công nghệ ở đây.
-3. Có thể gợi ý 1 đề xuất kèm lý do, KHÔNG tự chọn thay user.
+2. Nếu có nhiều hướng hợp lý, đưa nhiều đề xuất riêng biệt. Mỗi đề xuất PHẢI có đủ diagram Mermaid mô tả phương án đó — Flow diagram + Sequence diagram LUÔN bắt buộc (mô tả trực tiếp hành vi/luồng xử lý); Architecture diagram và Component diagram bắt buộc nếu phương án đổi ranh giới hệ thống/thêm-bớt service-module (bỏ qua nếu chỉ sửa nội bộ 1 module, không đổi cấu trúc lớn); ERD bắt buộc nếu phương án đổi data model/schema (bỏ qua nếu không đụng tới dữ liệu lưu trữ). Không vẽ diagram không áp dụng được cho phạm vi thay đổi. Ngoài diagram, mỗi đề xuất còn gồm: Tradeoff giữa các hướng; Acceptance Criteria (Given-When-Then) + Edge Case + Definition of Done theo phương án; danh sách task cần hoàn thành — với mỗi task, ghi chú skill kỹ thuật (từ bảng ánh xạ Bước 0) dự kiến sẽ tham khảo lúc thực thi, KHÔNG cần nêu chi tiết công nghệ ở đây.
+3. Ghi toàn bộ nội dung Bước 2 (mọi đề xuất, đầy đủ diagram + tradeoff + AC/Edge Case/DoD + task list) ra file `docs/plans/<feature-slug>.md` — đây là bản lưu để tham chiếu lại, KHÔNG thay thế việc trình bày đầy đủ trực tiếp cho user ngay trong hội thoại.
+4. Có thể gợi ý 1 đề xuất kèm lý do, KHÔNG tự chọn thay user.
 
-**CHECKPOINT (bắt buộc)**: trình bày đầy đủ đề xuất, chờ user xác nhận requirement/solution. KHÔNG sang Bước 3 khi chưa có xác nhận rõ ràng.
+**CHECKPOINT (bắt buộc)**: trình bày đầy đủ đề xuất (đã ghi ở `docs/plans/<feature-slug>.md`), chờ user xác nhận requirement/solution. KHÔNG sang Bước 3 khi chưa có xác nhận rõ ràng.
+
+Ngay sau khi user chọn xong ở CHECKPOINT: cập nhật lại `docs/plans/<feature-slug>.md` — đưa phương án đã chọn lên đầu, đánh dấu rõ ràng (VD: `## ✅ Phương án đã chọn: <tên>`); các phương án KHÔNG được chọn đẩy xuống dưới, mỗi phương án bọc trong `<details><summary>Phương án không chọn: <tên></summary> ... </details>` để mặc định thu gọn (collapsed) khi xem trên renderer hỗ trợ (GitHub, VS Code preview...).
 
 ## Bước 3 — Implement + Test (loop tới khi đạt chất lượng)
 
@@ -76,7 +79,7 @@ Không cần checkpoint chờ xác nhận riêng ở đây — báo cáo xong l�
 ## Bước 5 — Lưu kiến thức & note kinh nghiệm (làm ngay sau Bước 4, không chờ checkpoint)
 
 1. Memory/MCP (nếu có kết nối): ghi quyết định quan trọng, kết quả cuối.
-2. File quyết định: `docs/decisions/<feature-slug>.md` — phương án đã chọn, lý do, diagram cuối, AC/DoD cuối, risk còn tồn đọng.
+2. File changelog: `docs/changelog/<feature-slug>.md` — kế thừa từ `docs/plans/<feature-slug>.md` (phương án đã chọn + diagram tương ứng, cập nhật lại nếu diagram/thiết kế có đổi trong lúc implement), cộng thêm: lý do chọn phương án, AC/DoD cuối (đạt/chưa đạt), risk còn tồn đọng, danh sách file đã thay đổi. Đây là bản ghi những gì THỰC SỰ đã build cho feature này (khác `docs/plans/` — nơi chỉ ghi các phương án lúc đề xuất), không đặt trong `docs/decisions/` vì sau khi hoàn thành nó không còn là 1 quyết định thuần túy mà là nhật ký thay đổi thực tế của feature.
 3. **Experience log (bắt buộc, tích lũy lâu dài, KHÔNG ghi đè)**: append vào `docs/knowledge/experience-log.md` — với mỗi issue đã gặp trong Bước 3.3 (dù đã fix hay chưa fix được), ghi theo format:
 
    ```markdown

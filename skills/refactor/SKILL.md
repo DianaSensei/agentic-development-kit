@@ -56,5 +56,5 @@ Không cần checkpoint chờ xác nhận riêng ở đây — báo cáo xong l�
 
 ## Bước 7 — Lưu kiến thức (làm ngay sau Bước 6)
 1. Memory/MCP (nếu có kết nối): ghi lại pattern refactor đã áp dụng, lý do.
-2. `docs/decisions/<refactor-slug>.md`: pain point, phương án đã chọn, behavior preservation checklist, kết quả.
+2. File changelog: `docs/changelog/<refactor-slug>.md` — pain point ban đầu, phương án đã chọn (+ lý do), behavior preservation checklist, kết quả cuối (đối chiếu Bước 5), danh sách file đã thay đổi. Đây là bản ghi những gì THỰC SỰ đã refactor, không đặt trong `docs/decisions/` vì sau khi hoàn thành nó là nhật ký thay đổi thực tế chứ không còn là 1 quyết định thuần túy.
 3. **Experience log** (tích lũy, append): `docs/knowledge/experience-log.md` — ghi lại pattern refactor nào hiệu quả/không hiệu quả cho loại pain point tương ứng, để lần sau tham khảo khi gặp pain point tương tự.
