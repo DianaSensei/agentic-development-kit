@@ -30,7 +30,7 @@ Phù hợp: cache, session, distributed lock ngắn hạn, queue nhẹ chấp nh
 
 ## 3. Queue nhẹ
 - **List** (`LPUSH`/`BRPOP`) cho queue đơn giản FIFO, không cần độ tin cậy cao.
-- **Redis Streams** (`XADD`/`XREADGROUP`) nếu cần consumer group, ack, replay — gần với Kafka hơn nhưng nhẹ hơn, phù hợp khi không muốn thêm hạ tầng Kafka/RabbitMQ mới. Nếu nghiệp vụ cần độ tin cậy/durability cao hơn Streams cung cấp, cân nhắc `kafka-skill`/ `rabbitmq-skill` thay vì cố ép Redis làm queue chính.
+- **Redis Streams** (`XADD`/`XREADGROUP`) nếu cần consumer group, ack, replay — gần với Kafka hơn nhưng nhẹ hơn, phù hợp khi không muốn thêm hạ tầng Kafka/RabbitMQ mới. Nếu nghiệp vụ cần độ tin cậy/durability cao hơn Streams cung cấp, cân nhắc `kafka-skill`/`rabbitmq-skill` thay vì cố ép Redis làm queue chính.
 
 ## 4. Ranking / Leaderboard
 - **Sorted Set** (`ZADD`/`ZRANGE`/`ZRANK`) — cấu trúc chuẩn cho bảng xếp hạng, tra cứu rank O(log N).

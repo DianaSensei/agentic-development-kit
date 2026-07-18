@@ -35,7 +35,7 @@ description: Checklist review code khách quan trước khi báo hoàn thành �
 
 **API Contract (REST/RPC/Message)**: response/message khớp đúng contract đã chốt (`api-contract-skill`), không có breaking change âm thầm với schema/proto field.
 
-**Tauri/React**: path handling đúng API (không path traversal), capabilities least- privilege khai báo đủ cho command đang dùng, plugin chuẩn cho dialog, `#[cfg(target_os)]` đủ 3 OS, command Rust không panic (trả `Result`), listener event được cleanup khi unmount, React đủ loading/error/empty state.
+**Tauri/React**: path handling đúng API (không path traversal), capabilities least-privilege khai báo đủ cho command đang dùng, plugin chuẩn cho dialog, `#[cfg(target_os)]` đủ 3 OS, command Rust không panic (trả `Result`), listener event được cleanup khi unmount, React đủ loading/error/empty state.
 
 **Data/Storage local (Tauri offline)**: migration SQLite chạy được lúc app khởi động và có fallback nếu fail (không làm app không mở được), TTL/schema key-value nhất quán, không lưu blob lớn vào SQLite nếu `tauri-plugin-fs` phù hợp hơn.
 

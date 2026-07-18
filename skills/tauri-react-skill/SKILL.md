@@ -16,15 +16,15 @@ description: Kiến thức chuyên sâu implement code Tauri (Rust backend) + Re
 - Cần gửi tiến trình liên tục (progress, log realtime) → dùng event (`emit`/`listen`) thay vì poll bằng invoke lặp lại.
 
 ## Capabilities & Permissions (Tauri v2 — least-privilege)
-- Khai báo permission CHỈ đúng scope cần dùng trong `capabilities/*.json` (VD: `fs:allow- read-file` với `path` scope cụ thể, không cấp quyền full filesystem nếu chỉ cần đọc 1 thư mục cấu hình).
+- Khai báo permission CHỈ đúng scope cần dùng trong `capabilities/*.json` (VD: `fs:allow-read-file` với `path` scope cụ thể, không cấp quyền full filesystem nếu chỉ cần đọc 1 thư mục cấu hình).
 - Không bật `"dangerousRemoteDomainIpcAccess"` hoặc mở CSP quá rộng nếu không thực sự cần.
 - Mỗi plugin thêm vào phải đi kèm khai báo permission tương ứng trong capabilities — thiếu khai báo sẽ khiến command bị chặn ở runtime dù code Rust đúng (lỗi dễ nhầm là "bug logic" trong khi thực chất là thiếu permission).
 
 ## Plugin chuẩn
 - **Dialog** (`tauri-plugin-dialog`): dùng cho open/save file picker, confirm dialog native — không tự dựng modal HTML giả lập file picker OS.
 - **FS** (`tauri-plugin-fs`): thao tác file thô, luôn qua scope đã khai báo trong capabilities, không dùng path tuyệt đối build tay từ input user chưa validate (path traversal risk — chuẩn hóa/kiểm tra path nằm trong base dir cho phép).
-- **Store** (`tauri-plugin-store`): key-value JSON, xem chi tiết chọn lựa ở `data-storage- skill` — skill này chỉ lo code gọi đúng API (`load`, `get`, `set`, `save`).
-- **SQL** (`tauri-plugin-sql`): connection string/migration setup, dùng đúng API async của plugin (`Database.load`, `execute`, `select`) — schema/migration design xem `data- storage-skill`.
+- **Store** (`tauri-plugin-store`): key-value JSON, xem chi tiết chọn lựa ở `data-storage-skill` — skill này chỉ lo code gọi đúng API (`load`, `get`, `set`, `save`).
+- **SQL** (`tauri-plugin-sql`): connection string/migration setup, dùng đúng API async của plugin (`Database.load`, `execute`, `select`) — schema/migration design xem `data-storage-skill`.
 - Plugin chuẩn cần thiết trực tiếp cho task (dialog/fs/store/sql ở trên) thì tự thêm bình thường, khai báo permission tối thiểu tương ứng, chỉ nêu trong báo cáo là đã thêm. Không tự thêm plugin NGOÀI phạm vi task đang làm — mỗi plugin thêm quyền truy cập hệ thống, tăng bề mặt tấn công, nên việc thêm phải gắn với nhu cầu cụ thể chứ không phải "tiện thì thêm".
 
 ## Đa OS (`#[cfg(target_os)]`)

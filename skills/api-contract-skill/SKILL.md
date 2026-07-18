@@ -41,7 +41,7 @@ Khai báo scheme xác thực/phân quyền rõ theo endpoint/method. Validate in
 
 1. **REST**: nếu project đã có file OpenAPI (`openapi.yaml`/`.json`, hoặc dùng springdoc tự sinh từ annotation), cập nhật/bổ sung đúng path/schema liên quan vào đó. Nếu project CHƯA có file OpenAPI tập trung, tạo mới `docs/api/<feature-slug>.openapi.yaml` chứa fragment của endpoint đang thiết kế.
 2. **Message contract (Kafka/RabbitMQ/Pub-Sub)**: LUÔN ghi ra `docs/api/<feature-slug>.asyncapi.yaml` (hoặc file tương đương) mô tả event schema, channel/topic name, delivery semantic yêu cầu — kể cả khi project không có convention AsyncAPI sẵn, đây là tài liệu SỐNG (living doc) để lần sau đối chiếu, không phải chỉ annotation trong ngoặc ở task list.
-3. Sau khi ghi file, liệt kê rõ đường dẫn file đã tạo/cập nhật vào phần báo cáo — để lead- agent (hoặc `feature-development`/`bug-fix`) biết đây là 1 file thật đã thay đổi, đưa vào danh sách "File đã thay đổi" ở báo cáo cuối.
+3. Sau khi ghi file, liệt kê rõ đường dẫn file đã tạo/cập nhật vào phần báo cáo — để lead-agent (hoặc `feature-development`/`bug-fix`) biết đây là 1 file thật đã thay đổi, đưa vào danh sách "File đã thay đổi" ở báo cáo cuối.
 
 Nếu 1 task chỉ thêm 1 endpoint/event rất nhỏ và project chưa có convention tập trung file contract — vẫn PHẢI tạo file nhỏ tương ứng, không bỏ qua bước này chỉ vì "đơn giản quá không cần file riêng".
 

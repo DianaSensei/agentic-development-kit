@@ -37,14 +37,14 @@ Nếu không có nhu cầu đặc biệt, ưu tiên spring MVC thay vì WebFlux 
 
 ## Issue thường gặp trong thực tế
 
-- **Self-invocation làm mất hiệu lực proxy AOP**: gọi method có `@Transactional`/`@Async`/ `@Cacheable` từ 1 method KHÁC trong CÙNG class (`this.methodX()`) bỏ qua proxy Spring hoàn toàn — annotation bị lờ đi âm thầm, không có lỗi/warning rõ ràng. Tách method đó sang bean khác nếu cần annotation có hiệu lực.
+- **Self-invocation làm mất hiệu lực proxy AOP**: gọi method có `@Transactional`/`@Async`/`@Cacheable` từ 1 method KHÁC trong CÙNG class (`this.methodX()`) bỏ qua proxy Spring hoàn toàn — annotation bị lờ đi âm thầm, không có lỗi/warning rõ ràng. Tách method đó sang bean khác nếu cần annotation có hiệu lực.
 - **Bean singleton có mutable state không đồng bộ hóa**: field instance trên 1 `@Service` (mặc định singleton scope) bị nhiều request cùng lúc ghi/đọc gây race condition — service phải stateless (không field mutable theo request) hoặc đồng bộ hóa đúng nếu bắt buộc có state.
 - **ThreadLocal không được clear**: dùng ThreadLocal lưu context theo request (userId, tenant...) mà không `remove()` sau khi xong — thread trong pool được tái sử dụng cho request khác vẫn còn giá trị cũ, gây rò rỉ dữ liệu giữa các request (nghiêm trọng nếu là thông tin phân quyền/tenant).
 
 ## Unit Test (JUnit5 + Mockito)
 
 1. Cover từng Acceptance Criteria/Edge Case ở mức business logic thuần túy.
-2. Mock mọi dependency ngoài (DB, HTTP client, message broker) — unit test không chạm I/O thật (integration test là phạm vi khác, phối hợp với `database-skill`/`kafka-skill`/ `rabbitmq-skill` khi cần Testcontainers).
+2. Mock mọi dependency ngoài (DB, HTTP client, message broker) — unit test không chạm I/O thật (integration test là phạm vi khác, phối hợp với `database-skill`/`kafka-skill`/`rabbitmq-skill` khi cần Testcontainers).
 3. Test cả exception path, không chỉ happy path — đặc biệt validate input sai, dependency trả lỗi/timeout.
 4. Assertion rõ ràng (AssertJ ưu tiên hơn assert thô nếu project đã dùng), tên test method mô tả rõ hành vi đang test (`should_X_when_Y`).
 5. Chạy test thật (`mvn test`/`gradle test`), không chỉ viết xong là báo hoàn thành. Fail thì tự sửa trong phạm vi hợp lý rồi chạy lại.

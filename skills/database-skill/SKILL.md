@@ -7,7 +7,7 @@ description: Kiến thức chuyên sâu thiết kế và tối ưu database quan
 
 ## Discover
 
-Xác nhận DB đang dùng qua dependency/driver cụ thể (Oracle JDBC, `postgresql`, `mysql- connector-j`, `spring-data-mongodb`). Đọc schema/entity hiện có, migration tool đang dùng (Flyway/Liquibase). KHÔNG giả định RDBMS nào nếu chưa xác nhận — cú pháp/hành vi khác nhau đáng kể giữa Oracle/Postgres/MySQL.
+Xác nhận DB đang dùng qua dependency/driver cụ thể (Oracle JDBC, `postgresql`, `mysql-connector-j`, `spring-data-mongodb`). Đọc schema/entity hiện có, migration tool đang dùng (Flyway/Liquibase). KHÔNG giả định RDBMS nào nếu chưa xác nhận — cú pháp/hành vi khác nhau đáng kể giữa Oracle/Postgres/MySQL.
 
 ## Transaction Isolation Level
 
