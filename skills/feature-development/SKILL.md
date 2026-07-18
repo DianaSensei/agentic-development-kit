@@ -1,7 +1,7 @@
 ---
 name: feature-development
 description: Quy trình phát triển 1 tính năng mới hoàn chỉnh — từ phân tích yêu cầu, đề xuất giải pháp, tới implement/test/fix lặp cho tới khi đạt chất lượng, rồi báo cáo và lưu kiến thức. Hoàn toàn abstraction công nghệ — tự quét và dùng các skill kỹ thuật chi tiết khi cần. Dùng cho mọi loại project/stack.
-argument-hint: [mô tả yêu cầu tính năng]
+argument-hint: "[mô tả yêu cầu tính năng]"
 ---
 
 # Feature Development Workflow

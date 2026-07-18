@@ -1,6 +1,6 @@
 ---
 name: tauri-react-skill
-description: Kiến thức chuyên sâu implement code Tauri (Rust backend) + React (frontend) cho desktop app — IPC command/invoke, capabilities/permissions, plugin chuẩn (dialog/fs/store/sql), xử lý đa OS (`#[cfg(target_os)]`), state loading/error/empty ở React. Phối hợp với `data-storage-skill` (thiết kế lưu trữ) và `ui-ux-design-skill` (thiết kế UX) — skill này CHỈ lo phần code thực thi. Dùng khi implement/sửa code trong app Tauri+React.
+description: Kiến thức chuyên sâu implement code Tauri (Rust backend) + React (frontend) cho desktop app — IPC command/invoke, capabilities/permissions, plugin chuẩn (dialog/fs/store/sql), xử lý đa OS (`#[cfg(target_os)]`), state loading/error/empty ở React. Phối hợp với `tauri-storage-skill` (thiết kế lưu trữ) và `ui-ux-design-skill` (thiết kế UX) — skill này CHỈ lo phần code thực thi. Dùng khi implement/sửa code trong app Tauri+React.
 ---
 
 # Tauri + React — Implementation
@@ -23,8 +23,8 @@ description: Kiến thức chuyên sâu implement code Tauri (Rust backend) + Re
 ## Plugin chuẩn
 - **Dialog** (`tauri-plugin-dialog`): dùng cho open/save file picker, confirm dialog native — không tự dựng modal HTML giả lập file picker OS.
 - **FS** (`tauri-plugin-fs`): thao tác file thô, luôn qua scope đã khai báo trong capabilities, không dùng path tuyệt đối build tay từ input user chưa validate (path traversal risk — chuẩn hóa/kiểm tra path nằm trong base dir cho phép).
-- **Store** (`tauri-plugin-store`): key-value JSON, xem chi tiết chọn lựa ở `data-storage-skill` — skill này chỉ lo code gọi đúng API (`load`, `get`, `set`, `save`).
-- **SQL** (`tauri-plugin-sql`): connection string/migration setup, dùng đúng API async của plugin (`Database.load`, `execute`, `select`) — schema/migration design xem `data-storage-skill`.
+- **Store** (`tauri-plugin-store`): key-value JSON, xem chi tiết chọn lựa ở `tauri-storage-skill` — skill này chỉ lo code gọi đúng API (`load`, `get`, `set`, `save`).
+- **SQL** (`tauri-plugin-sql`): connection string/migration setup, dùng đúng API async của plugin (`Database.load`, `execute`, `select`) — schema/migration design xem `tauri-storage-skill`.
 - Plugin chuẩn cần thiết trực tiếp cho task (dialog/fs/store/sql ở trên) thì tự thêm bình thường, khai báo permission tối thiểu tương ứng, chỉ nêu trong báo cáo là đã thêm. Không tự thêm plugin NGOÀI phạm vi task đang làm — mỗi plugin thêm quyền truy cập hệ thống, tăng bề mặt tấn công, nên việc thêm phải gắn với nhu cầu cụ thể chứ không phải "tiện thì thêm".
 
 ## Đa OS (`#[cfg(target_os)]`)
@@ -47,4 +47,4 @@ description: Kiến thức chuyên sâu implement code Tauri (Rust backend) + Re
 - Nếu cần test tích hợp thật (cả Rust + WebView), ghi rõ đây là test thủ công/manual QA nếu project chưa có hạ tầng E2E cho desktop (WebDriver/tauri-driver). KHÔNG tự dựng mới hạ tầng E2E (chi phí thiết lập lớn, ảnh hưởng toàn bộ quy trình test của project) — đề xuất kèm lý do, chờ user quyết định có đầu tư hạ tầng này không.
 
 ## Ranh giới
-Không tự quyết định cơ chế lưu trữ (SQLite vs store vs fs) — đó là `data-storage-skill`. Không tự quyết định layout/luồng UX — đó là `ui-ux-design-skill`. Skill này chỉ lo phần code Rust command + capabilities + code React gọi/hiển thị kết quả đúng theo quyết định đã chốt ở 2 skill kia. Review cuối → `code-review-skill`.
+Không tự quyết định cơ chế lưu trữ (SQLite vs store vs fs) — đó là `tauri-storage-skill`. Không tự quyết định layout/luồng UX — đó là `ui-ux-design-skill`. Skill này chỉ lo phần code Rust command + capabilities + code React gọi/hiển thị kết quả đúng theo quyết định đã chốt ở 2 skill kia. Review cuối → `code-review-skill`.

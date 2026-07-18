@@ -1,7 +1,7 @@
 ---
 name: bug-fix
 description: Quy trình xử lý lỗi hoàn chỉnh — thu thập triệu chứng, cố gắng reproduce nếu có thể, chờ user xác nhận trước khi sửa, implement/fix lặp tới khi đạt chất lượng, rồi báo cáo, lưu kiến thức và tạo postmortem. Hoàn toàn abstraction công nghệ — tự quét và dùng các skill kỹ thuật chi tiết khi cần. Dùng cho mọi loại project/stack.
-argument-hint: [mô tả lỗi/triệu chứng]
+argument-hint: "[mô tả lỗi/triệu chứng]"
 ---
 
 # Bug Fix Workflow

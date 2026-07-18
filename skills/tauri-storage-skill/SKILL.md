@@ -1,5 +1,5 @@
 ---
-name: data-storage-skill
+name: tauri-storage-skill
 description: Kiến thức chuyên sâu thiết kế lưu trữ local/offline CHỈ CHO app desktop Tauri+React — SQLite (tauri-plugin-sql), key-value (tauri-plugin-store), file thô (tauri-plugin-fs). KHÔNG dùng cho database server-side (Oracle/Postgres/MySQL/Mongo — xem database-skill; Redis — xem redis-skill; Elasticsearch — xem elasticsearch-skill). Dùng khi feature Tauri cần lưu dữ liệu offline trên máy user.
 ---
 

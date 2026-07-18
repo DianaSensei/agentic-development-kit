@@ -1,6 +1,6 @@
 ---
 name: database-skill
-description: Kiến thức chuyên sâu thiết kế và tối ưu database quan hệ server-side (Oracle, PostgreSQL, MySQL) và MongoDB — transaction isolation, concurrency control/locking, indexing, query optimization, migration. Dùng khi feature cần thiết kế/đổi schema hoặc tối ưu truy vấn với DB có server riêng. KHÔNG dùng cho lưu trữ local/offline Tauri (SQLite qua `tauri-plugin-sql`) — xem `data-storage-skill`.
+description: Kiến thức chuyên sâu thiết kế và tối ưu database quan hệ server-side (Oracle, PostgreSQL, MySQL) và MongoDB — transaction isolation, concurrency control/locking, indexing, query optimization, migration. Dùng khi feature cần thiết kế/đổi schema hoặc tối ưu truy vấn với DB có server riêng. KHÔNG dùng cho lưu trữ local/offline Tauri (SQLite qua `tauri-plugin-sql`) — xem `tauri-storage-skill`.
 ---
 
 # Database — RDBMS (Oracle/Postgres/MySQL) + MongoDB
