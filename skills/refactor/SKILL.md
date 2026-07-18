@@ -1,60 +1,110 @@
 ---
 name: refactor
-description: Quy trình refactor code — cải thiện cấu trúc/hiệu năng/khả năng bảo trì mà KHÔNG được đổi hành vi bên ngoài (API response, side-effect, output phải giữ nguyên 100%). Dùng khi yêu cầu là dọn dẹp/tái cấu trúc/cải thiện chất lượng code, không phải thêm tính năng mới hay sửa hành vi sai. Hoàn toàn abstraction công nghệ — tự quét và dùng các skill kỹ thuật chi tiết khi cần.
-argument-hint: "[mô tả phần code cần refactor + lý do]"
+description: Code-refactoring workflow — improve structure/performance/maintainability WITHOUT changing external behavior (API responses, side effects, output must stay 100% identical). Use when the request is to clean up/restructure/improve code quality, not to add a new feature or fix wrong behavior. Fully technology-agnostic — invokes whichever technical skills the task needs.
+argument-hint: "[code to refactor + reason]"
 ---
 
 # Refactor Workflow
 
-Chạy trong 1 agent duy nhất, tuần tự. Nguyên tắc TỐI THƯỢNG xuyên suốt: **hành vi bên ngoài của hệ thống (API response, side-effect, dữ liệu ghi ra, log, event phát ra...) PHẢI giữ nguyên 100% trước và sau refactor**. Nếu tại bất kỳ điểm nào phát hiện không thể refactor mà giữ nguyên hành vi — DỪNG LẠI, báo user, KHÔNG tự ý coi đây là "refactor kèm sửa nhỏ".
+Runs as a single agent, sequentially. The OVERRIDING principle throughout: **the system's external
+behavior (API responses, side effects, data written, logs, events emitted, etc.) MUST stay 100%
+identical before and after the refactor**. If at any point a refactor turns out to be impossible without
+changing behavior — STOP, tell the user, don't unilaterally treat it as "a refactor with a small fix
+bundled in."
 
-## Bước 0 — Quét & cache skill map + Discover bối cảnh
-Giống `feature-development`/`bug-fix`: quét `.claude/skills/*/SKILL.md` (bỏ qua skill này), đọc `CLAUDE.md`, memory/MCP nếu có, code/logic hiện có ở khu vực cần refactor — nếu `workflow-router` đã đọc các file này ngay trước đó trong cùng session, dùng lại, không đọc lại.
+## Step 0 — Discover Context
 
-## Bước 1 — Xác định rõ pain point (KHÔNG chấp nhận mô tả mơ hồ)
-Yêu cầu refactor phải cụ thể hóa được TẠI SAO cần refactor — không chấp nhận lý do chung chung như "code xấu". Làm rõ 1 trong các loại pain point:
-- Code duplicate (DRY violation) ở đâu, lặp lại bao nhiêu chỗ.
-- Coupling quá chặt, khó test độc lập (phải mock quá nhiều dependency không liên quan).
-- Hiệu năng kém do cấu trúc (không phải do thiếu index/cache — cái đó là việc của skill kỹ thuật tương ứng, refactor ở đây là về cấu trúc code).
-- Khó mở rộng do vi phạm nguyên tắc thiết kế (God class, vi phạm Single Responsibility...).
-- Naming/structure không nhất quán với convention hiện tại của project.
+Read `CLAUDE.md`, memory/MCP if connected, and the existing code/logic in the area to be refactored. If
+`workflow-router` already read these in this same session immediately before handing off, reuse that —
+don't re-read from scratch.
 
-Nếu user mô tả mơ hồ ("dọn code này cho sạch"), hỏi lại cụ thể pain point nào đang nhắm tới trước khi tiếp tục — refactor không có mục tiêu rõ ràng dễ lan man, đổi quá nhiều thứ không cần thiết.
+## Step 1 — Pin Down the Pain Point (vague descriptions not accepted)
 
-## Bước 2 — Kiểm tra "lưới an toàn" TRƯỚC khi refactor (bắt buộc, không bỏ qua)
-Refactor an toàn đòi hỏi có test bao phủ ĐỦ hành vi hiện tại trước khi động vào code.
-1. Kiểm tra test hiện có cho khu vực cần refactor — có bao phủ đủ các nhánh hành vi quan trọng không (không chỉ happy path).
-2. Nếu THIẾU bao phủ: viết **characterization test** trước — test ghi lại ĐÚNG hành vi hiện tại (dù hành vi đó tối ưu hay không, dù có bug tiềm ẩn hay không — KHÔNG sửa bug trong bước này, chỉ ghi lại "hiện tại nó đang chạy thế này"). Nếu phát hiện bug thật sự trong lúc viết characterization test, DỪNG LẠI, báo user: đây không còn là refactor thuần túy nữa, cần chuyển sang `bug-fix` trước, quay lại refactor sau khi bug đã fix.
-3. KHÔNG bắt đầu Bước 3 nếu chưa có lưới an toàn đủ tin cậy.
+A refactor request must make concrete WHY it's needed — a generic reason like "the code is ugly" isn't
+accepted. Clarify which one of these pain points applies:
+- Code duplication (DRY violation) — where, and how many places it repeats.
+- Coupling too tight, hard to test in isolation (too many unrelated dependencies need mocking).
+- Poor performance due to structure (not due to a missing index/cache — that's the relevant technical
+  skill's job; refactor here is about code structure).
+- Hard to extend due to a design-principle violation (a God class, a Single Responsibility violation...).
+- Naming/structure inconsistent with the project's current convention.
 
-## Bước 3 — Đề xuất phương án refactor
-1. Đọc convention/kiến trúc hiện có, đề xuất theo pattern refactor phù hợp (extract method/class, introduce interface, replace conditional with polymorphism, strangler fig cho refactor lớn theo từng phần...).
-2. Nếu có nhiều hướng hợp lý, đưa nhiều đề xuất kèm tradeoff (mức độ thay đổi, rủi ro, thời gian), giống `feature-development` Bước 2 — nhưng KHÔNG cần AC/Edge Case theo nghĩa thêm hành vi mới, thay bằng: "Behavior Preservation Checklist" (danh sách hành vi cụ thể PHẢI giữ nguyên, đối chiếu từ characterization test ở Bước 2).
-3. Xác định phạm vi: refactor 1 lần (nếu nhỏ) hay chia nhiều bước nhỏ tăng dần (nếu lớn) — ưu tiên chia nhỏ để mỗi bước dễ verify, dễ rollback nếu có vấn đề.
+If the user's description is vague ("clean up this code"), ask which specific pain point is being
+targeted before continuing — a refactor with no clear target tends to sprawl into unnecessary changes.
 
-**CHECKPOINT (bắt buộc)**: trình bày phương án, chờ user xác nhận trước khi thực thi.
+## Step 2 — Check the "Safety Net" BEFORE Refactoring (required, never skipped)
 
-## Bước 4 — Thực thi (từng bước nhỏ, verify liên tục)
-1. Refactor theo TỪNG bước nhỏ đã chia ở Bước 3 — KHÔNG làm 1 lần lớn rồi mới test cuối cùng (rủi ro cao, khó xác định điểm gây lỗi nếu có).
-2. Sau MỖI bước nhỏ: chạy lại toàn bộ test liên quan (bao gồm characterization test) — PHẢI pass 100% trước khi sang bước nhỏ tiếp theo.
-3. Nếu 1 bước làm vỡ test: sửa lại trong phạm vi hợp lý, tối đa **3 lần thử** cho bước đó (ít hơn 5 lần của `feature-development`/`bug-fix` vì bản chất refactor nên rủi ro thấp, sửa nhiều lần không thành công là dấu hiệu hướng refactor không ổn). Nếu vẫn fail sau 3 lần: **ROLLBACK bước đó** (revert lại trạng thái trước bước nhỏ này, dùng git nếu có), báo cáo user, không tiếp tục refactor dở dang trên trạng thái lỗi.
-4. Tham khảo skill kỹ thuật phù hợp (đọc TOÀN VĂN `SKILL.md` liên quan NGAY LÚC áp dụng, không dùng cache từ yêu cầu trước trong session — cùng nguyên tắc như `feature-development`) cho cách viết code chuẩn theo stack.
+A safe refactor requires test coverage of the CURRENT behavior before touching any code.
+1. Check existing tests for the area to be refactored — do they cover the important behavioral branches
+   (not just the happy path)?
+2. If coverage is MISSING: write **characterization tests** first — tests that lock in the CURRENT
+   behavior exactly (whether or not that behavior is optimal, whether or not it has a latent bug — do
+   NOT fix a bug at this step, just record "this is how it currently behaves"). If a genuine bug is
+   discovered while writing characterization tests, STOP, tell the user: this is no longer a pure
+   refactor — it needs to go through `bug-fix` first, then come back to the refactor once fixed.
+3. Do NOT start Step 3 without a sufficiently reliable safety net in place.
 
-## Bước 5 — Xác nhận hành vi không đổi (bắt buộc, khác biệt cốt lõi so với 2 workflow kia)
-1. Chạy lại TOÀN BỘ test suite liên quan (không chỉ test của khu vực vừa refactor) — đảm bảo không phá vỡ phần khác của hệ thống.
-2. Đối chiếu lại "Behavior Preservation Checklist" ở Bước 3 — xác nhận từng mục vẫn đúng.
-3. Nếu có thể, so sánh output cụ thể trước/sau (VD: chạy cùng input, so sánh response) để có bằng chứng cụ thể ngoài việc "test pass" — test có thể sót case.
+## Step 3 — Propose a Refactor Approach
 
-## Bước 6 — Báo cáo kết quả cuối (bắt buộc)
-- Pain point ban đầu đã giải quyết như thế nào (đối chiếu Bước 1).
-- Xác nhận rõ ràng: hành vi bên ngoài có thay đổi gì không (phải là "Không" — nếu có, đây là vấn đề nghiêm trọng cần nêu bật, không chôn trong chi tiết).
-- Danh sách file đã thay đổi, số bước nhỏ đã thực hiện, có bước nào phải rollback không.
-- Risk còn tồn đọng (nếu có).
-- Đã chạy `code-review-skill` (nếu có) trước khi báo cáo.
+1. Read the existing conventions/architecture, propose the fitting refactor pattern (extract
+   method/class, introduce interface, replace conditional with polymorphism...). If the refactor's scope
+   is large enough to need strangler fig / branch by abstraction (gradually replacing a large
+   module/service that can't be safely changed in one small step) — read `legacy-modernizer` in full
+   (the technical skill specializing in exactly this: facade/routing, dual-write, dependency mapping,
+   in-depth characterization testing) and apply its method within this Step 3/4, instead of reinventing
+   the approach — `legacy-modernizer` does NOT run its own CHECKPOINT/report/changelog; this workflow
+   remains the sole orchestrator.
+2. If more than one direction is reasonable, present multiple proposals with trade-offs (extent of
+   change, risk, time), similar to `feature-development` Step 2 — but instead of AC/Edge Cases in the
+   sense of new behavior, use a "Behavior Preservation Checklist" (the specific behaviors that MUST stay
+   identical, cross-checked against the characterization tests from Step 2).
+3. Decide scope: a single-pass refactor (if small) or split into incremental small steps (if large) —
+   prefer splitting so each step is easy to verify and easy to roll back if something goes wrong.
 
-Không cần checkpoint chờ xác nhận riêng ở đây — báo cáo xong làm luôn Bước 7 (ghi log là thao tác phụ, ít rủi ro, sửa lại được nếu user phản hồi khác).
+**CHECKPOINT (required)**: present the proposal and wait for the user to confirm before executing.
 
-## Bước 7 — Lưu kiến thức (làm ngay sau Bước 6)
-1. Memory/MCP (nếu có kết nối): ghi lại pattern refactor đã áp dụng, lý do.
-2. File changelog: `docs/changelog/<refactor-slug>.md` — pain point ban đầu, phương án đã chọn (+ lý do), behavior preservation checklist, kết quả cuối (đối chiếu Bước 5), danh sách file đã thay đổi. Đây là bản ghi những gì THỰC SỰ đã refactor, không đặt trong `docs/decisions/` vì sau khi hoàn thành nó là nhật ký thay đổi thực tế chứ không còn là 1 quyết định thuần túy.
-3. **Experience log** (tích lũy, append): `docs/knowledge/experience-log.md` — ghi lại pattern refactor nào hiệu quả/không hiệu quả cho loại pain point tương ứng, để lần sau tham khảo khi gặp pain point tương tự.
+## Step 4 — Execute (small steps, continuously verified)
+
+1. Refactor in the SMALL steps defined in Step 3 — do NOT do one large pass and only test at the very
+   end (high risk, hard to pinpoint the source of a failure if one occurs).
+2. After EVERY small step: re-run all relevant tests (including the characterization tests) — they MUST
+   pass 100% before moving to the next small step.
+3. If a step breaks a test: fix it within a reasonable scope, **maximum 3 attempts** for that step
+   (fewer than the 5 used by `feature-development`/`bug-fix`, since a refactor is inherently lower-risk —
+   repeated failed fixes are themselves a signal the refactor direction is unstable). If still failing
+   after 3 attempts: **ROLL BACK that step** (revert to the state before this small step, using git if
+   available), report to the user, and don't continue refactoring on top of a broken state.
+4. Reference the relevant technical skill (`Read` the full `SKILL.md` at the point of applying it, never
+   reused from an earlier request in the session — same principle as `feature-development`) for the
+   stack's correct coding conventions.
+
+## Step 5 — Confirm Behavior Is Unchanged (required, the core difference from the other two workflows)
+
+1. Re-run the ENTIRE relevant test suite (not just the refactored area's tests) — confirm nothing else
+   in the system broke.
+2. Cross-check the "Behavior Preservation Checklist" from Step 3 — confirm every item still holds.
+3. Where possible, compare concrete output before/after (e.g. run the same input, compare the response)
+   for concrete evidence beyond "tests pass" — tests can miss a case.
+
+## Step 6 — Final Report (required)
+
+- How the original pain point was resolved (cross-checked against Step 1).
+- A clear confirmation: did external behavior change at all (must be "No" — if it did, this is a serious
+  issue to surface prominently, not bury in the details).
+- List of files changed, number of small steps taken, whether any step needed a rollback.
+- Remaining risk, if any.
+- Whether `code-review-skill` was run (if available) before reporting.
+
+No separate confirmation checkpoint is needed here — proceed straight to Step 7 after reporting
+(logging is a low-risk side effect, easy to amend later if the user's feedback changes something).
+
+## Step 7 — Knowledge Capture (immediately after Step 6)
+
+1. Memory/MCP (if connected): record the refactor pattern applied and why.
+2. Changelog file: `docs/changelog/<refactor-slug>.md` — the original pain point, the chosen approach
+   (+ reasoning), the behavior preservation checklist, the final outcome (cross-checked against Step 5),
+   and the list of files changed. This is the record of what was ACTUALLY refactored — it doesn't
+   belong in `docs/decisions/` because once complete it's a change log, not a standalone decision record.
+3. **Experience log** (cumulative, append-only): `docs/knowledge/experience-log.md` — record which
+   refactor pattern was effective/ineffective for this type of pain point, for reference the next time a
+   similar pain point comes up.

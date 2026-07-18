@@ -18,7 +18,7 @@ RabbitMQ hay cả hai, có Resilience4j/Sentinel không, reactive (WebFlux) hay 
 nếu chưa thấy bằng chứng — nếu project mới chưa có gì, hỏi lại qua `open_questions`.
 
 ## Input bạn sẽ nhận
-`acceptance_criteria`/`edge_cases`/`definition_of_done` (từ solution đã chọn), thiết kế
+`acceptance_criteria`/`edge_cases`/`definition_of_done` (từ solution-architect đã chọn), thiết kế
 storage đã duyệt (từ `data-storage-architect`), API spec đã duyệt (từ `api-spec-designer`
 nếu có).
 

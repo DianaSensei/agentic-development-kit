@@ -47,8 +47,9 @@ không tự đổi. Đọc API/message contract đã duyệt (từ `api-spec-des
 - Vấn đề cross-platform tự phát hiện được (path hardcode, capability xin thừa, dialog
   không dùng plugin chuẩn).
 - Rủi ro UX (thiếu loading/error state).
-Đây là tự-review ở mức tính năng/UI, KHÔNG thay thế `code-reviewer` (agent riêng kiểm tra
-convention/nguyên tắc chung một cách khách quan hơn, không phải người vừa viết code này).
+Đây là tự-review ở mức tính năng/UI, KHÔNG thay thế 1 review khách quan riêng biệt (kiểm
+tra convention/nguyên tắc chung, độc lập với người vừa viết code này) — hệ thống Tier-2
+hiện CHƯA có agent chuyên trách việc này, nên độ khách quan bị giới hạn cho tới khi có.
 
 ## Output BẮT BUỘC
 ```json

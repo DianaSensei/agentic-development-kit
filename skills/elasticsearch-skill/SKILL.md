@@ -1,46 +1,50 @@
 ---
 name: elasticsearch-skill
-description: Kiến thức chuyên sâu Elasticsearch — thiết kế index/mapping, analyzer, Query DSL, aggregation, chiến lược reindex, shard/replica. Dùng khi feature cần tìm kiếm full-text hoặc phân tích/aggregation dữ liệu lớn.
+description: In-depth Elasticsearch knowledge — index/mapping design, analyzers, Query DSL, aggregations, reindex strategy, shard/replica sizing. Use when the feature needs full-text search or analysis/aggregation over large datasets.
 ---
 
 # Elasticsearch
 
 ## Discover
-Xác nhận project đã dùng ES qua dependency (`spring-data-elasticsearch` hoặc client trực tiếp), đọc index/mapping hiện có, version ES đang dùng (khác biệt đáng kể giữa major version).
+Confirm the project already uses ES via its dependency (`spring-data-elasticsearch` or a direct client), read the existing index/mapping, and check the ES version in use (major versions differ significantly).
 
-## Khi nào phù hợp / KHÔNG phù hợp
-Phù hợp: full-text search, log analytics, aggregation trên dataset lớn cần tốc độ. **KHÔNG nên dùng ES làm nguồn dữ liệu chính (source of truth)** — luôn có 1 DB chính (RDBMS/Mongo) giữ dữ liệu gốc, ES chỉ là index phái sinh đồng bộ sang. Đồng bộ này có độ trễ (eventual consistency, mặc định `refresh_interval` 1s) — nếu nghiệp vụ cần đọc NGAY sau ghi với dữ liệu vừa ghi, không dựa vào ES cho path đó.
+## When It Fits / When It Doesn't
+Fits: full-text search, log analytics, aggregation over large datasets that needs to be fast. **Do NOT use ES as the primary source of truth** — always keep one primary DB (RDBMS/Mongo) holding the canonical data, with ES only as a derived index synced from it. That sync has latency (eventual consistency, `refresh_interval` defaults to 1s) — if the business needs to read the just-written data immediately after a write, don't rely on ES for that path.
 
-## Issue thường gặp trong thực tế
-- **Cluster health**: `yellow` = thiếu replica (vẫn đọc/ghi được, giảm chịu lỗi), `red` = thiếu primary shard (mất khả năng đọc/ghi phần dữ liệu đó, có thể mất dữ liệu) — luôn theo dõi cluster health khi thiết kế số shard/replica, không chỉ set lúc đầu rồi bỏ quên.
-- **Mapping explosion**: dynamic mapping không kiểm soát (field mới tự sinh liên tục từ dữ liệu không đồng nhất) có thể chạm giới hạn `index.mapping.total_fields.limit` gây lỗi ghi — lý do chính để ưu tiên explicit mapping thay vì dynamic cho field quan trọng.
-- **Circuit breaker (memory)**: aggregation/sort trên field không giới hạn kích thước có thể gây `CircuitBreakingException` (tràn heap) — giới hạn kích thước response, dùng `search_after` thay vì `from`/`size` cho phân trang sâu (deep pagination cũng chậm dần vì ES phải load + sort toàn bộ kết quả từ đầu tới offset).
+## Common Real-World Issues
+- **Cluster health**: `yellow` = missing a replica (still readable/writable, reduced fault tolerance), `red` = missing a primary shard (that portion of data is unreadable/unwritable, potentially lost) — monitor cluster health continuously as shard/replica counts are designed, not just set once at the start and forgotten.
+- **Mapping explosion**: uncontrolled dynamic mapping (new fields auto-generated continuously from inconsistent data) can hit the `index.mapping.total_fields.limit` and cause write failures — this is the main reason to prefer explicit mapping over dynamic mapping for important fields.
+- **Circuit breaker (memory)**: aggregating/sorting on an unbounded-size field can trigger a `CircuitBreakingException` (heap overflow) — bound response size, use `search_after` instead of `from`/`size` for deep pagination (deep pagination also gets progressively slower since ES has to load and sort every result from the start up to the offset).
 
-## Thiết kế Index & Mapping
-- Xác định field nào cần full-text search (`text` + analyzer) vs field nào chỉ cần exact match/filter/sort (`keyword`) — dùng sai kiểu gây kết quả search sai hoặc tốn tài nguyên.
-- `mapping` nên khai báo tường minh (explicit mapping), tránh dựa vào dynamic mapping cho field quan trọng (dynamic mapping có thể đoán sai kiểu dữ liệu).
-- Đặt tên index theo convention có version/ngày nếu dùng chiến lược reindex qua alias (VD: `products_v2`, alias `products` trỏ tới bản mới nhất).
+## Index & Mapping Design
+- Decide which fields need full-text search (`text` + analyzer) vs. which only need exact match/filter/sort (`keyword`) — using the wrong type causes incorrect search results or wastes resources.
+- Prefer explicit mapping over relying on dynamic mapping for important fields (dynamic mapping can infer the wrong data type).
+- Name indices with a version/date convention if using an alias-based reindex strategy (e.g. `products_v2`, with alias `products` pointing at the latest).
 
 ## Analyzer
-- Chọn analyzer phù hợp ngôn ngữ nội dung (standard, hoặc analyzer riêng cho tiếng Việt/ngôn ngữ khác nếu cần xử lý dấu, từ ghép).
-- Custom analyzer (tokenizer + filter) nếu cần yêu cầu tìm kiếm đặc thù (synonym, ngram cho autocomplete) — tự thiết kế và áp dụng khi yêu cầu tìm kiếm đã rõ (VD: "hỗ trợ tìm gần đúng/autocomplete"), nêu ngắn gọn tradeoff độ phức tạp/hiệu năng index đã chấp nhận trong báo cáo thay vì hỏi trước.
+- Choose an analyzer that fits the content's language (standard, or a language-specific analyzer if diacritics/compound words need special handling).
+- Build a custom analyzer (tokenizer + filter) when a specific search requirement exists (synonyms, n-gram for autocomplete) — design and apply it once the search requirement is clear (e.g. "support fuzzy search/autocomplete"), stating the accepted complexity/indexing-performance trade-off briefly in the report rather than asking beforehand.
 
 ## Query DSL
-- Dùng đúng loại query theo nhu cầu: `match`/`multi_match` cho full-text, `term`/`terms` cho exact match, `bool` để kết hợp must/should/filter (ưu tiên `filter` cho điều kiện không cần tính relevance score — nhanh hơn vì được cache).
-- Tránh query kiểu wildcard/regex ở đầu chuỗi (`*abc`) — cực kỳ chậm, cân nhắc thiết kế lại mapping (n-gram) nếu cần kiểu tìm kiếm này thường xuyên.
+- Use the right query type for the need: `match`/`multi_match` for full-text, `term`/`terms` for exact match, `bool` to combine must/should/filter (prefer `filter` for conditions that don't need a relevance score — faster because it's cacheable).
+- Avoid leading-wildcard/regex queries (`*abc`) — extremely slow; consider redesigning the mapping (n-gram) if this kind of search is needed frequently.
 
 ## Aggregation
-- Phân biệt bucket aggregation (group by) và metric aggregation (sum/avg/min/max) — kết hợp đúng thứ tự lồng nhau theo nhu cầu phân tích.
-- Cân nhắc `cardinality` (approximate distinct count) thay vì đếm chính xác nếu dataset lớn và không cần độ chính xác tuyệt đối (đánh đổi tốc độ).
+- Distinguish bucket aggregations (group by) from metric aggregations (sum/avg/min/max) — nest them in the right order for the analysis needed.
+- Consider `cardinality` (approximate distinct count) instead of an exact count on large datasets when absolute precision isn't required (trades accuracy for speed).
 
 ## Reindex Strategy
-Khi cần đổi mapping (breaking change): tạo index mới, reindex dữ liệu cũ sang, chuyển alias sang index mới, xóa index cũ sau khi xác nhận ổn — KHÔNG sửa mapping trực tiếp trên index đang chạy (nhiều thay đổi mapping không cho phép sau khi tạo field).
+When a mapping change is needed (breaking change): create a new index, reindex the old data into it, switch the alias to the new index, delete the old index once confirmed stable — do NOT edit the mapping directly on a running index (many mapping changes aren't allowed once a field already exists).
 
-## Shard & Replica (ghi chú, tradeoff nếu ảnh hưởng lớn)
-Số shard quyết định lúc tạo index, khó đổi sau (phải reindex) — cân nhắc kỹ dựa trên dữ liệu dự kiến. Replica ảnh hưởng độ sẵn sàng và tốc độ đọc, không ảnh hưởng ghi.
+## Shard & Replica (note, and a trade-off discussion only if the impact is large)
+Shard count is fixed at index creation and hard to change later (requires a reindex) — weigh it carefully against expected data volume. Replica count affects availability and read speed, not write speed.
 
 ## Test
-Testcontainers Elasticsearch cho integration test — test mapping đúng kiểu dữ liệu mong đợi, test query trả kết quả đúng, test aggregation ra số liệu đúng.
+Testcontainers Elasticsearch for integration tests — test that mappings produce the expected data types, test that queries return correct results, test that aggregations produce correct figures.
 
-## Ranh giới
-Với index MỚI hoặc chưa có dữ liệu thật, tự thiết kế mapping/analyzer tốt nhất theo yêu cầu mà không cần hỏi. Không tự đổi mapping của index ĐANG CHẠY production có dữ liệu thật mà không có kế hoạch reindex — luôn trình bày kế hoạch migrate mapping, chờ user duyệt vì đây là thay đổi khó đảo ngược và có rủi ro downtime/mất khả năng đọc trong lúc reindex.
+## Boundary
+For a NEW index, or one with no real data yet, design the best mapping/analyzer for the requirement without asking back. Never change the mapping of an index ALREADY RUNNING in production with real data without a reindex plan — always present the migration plan and wait for user approval, since this is a hard-to-reverse change with real downtime/read-availability risk during reindex.
+
+## Knowledge Reference
+
+Explicit vs. dynamic mapping, `text` vs. `keyword` fields, analyzers and custom tokenizer/filter chains, Query DSL (`match`, `term`, `bool`, `filter` context), bucket vs. metric aggregations, alias-based reindex strategy, cluster health (green/yellow/red), shard/replica sizing.

@@ -1,54 +1,143 @@
 ---
 name: java-spring-skill
-description: Kiến thức chuyên sâu Java + Spring ecosystem (Spring Boot > 2.4, Java > 8) — Spring MVC/WebFlux, Spring Data, Spring Security, Resilience4j — kèm unit test (JUnit5, Mockito). KHÔNG bao gồm Kafka/RabbitMQ (xem kafka-skill/rabbitmq-skill riêng) hay thiết kế DB (xem database-skill). Dùng khi implement business logic Java thuần.
+description: In-depth Java + Spring ecosystem knowledge (Spring Boot 3.x, Java 21) — Spring MVC/WebFlux, Spring Data JPA, Spring Security 6 (JWT/OAuth2), Spring Cloud (Config/Eureka/Gateway)/Resilience4j, plus unit + integration testing (JUnit5, Mockito, Testcontainers). Does NOT cover Kafka/RabbitMQ (see `kafka-skill`/`rabbitmq-skill`), API contract design (see `api-contract-skill`), or DB schema design (see `database-skill`). Use when implementing Java/Spring business logic.
+metadata:
+  domain: java-backend
+  triggers: Java, Spring Boot, Spring MVC, Spring WebFlux, Spring Data JPA, Spring Security, Spring Cloud, Resilience4j, JUnit, Mockito, Java microservices, reactive Java
+  role: engineer
+  scope: implementation
+  output-format: code
+  related-skills: database-skill, kafka-skill, rabbitmq-skill, api-contract-skill, testcontainers-skill, code-review-skill
 ---
 
-# Java + Spring Ecosystem + Unit Test
+# Java + Spring Ecosystem
 
-## Discover trước khi code
+Implement Java/Spring business logic following the project's existing conventions, prioritizing data safety and maintainability over adopting a new pattern just because it's "more modern."
 
-Đọc `pom.xml`/`build.gradle`: version Java/Spring Boot chính xác, reactive (WebFlux) hay servlet (MVC), có Resilience4j/Spring Security không, framework test đang dùng (JUnit4 vs 5, có Mockito/AssertJ chưa). Đọc `CLAUDE.md`/convention. KHÔNG giả định nếu chưa thấy bằng chứng.
+## When to Use This Skill
 
-## Kiến trúc & layering
+- Implementing/modifying Java business logic with Spring Boot (MVC or WebFlux).
+- Designing the data-access layer (JPA), security (JWT/OAuth2), or cloud-native infrastructure (Config/Discovery/Gateway/Resilience4j) for a Java service.
+- Writing unit tests for logic just implemented (JUnit5 + Mockito).
 
-Giữ đúng layer convention hiện có (Controller → Service → Repository, hoặc hexagonal/onion nếu project đã dùng). Không tự đổi kiến trúc layering giữa chừng. Ưu tiên tách nghiệp vụ ra khỏi infrastructure (DB, HTTP client, message broker) để dễ test — nếu project đã có sẵn pattern này, dùng đúng convention hiện có, không cần hỏi. Nếu project chưa có, đánh giá việc tách ra có làm tăng độ phức tạp hoặc issue không.
+## Core Workflow
 
-Nếu không có nhu cầu đặc biệt, ưu tiên spring MVC thay vì WebFlux (reactive) — WebFlux chỉ dùng khi có I/O-bound cao, hoặc project đã dùng WebFlux từ đầu. Không tự đổi giữa MVC ↔ WebFlux giữa chừng nếu không được yêu cầu rõ ràng — đây là quyết định kiến trúc lớn ảnh hưởng toàn bộ service, khó đảo ngược nếu đã triển khai. Ưu tiên xử lý IO dưới dạng non-blocking nếu có thể.
+1. **Discover** — Read `pom.xml`/`build.gradle`: exact Java/Spring Boot version, reactive (WebFlux) or servlet (MVC), whether Resilience4j/Spring Security is present, the test framework in use (JUnit4 vs. 5, Mockito/AssertJ). Read `CLAUDE.md`/existing conventions. Do NOT assume anything without evidence.
+2. **Architecture & Layering** — Preserve the existing layer convention (Controller → Service → Repository, or hexagonal/onion if the project already uses one) — don't change architecture mid-task. Absent a specific need, prefer Spring MVC over WebFlux — WebFlux is only for high I/O-bound load or when the project already uses it from the start; switching MVC ↔ WebFlux is a major, hard-to-reverse architectural decision — never do it unprompted without an explicit request.
+3. **Implement** — Apply the correct pattern for the layer being worked on (see Reference Guide), while ensuring the three aspects below are addressed as the code is written, not fixed later in review:
+   - *Safety*: clear transaction boundaries (avoid self-invocation, which silently defeats the `@Transactional`/`@Async`/`@Cacheable` proxy), idempotency for endpoints that can be called twice, thread safety for stateful singleton beans, input validation at the boundary (`@Valid`).
+   - *Performance*: avoid N+1 (`@EntityGraph`/`JOIN FETCH`), batch processing for large volumes, connection-pool tuning (HikariCP) based on measured evidence — don't guess without data.
+   - *Scalability*: prefer stateless services for horizontal scaling; Resilience4j (circuit breaker/retry/bulkhead) for calls to dependent services if the project already has this convention, or add it for a specific call site that clearly needs it (state this in the report, no need to stop and wait for approval).
+4. **Test** — Write unit tests (JUnit5 + Mockito) for every Acceptance Criterion/edge case, mock every external dependency, test the exception path too. Run the tests for real (`mvn test`/`gradle test`) before reporting done; if they fail, fix within reasonable scope and re-run. For integration tests against real infrastructure (DB/broker) → coordinate with `testcontainers-skill`.
+5. **Handoff** — List every file created/modified clearly in the report, so the lead orchestrator (`feature-development`/`bug-fix`) can add it to the "Files Changed" list.
 
-## An toàn (safe)
+## Reference Guide
 
-- Transaction boundary rõ ràng (`@Transactional` đúng scope, tránh transactional method gọi lẫn nhau trong cùng class gây mất hiệu lực proxy).
-- Idempotency ở nơi có thể gọi trùng (retry từ client, timeout rồi gọi lại).
-- Thread-safety cho bean singleton có state (tránh mutable state không đồng bộ hóa).
-- Validate input ở boundary (Bean Validation `@Valid`), không tin dữ liệu đầu vào.
+Load detail based on the context currently being coded:
 
-## Hiệu năng (performance)
+| Topic | Reference | Load When |
+|-------|-----------|-----------|
+| Project setup | `references/project-setup.md` | Setting up a new project, structure, `pom.xml`, `application.yml` |
+| Web layer | `references/web-layer.md` | Controller, DTO, validation, exception handling (ProblemDetail) |
+| Data JPA | `references/data-jpa.md` | Entity, repository, N+1, transactions, Specification, migration |
+| Reactive WebFlux | `references/reactive-webflux.md` | Reactive Controller/Service, R2DBC, Reactor operators |
+| Security | `references/security.md` | JWT, method security, OAuth2 resource server |
+| Cloud & Resilience | `references/cloud-resilience.md` | Spring Cloud Config/Eureka/Gateway, Resilience4j, Actuator |
+| Testing | `references/testing.md` | Unit/slice/integration test patterns |
 
-- Tránh N+1 (dùng `@EntityGraph`/`JOIN FETCH` nếu dùng JPA — chi tiết index/DB xem `database-skill`).
-- Batch xử lý khi khối lượng lớn, tránh load toàn bộ dataset vào memory.
-- Connection pool tuning (HikariCP): tự đề xuất và áp dụng giá trị hợp lý dựa trên bằng chứng đo được (query log, số connection đang dùng) — không đoán mò khi chưa có số liệu; nếu chưa đo được, giữ nguyên config hiện tại và nêu rõ cần đo trước khi đổi.
+## Constraints
 
-## Khả năng scale
+### MUST DO
+- Read `pom.xml`/`build.gradle` + existing conventions before coding — never assume the version/framework.
+- Constructor injection (`public MyService(Dep dep) { this.dep = dep; }`), never field injection.
+- Validate input on every mutating endpoint (`@Valid @RequestBody`).
+- Clear, correctly-scoped transaction boundaries (`@Transactional(readOnly = true)` for reads, a write transaction only for writes).
+- Externalize config/secrets via environment variables — never hardcoded in `application.properties`/`application.yml`.
+- Run the tests for real before reporting done.
 
-- Ưu tiên tránh depend vào framework nếu có thể, nếu không có thể tránh phụ thuộc vào các detail infrastructure (DB, HTTP client, message broker) để tránh phụ thuộc vào dependency cụ thể, dễ thay thế/scale sau này.
-- Ưu tiên stateless service để scale ngang.
-- Resilience4j: tự áp dụng circuit breaker/retry/bulkhead/rate-limiter cho lời gọi phụ thuộc dịch vụ khác nếu project đã có sẵn pattern này (dùng đúng convention hiện có, không cần hỏi). Nếu project CHƯA có dependency này, tự thêm là hợp lý cho 1 call site cụ thể đang cần — chỉ nêu rõ trong báo cáo là đã thêm dependency mới, không cần dừng lại chờ duyệt trước.
-- Cân nhắc reactive (WebFlux) cho I/O-bound cao, nhưng KHÔNG tự chuyển từ MVC sang WebFlux giữa chừng nếu không được yêu cầu rõ ràng — đây là quyết định kiến trúc lớn ảnh hưởng toàn bộ service (đổi runtime model, học lại cho team), khó đảo ngược nếu đã lỡ triển khai — luôn trình bày tradeoff và chờ user duyệt trước khi đổi.
+### MUST NOT DO
+- Field injection (`@Autowired` on a field).
+- Calling `.block()` inside a reactive chain (mixing blocking code into WebFlux).
+- Switching MVC ↔ WebFlux, or adding a new runtime framework, mid-task without an explicit request.
+- Using deprecated Spring Boot 2.x APIs (e.g. `WebSecurityConfigurerAdapter`).
+- Skipping the exception path when writing tests — testing only the happy path.
 
-## Issue thường gặp trong thực tế
+## Common Real-World Issues
 
-- **Self-invocation làm mất hiệu lực proxy AOP**: gọi method có `@Transactional`/`@Async`/`@Cacheable` từ 1 method KHÁC trong CÙNG class (`this.methodX()`) bỏ qua proxy Spring hoàn toàn — annotation bị lờ đi âm thầm, không có lỗi/warning rõ ràng. Tách method đó sang bean khác nếu cần annotation có hiệu lực.
-- **Bean singleton có mutable state không đồng bộ hóa**: field instance trên 1 `@Service` (mặc định singleton scope) bị nhiều request cùng lúc ghi/đọc gây race condition — service phải stateless (không field mutable theo request) hoặc đồng bộ hóa đúng nếu bắt buộc có state.
-- **ThreadLocal không được clear**: dùng ThreadLocal lưu context theo request (userId, tenant...) mà không `remove()` sau khi xong — thread trong pool được tái sử dụng cho request khác vẫn còn giá trị cũ, gây rò rỉ dữ liệu giữa các request (nghiêm trọng nếu là thông tin phân quyền/tenant).
+- **Self-invocation defeats the AOP proxy**: calling a method annotated `@Transactional`/`@Async`/`@Cacheable` from ANOTHER method in the SAME class (`this.methodX()`) bypasses the Spring proxy entirely — the annotation is silently ignored, with no clear error or warning. Move that method to a different bean if the annotation must take effect.
+- **Singleton bean with unsynchronized mutable state**: an instance field on a `@Service` (singleton scope by default) read/written by multiple concurrent requests causes a race condition — the service must be stateless, or properly synchronized if state is unavoidable.
+- **ThreadLocal never cleared**: using a ThreadLocal to hold per-request context (userId, tenant, etc.) without calling `remove()` afterward — a thread reused from the pool for a different request still carries the old value, leaking data across requests (severe if it's authorization/tenant information).
 
-## Unit Test (JUnit5 + Mockito)
+## Templates
 
-1. Cover từng Acceptance Criteria/Edge Case ở mức business logic thuần túy.
-2. Mock mọi dependency ngoài (DB, HTTP client, message broker) — unit test không chạm I/O thật (integration test là phạm vi khác, phối hợp với `database-skill`/`kafka-skill`/`rabbitmq-skill` khi cần Testcontainers).
-3. Test cả exception path, không chỉ happy path — đặc biệt validate input sai, dependency trả lỗi/timeout.
-4. Assertion rõ ràng (AssertJ ưu tiên hơn assert thô nếu project đã dùng), tên test method mô tả rõ hành vi đang test (`should_X_when_Y`).
-5. Chạy test thật (`mvn test`/`gradle test`), không chỉ viết xong là báo hoàn thành. Fail thì tự sửa trong phạm vi hợp lý rồi chạy lại.
+### Quick Start — One Complete Slice (copy-paste starter)
 
-## Ranh giới
+```java
+@Entity
+public class Product {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @NotBlank private String name;
+    @DecimalMin("0.0") private BigDecimal price;
+}
 
-Tự quyết định các lựa chọn kỹ thuật cục bộ trong phạm vi task (cấu trúc method, exception type, tên biến, cách chia nhỏ logic) mà không cần hỏi — đây là công việc thường ngày của skill này. Chỉ dừng lại trình bày tradeoff và chờ user duyệt cho quyết định kiến trúc LỚN, ảnh hưởng toàn service và khó đảo ngược (đổi MVC↔WebFlux, thêm framework runtime mới). Messaging (Kafka/RabbitMQ) → skill riêng. Thiết kế DB/schema → `database-skill`. Contract API → `api-contract-skill`. Review cuối → `code-review-skill`.
+public interface ProductRepository extends JpaRepository<Product, Long> {
+    List<Product> findByNameContainingIgnoreCase(String name);
+}
+
+@Service
+public class ProductService {
+    private final ProductRepository repo;
+    public ProductService(ProductRepository repo) { this.repo = repo; } // constructor injection
+
+    @Transactional(readOnly = true)
+    public List<Product> search(String name) { return repo.findByNameContainingIgnoreCase(name); }
+
+    @Transactional
+    public Product create(ProductRequest request) {
+        var product = new Product();
+        product.setName(request.name());
+        product.setPrice(request.price());
+        return repo.save(product);
+    }
+}
+
+public record ProductRequest(@NotBlank String name, @DecimalMin("0.0") BigDecimal price) {}
+
+@RestController
+@RequestMapping("/api/v1/products")
+@Validated
+public class ProductController {
+    private final ProductService service;
+    public ProductController(ProductService service) { this.service = service; }
+
+    @GetMapping
+    public List<Product> search(@RequestParam(defaultValue = "") String name) { return service.search(name); }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public Product create(@Valid @RequestBody ProductRequest request) { return service.create(request); }
+}
+```
+
+See `references/web-layer.md` for exception handling (`ProblemDetail`) and `references/data-jpa.md` for more advanced N+1-avoidance/transaction patterns.
+
+## Boundary
+
+This skill decides the Java/Spring implementation: business logic, transaction boundaries, internal
+layering, data-access patterns, security/resilience configuration. It does NOT decide the API contract's
+shape (that's `api-contract-skill`, which runs BEFORE implementation), does NOT design the DB schema
+(that's `database-skill`), and does NOT decide messaging infrastructure detail (that's
+`kafka-skill`/`rabbitmq-skill`).
+
+Decide local technical choices within the task's scope (method structure, exception types, variable
+names, how to break down logic) without asking — this is this skill's routine, everyday work. Only stop
+to present trade-offs and wait for user approval on a LARGE architectural decision affecting the whole
+service and hard to reverse (switching MVC ↔ WebFlux, adding a new runtime framework, changing the
+service-discovery/gateway strategy).
+
+## Knowledge Reference
+
+Spring Boot 3.x, Java 21, Spring MVC/WebFlux, Project Reactor, R2DBC, Spring Data JPA, Spring Security 6,
+OAuth2/JWT, Spring Cloud (Config/Eureka/Gateway), Resilience4j, Micrometer, Hibernate, JUnit 5, Mockito,
+AssertJ, Testcontainers, Maven/Gradle.

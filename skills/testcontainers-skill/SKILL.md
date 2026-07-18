@@ -1,45 +1,49 @@
 ---
 name: testcontainers-skill
-description: Kiến thức chuyên sâu setup/chạy Testcontainers cho integration test — dependency, lifecycle container (singleton pattern, reuse, cleanup), wait strategy, network giữa nhiều container, tích hợp CI. KHÔNG bao gồm kịch bản test nghiệp vụ theo từng hạ tầng (xem database-skill/kafka-skill/rabbitmq-skill/redis-skill/elasticsearch-skill). Dùng khi cần dựng hạ tầng thật (container) cho integration test thay vì mock.
+description: In-depth Testcontainers setup/operation knowledge for integration tests — dependencies, container lifecycle (singleton pattern, reuse, cleanup), wait strategies, multi-container networking, CI integration. Does NOT cover infrastructure-specific test scenarios (see `database-skill`/`kafka-skill`/`rabbitmq-skill`/`redis-skill`/`elasticsearch-skill`). Use when an integration test needs real infrastructure via containers instead of a mock.
 ---
 
-# Testcontainers — Setup & Chạy Container cho Integration Test
+# Testcontainers — Container Setup & Execution for Integration Tests
 
-## Discover trước khi setup
-Đọc `pom.xml`/`build.gradle` (hoặc `package.json` nếu dùng binding Node) xem đã có dependency Testcontainers chưa, module nào đã dùng (postgresql/mysql/kafka/rabbitmq/elasticsearch/...). Xác nhận Docker daemon đang chạy trên máy/CI (`docker info`). Đọc config test hiện có (`application-test.yml`, `docker-compose.test.yml` nếu có) trước khi thêm mới — không tạo trùng cơ chế đã tồn tại.
+## Discover Before Setting Up
+Read `pom.xml`/`build.gradle` (or `package.json` if using the Node binding) to check whether a Testcontainers dependency already exists, and which modules are already used (postgresql/kafka/rabbitmq/elasticsearch/...). Confirm the Docker daemon is running on the machine/CI (`docker info`). Read any existing test config (`application-test.yml`, `docker-compose.test.yml` if present) before adding anything new — don't create a duplicate mechanism for something that already exists.
 
-## Khi nào dùng Testcontainers / KHÔNG dùng
-Dùng khi integration test cần hành vi **thật** của hạ tầng (SQL dialect thật, Kafka delivery semantic thật, TTL Redis thật...) mà mock/in-memory (H2, embedded Kafka) không tái hiện đúng — đặc biệt khi trước đó dự án từng gặp lỗi do khác biệt giữa mock và prod. KHÔNG dùng cho unit test thuần business logic (mock dependency theo `java-spring-skill`) — Testcontainers chỉ ở tầng integration test, chạy chậm hơn nên không nên lạm dụng cho mọi test case.
+## When to Use Testcontainers / When Not To
+Use it when an integration test needs the infrastructure's **real** behavior (real SQL dialect, real Kafka delivery semantics, real Redis TTL, etc.) that a mock/in-memory substitute (H2, embedded Kafka) can't faithfully reproduce — especially if the project has previously hit bugs caused by a mock/prod behavior gap. Do NOT use it for pure business-logic unit tests (mock the dependency per the relevant language/framework skill) — Testcontainers belongs strictly at the integration-test layer; it's slower, so don't overuse it for every test case.
 
-## Setup cơ bản (JVM/JUnit5)
-1. Thêm `testcontainers-bom` + module tương ứng (`postgresql`, `kafka`, `rabbitmq`, `elasticsearch`...) — tự chọn version mới nhất tương thích với version dependency test khác đã có trong project (không cần hỏi, đây chỉ là dependency phạm vi test). Chỉ hỏi lại nếu version mới yêu cầu nâng version công cụ build/JDK vượt ra ngoài phạm vi task.
-2. Dùng `@Testcontainers` + `@Container` (JUnit5 extension) thay vì tự quản lý lifecycle thủ công bằng `start()`/`stop()` rải rác — extension tự đảm bảo cleanup kể cả khi test fail.
-3. Pin version image cụ thể (VD: `postgres:15.4`), KHÔNG dùng tag `latest` — tránh test flaky/không tái lập được khi image đổi hành vi giữa các lần chạy.
+## Basic Setup (JVM/JUnit5)
+1. Add the `testcontainers-bom` + the matching module (`postgresql`, `kafka`, `rabbitmq`, `elasticsearch`, etc.) — pick the latest version compatible with the other test dependencies already in the project (no need to ask, this is a test-scope-only dependency). Only ask back if the new version forces a build-tool/JDK version bump outside the task's scope.
+2. Use `@Testcontainers` + `@Container` (the JUnit5 extension) instead of manually managing lifecycle with scattered `start()`/`stop()` calls — the extension guarantees cleanup even when a test fails.
+3. Pin a specific image version (e.g. `postgres:15.4`); do NOT use the `latest` tag — avoids flaky, non-reproducible tests when the image's behavior changes between runs.
 
-## Lifecycle & Hiệu năng — vấn đề thường gặp nhất
-- **Container khởi động lại cho mỗi test class** là nguyên nhân hàng đầu khiến test suite chậm (mỗi container mất vài giây tới chục giây để healthy). Ưu tiên **singleton container pattern**: 1 container static dùng chung cho toàn bộ test suite (base test class hoặc JUnit5 extension riêng), start 1 lần, không `stop()` giữa các test class — để Ryuk (xem dưới) dọn khi JVM test kết thúc.
-- **Container reuse giữa các lần chạy test cục bộ** (không phải CI): bật `testcontainers.reuse.enable=true` trong `~/.testcontainers.properties` và gọi `.withReuse(true)` khi cần lặp lại chạy test nhanh trong lúc dev — KHÔNG bật reuse mặc định trong CI vì container có thể mang state cũ giữa các build.
-- **Ryuk (resource reaper)**: Testcontainers tự chạy container Ryuk để dọn container/network/volume mồ côi khi JVM test process chết đột ngột — không tắt Ryuk (`TESTCONTAINERS_RYUK_DISABLED=true`) trừ khi CI runner không cho phép container quản lý container khác (privileged), vì tắt Ryuk dễ để lại container rác tích lũy trên máy CI.
+## Lifecycle & Performance — the Most Common Issue
+- **Restarting a container for every test class** is the leading cause of a slow test suite (each container takes several seconds to tens of seconds to become healthy). Prefer the **singleton container pattern**: one static container shared across the whole test suite (a base test class or a dedicated JUnit5 extension), started once, never `stop()`-ed between test classes — let Ryuk (below) clean it up when the test JVM exits.
+- **Container reuse across local test runs** (not CI): enable `testcontainers.reuse.enable=true` in `~/.testcontainers.properties` and call `.withReuse(true)` for fast repeated local runs during development — do NOT enable reuse by default in CI, since a reused container can carry stale state across builds.
+- **Ryuk (the resource reaper)**: Testcontainers automatically runs a Ryuk container to clean up orphaned containers/networks/volumes if the test JVM process dies unexpectedly — don't disable Ryuk (`TESTCONTAINERS_RYUK_DISABLED=true`) unless the CI runner doesn't allow container-managing-container (privileged) access, since disabling it tends to leave orphaned containers accumulating on the CI machine.
 
-## Wait Strategy — tránh test flaky do container "chưa sẵn sàng"
-Container ở trạng thái "running" không đồng nghĩa service bên trong đã sẵn sàng nhận kết nối — luôn khai báo wait strategy đúng thay vì dựa vào delay cố định (`Thread.sleep`):
-- `Wait.forListeningPort()` cho service chỉ cần mở port (yếu, dễ false positive nếu app mở port trước khi thực sự init xong).
-- `Wait.forLogMessage(...)` khớp log dòng báo hiệu đã sẵn sàng (VD: "database system is ready to accept connections") — chính xác hơn `forListeningPort`.
-- `Wait.forHealthcheck()` nếu image có healthcheck sẵn trong Dockerfile.
-- Tăng `startupTimeout` khi chạy trên CI runner yếu/chậm hơn máy dev, tránh timeout giả do máy chậm chứ không phải container lỗi thật.
+## Wait Strategy — Avoiding Flaky "Container Not Ready Yet" Failures
+A container in the "running" state doesn't mean the service inside it is ready to accept connections — always declare a proper wait strategy instead of relying on a fixed delay (`Thread.sleep`):
+- `Wait.forListeningPort()` for a service that just needs its port open (weak — prone to false positives if the app opens the port before it's actually finished initializing).
+- `Wait.forLogMessage(...)` matching a log line that signals readiness (e.g. "database system is ready to accept connections") — more accurate than `forListeningPort`.
+- `Wait.forHealthcheck()` if the image already has a healthcheck defined in its Dockerfile.
+- Increase `startupTimeout` when running on a CI runner that's weaker/slower than the dev machine, to avoid a false timeout caused by a slow machine rather than a genuinely broken container.
 
-## Network giữa nhiều container
-Khi test cần nhiều container giao tiếp với nhau (VD: app container gọi Kafka + Zookeeper, hoặc service A gọi service B) — dùng chung `Network.newNetwork()` và đặt `.withNetworkAliases(...)` cho từng container, KHÔNG dùng `localhost`/port map từ container này sang container khác (chỉ host test JVM mới thấy được port map ra ngoài qua `getMappedPort()`).
+## Networking Between Multiple Containers
+When a test needs multiple containers to talk to each other (e.g. an app container calling Kafka + Zookeeper, or service A calling service B) — share a `Network.newNetwork()` and set `.withNetworkAliases(...)` on each container; do NOT use `localhost` or a mapped port from one container to reach another (only the host test JVM can see the externally mapped port via `getMappedPort()`).
 
-## Tích hợp CI
-- CI runner cần Docker daemon khả dụng (Docker-in-Docker, hoặc mount `/var/run/docker.sock`). Đây là thay đổi cấu hình CI dùng chung, ảnh hưởng mọi job/pipeline khác chạy trên cùng runner — không tự ý đổi mà không báo; đề xuất cách cấu hình cụ thể kèm lý do rồi chờ user (hoặc người quản lý CI) xác nhận trước khi áp dụng.
-- Kiểm tra resource limit CI (RAM/CPU) đủ cho số container chạy song song — nhiều Testcontainers module cùng lúc (Postgres + Kafka + Elasticsearch...) trên runner nhỏ dễ timeout do đói tài nguyên chứ không phải lỗi code.
-- Nếu CI chạy test song song nhiều job, kiểm tra port conflict — Testcontainers tự map random port ra host nên thường không xung đột, nhưng nếu project tự pin port cố định thì cần rà lại.
+## CI Integration
+- The CI runner needs the Docker daemon available (Docker-in-Docker, or mounting `/var/run/docker.sock`). This is a shared CI configuration change affecting every other job/pipeline on the same runner — don't change it without flagging it; propose the specific configuration with reasoning and wait for confirmation from the user (or whoever owns CI) before applying it.
+- Check CI resource limits (RAM/CPU) are sufficient for however many containers run in parallel — several Testcontainers modules at once (Postgres + Kafka + Elasticsearch, etc.) on a small runner easily times out from resource starvation, not a code bug.
+- If CI runs multiple test jobs in parallel, check for port conflicts — Testcontainers maps to a random host port by default so conflicts are rare, but if the project pins a fixed port, double-check it.
 
-## Issue thường gặp trong thực tế
-- **Test pass local, fail CI**: thường do wait strategy yếu (`forListeningPort`) hoặc `startupTimeout` mặc định quá ngắn so với runner CI chậm hơn máy dev.
-- **Container rác tích lũy trên máy CI/dev**: do tắt Ryuk hoặc `kill -9` process test giữa chừng khiến cleanup không kịp chạy — dọn định kỳ bằng `docker system prune` nếu phát hiện, không phải lỗi code cần fix.
-- **Image pull chậm/timeout lần đầu trên CI**: cân nhắc pre-pull image trong bước cache riêng của pipeline CI nếu ảnh hưởng đáng kể thời gian build.
+## Common Real-World Issues
+- **Passes locally, fails in CI**: usually a weak wait strategy (`forListeningPort`) or a default `startupTimeout` too short for a CI runner slower than the dev machine.
+- **Orphaned containers accumulating on CI/dev machines**: caused by disabling Ryuk, or `kill -9`-ing the test process mid-run so cleanup never finishes — clean up periodically with `docker system prune` if noticed; not a code bug to fix.
+- **Slow/timing-out image pull on first CI run**: consider pre-pulling the image in a dedicated cache step of the CI pipeline if this noticeably affects build time.
 
-## Ranh giới
-Skill này chỉ lo **cơ chế setup/chạy container** (dependency, lifecycle, wait strategy, network, CI). Kịch bản test cụ thể theo từng hạ tầng (test đúng SQL dialect gì, test delivery semantic Kafka nào, test TTL Redis ra sao, test mapping Elasticsearch gì) → phối hợp với skill tương ứng: `database-skill`, `kafka-skill`, `rabbitmq-skill`, `redis-skill`, `elasticsearch-skill`. Unit test thuần (mock, không container) → `java-spring-skill`.
+## Boundary
+This skill only covers **the mechanics of setting up/running containers** (dependencies, lifecycle, wait strategy, networking, CI). The actual test scenarios per infrastructure type (which SQL dialect to test, which Kafka delivery semantics, how to test Redis TTL, what Elasticsearch mapping to test) → coordinate with the matching skill: `database-skill`, `kafka-skill`, `rabbitmq-skill`, `redis-skill`, `elasticsearch-skill`. Pure unit tests (mocked, no container) → the relevant language/framework skill (e.g. `java-spring-skill`).
+
+## Knowledge Reference
+
+Singleton container pattern, `@Testcontainers`/`@Container` (JUnit5), container reuse (`testcontainers.reuse.enable`), Ryuk resource reaper, wait strategies (`forListeningPort`, `forLogMessage`, `forHealthcheck`), multi-container networking (`Network.newNetwork()`, network aliases), CI Docker-in-Docker integration, image version pinning.

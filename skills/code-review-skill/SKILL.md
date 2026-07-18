@@ -1,46 +1,52 @@
 ---
 name: code-review-skill
-description: Checklist review code khách quan trước khi báo hoàn thành — convention chung, clean-code, checklist riêng theo công nghệ đã dùng. Đây là bước TỰ KIỂM Claude LUÔN chủ động chạy ở bước cuối trước khi báo hoàn thành với mọi thay đổi có code — không cần user yêu cầu riêng. KHÔNG dùng khi user chủ động yêu cầu review diff/PR ("review this", "/code-review") — dùng skill `code-review`/`review` built-in cho trường hợp đó.
+description: Objective code-review checklist to run before reporting work complete — general conventions, clean-code, plus a per-technology checklist for whatever was actually used. This is the SELF-CHECK step Claude ALWAYS proactively runs as the last step before reporting done on any change involving code — no separate user request needed. Do NOT use this when the user actively requests a diff/PR review ("review this", "/code-review") — use the built-in `code-review`/`review` skill for that case.
 ---
 
 # Code Review Checklist
 
 ## Discover
 
-Đọc `CLAUDE.md`/convention hiện có. Xác định công nghệ THỰC SỰ liên quan tới thay đổi vừa làm (không cần áp toàn bộ checklist bên dưới nếu không liên quan) qua bằng chứng cụ thể trong file đã đổi.
+Read `CLAUDE.md`/existing conventions. Determine which technologies are ACTUALLY relevant to the change just made (no need to apply the full checklist below for anything unrelated) based on concrete evidence in the changed files.
 
-## Checklist chung (mọi thay đổi)
+## General Checklist (every change)
 
-- Đặt tên rõ ràng, nhất quán convention.
-- Không trùng lặp lớn (DRY), không hàm/class ôm quá nhiều trách nhiệm.
-- Không hardcode secret/credential/API key.
-- Exception xử lý rõ ràng, không nuốt lỗi im lặng.
-- Comment cần thiết cho logic phức tạp, không comment thừa.
+- Clear naming, consistent with convention.
+- No significant duplication (DRY), no function/class carrying too many responsibilities.
+- No hardcoded secret/credential/API key.
+- Exceptions handled explicitly, no silently swallowed errors.
+- Comments where genuinely needed for complex logic, no redundant comments.
 
-## Checklist riêng theo công nghệ (chỉ áp dụng phần liên quan tới thay đổi)
+## Per-Technology Checklist (only apply the part relevant to the change)
 
-**Java/Spring**: transaction boundary đúng, không N+1, exception handling theo convention, đặt log tại trước/sau critical session để dễ dàng tracing, debug, tránh các issue liên quan về self invoke của aop, ưu tiên dùng abstraction của framework thay vì tight-coupling vào các specific dependencies, các configuration phải được cấu hình để dễ thay đổi thay vì hardcode, tránh magic code.
+**Java/Spring**: correct transaction boundaries, no N+1, exception handling follows convention, logging placed before/after critical sections for easier tracing/debugging, AOP self-invocation pitfalls avoided, framework abstractions preferred over tight coupling to specific dependencies, configuration externalized instead of hardcoded, no magic values.
 
-**Kafka**: idempotency ở consumer cho các consumer quan trọng, delivery semantic đúng như đã thiết kế, dead-letter có cấu hình nếu cần, partition key hợp lý.
+**Kafka**: consumer idempotency for important consumers, delivery semantics match what was designed, dead-letter configured if needed, sensible partition key.
 
-**RabbitMQ**: ack/nack xử lý đúng, DLX cấu hình nếu cần, prefetch hợp lý, không giữ connection/channel quá lâu không cần thiết.
+**RabbitMQ**: ack/nack handled correctly, DLX configured if needed, sensible prefetch, no connection/channel held open longer than necessary.
 
-**Redis**: TTL có đặt cho cache (không cache vô thời hạn vô tình), lock có TTL (tránh deadlock vĩnh viễn), lock giải phóng đúng chủ sở hữu.
+**Redis**: TTL set for cache entries (no accidental indefinite caching), lock has a TTL (avoids permanent deadlock), lock released only by its owner.
 
-**Elasticsearch**: mapping field đúng kiểu (text vs keyword), không dùng wildcard đầu chuỗi trong query thường xuyên, không sửa mapping trực tiếp trên index production.
+**Elasticsearch**: field mapping uses the correct type (text vs. keyword), no frequent leading-wildcard queries, no direct mapping edits on a production index.
 
-**Database (RDBMS/Mongo)**: index đúng cột dùng filter/join/sort, isolation level phù hợp nghiệp vụ, migration backward-compatible, không có deadlock tiềm ẩn (lock theo thứ tự nhất quán).
+**Database (RDBMS/Mongo)**: index on the correct filter/join/sort columns, isolation level fits the business need, migration is backward-compatible, no latent deadlock risk (locks acquired in a consistent order).
 
-**Google Pub/Sub**: ack deadline đủ cho thời gian xử lý thực tế, idempotency ở subscriber, dead-letter topic cấu hình nếu cần.
+**Google Pub/Sub**: ack deadline sufficient for actual processing time, subscriber idempotency, dead-letter topic configured if needed.
 
-**API Contract (REST/RPC/Message)**: response/message khớp đúng contract đã chốt (`api-contract-skill`), không có breaking change âm thầm với schema/proto field.
+**API Contract (REST/RPC/Message)**: response/message matches the finalized contract (`api-contract-skill`), no silent breaking change to a schema/proto field.
 
-**Tauri/React**: path handling đúng API (không path traversal), capabilities least-privilege khai báo đủ cho command đang dùng, plugin chuẩn cho dialog, `#[cfg(target_os)]` đủ 3 OS, command Rust không panic (trả `Result`), listener event được cleanup khi unmount, React đủ loading/error/empty state.
+**Tauri/React**: correct path-handling API (no path traversal), capabilities declared least-privilege for the commands actually used, standard plugin used for dialogs, `#[cfg(target_os)]` covers all 3 OSes, Rust commands never panic (return `Result`), event listeners cleaned up on unmount, React has loading/error/empty states covered.
 
-**Data/Storage local (Tauri offline)**: migration SQLite chạy được lúc app khởi động và có fallback nếu fail (không làm app không mở được), TTL/schema key-value nhất quán, không lưu blob lớn vào SQLite nếu `tauri-plugin-fs` phù hợp hơn.
+**Local Data/Storage (Tauri offline)**: SQLite migrations run successfully at app startup with a fallback if they fail (never leaves the app unable to open), key-value TTL/schema stays consistent, no large blobs stored in SQLite when `tauri-plugin-fs` would fit better.
 
-**UI/UX**: nhất quán với design system hiện có, có xử lý trạng thái lỗi/loading rõ ràng cho user, đủ accessibility cơ bản (label, contrast, điều hướng bàn phím).
+**UI/UX**: consistent with the existing design system, clear error/loading state handling for the user, basic accessibility covered (labels, contrast, keyboard navigation).
 
-## Lưu ý về tính khách quan
+## A Note on Objectivity
 
-Nếu đây là tự-review (cùng agent vừa viết code), độ khách quan thấp hơn có 1 phiên/agent riêng biệt review. Issue nghiêm trọng (severity cao) PHẢI sửa trước khi báo hoàn thành, không bỏ qua chỉ vì "đây chỉ là tự-review". Muốn khách quan hơn, đề xuất user mở 1 phiên Claude Code mới (không chia sẻ context) để review độc lập.
+If this is a self-review (the same agent that just wrote the code), it's inherently less objective than a separate session/agent reviewing it. A severe issue MUST be fixed before reporting done — never skip it just because "this is only a self-review." For more objectivity, suggest the user open a new Claude Code session (no shared context) for an independent review.
+
+## Knowledge Reference
+
+DRY, single responsibility, silent error swallowing, self-review objectivity limits, per-technology
+review checklists (transaction boundaries, delivery semantics, cache TTL, index correctness, contract
+conformance, capability least-privilege).

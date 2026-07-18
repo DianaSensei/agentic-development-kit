@@ -1,49 +1,53 @@
 ---
 name: rabbitmq-skill
-description: Kiến thức chuyên sâu RabbitMQ — exchange type, routing, queue durability, dead-letter exchange, prefetch, quorum queue, priority queue. Dùng khi feature cần RabbitMQ (đã dùng `spring-boot-starter-amqp` hoặc user nêu rõ "RabbitMQ"). Nếu yêu cầu chỉ nói chung "xử lý bất đồng bộ" mà chưa rõ công nghệ, kiểm tra dependency trước — không mặc định RabbitMQ; throughput cao/replay xem `kafka-skill`, GCP xem `pubsub-skill`.
+description: In-depth RabbitMQ knowledge — exchange types, routing, queue durability, dead-letter exchange, prefetch, quorum queues, priority queues. Use when the feature needs RabbitMQ (project already depends on `spring-boot-starter-amqp` or the user names RabbitMQ explicitly). If the request only says "async processing" with no technology named, check the actual dependency first — don't default to RabbitMQ; for high throughput/replay see `kafka-skill`, for GCP see `pubsub-skill`.
 ---
 
 # RabbitMQ
 
 ## Discover
-Xác nhận project đã dùng RabbitMQ qua dependency (`spring-boot-starter-amqp`), đọc exchange/queue config hiện có, đọc `api-contract-skill` nếu đã có message contract chốt trước — dùng đúng theo đó.
+Confirm the project already uses RabbitMQ via its dependency (`spring-boot-starter-amqp`), read the existing exchange/queue config, and read `api-contract-skill` if a message contract was already finalized there — follow it exactly.
 
-## Khi nào phù hợp / KHÔNG phù hợp
-Phù hợp: task queue kinh điển, cần routing linh hoạt theo nội dung (topic/header exchange), cần per-message ack/priority/TTL tinh vi, throughput vừa phải. KHÔNG phù hợp nếu cần replay lịch sử message — RabbitMQ xóa message khỏi queue ngay khi consumer ack (không phải log bất biến như Kafka), nếu nghiệp vụ cần "đọc lại từ đầu" hoặc nhiều consumer group độc lập cùng xem toàn bộ dòng sự kiện, cân nhắc `kafka-skill` thay vì cố ép RabbitMQ.
+## When It Fits / When It Doesn't
+Fits: classic task queues, flexible content-based routing (topic/header exchange), fine-grained per-message ack/priority/TTL, moderate throughput. Does NOT fit if history replay is needed — RabbitMQ deletes a message from the queue as soon as a consumer acks it (it's not an immutable log like Kafka); if the business need is "replay from the start" or multiple independent consumer groups each seeing the full event stream, consider `kafka-skill` instead of forcing RabbitMQ into that role.
 
-## Issue thường gặp trong thực tế
-- **Queue phình vô hạn**: consumer chậm/down lâu mà không giới hạn queue → tăng bộ nhớ broker không kiểm soát — cấu hình `x-max-length`/`x-max-length-bytes` hoặc TTL message để tránh out-of-memory broker khi consumer gặp sự cố.
-- **Memory/disk alarm**: khi broker đạt ngưỡng cấu hình (`vm_memory_high_watermark`), RabbitMQ tự động BLOCK publisher (không nhận message mới) cho tới khi giải phóng đủ — cần alerting theo dõi mức dùng bộ nhớ/đĩa TRƯỚC khi chạm ngưỡng, không phải sau khi publisher đã bị chặn.
-- **Unacked message tồn đọng**: consumer nhận message nhưng crash trước khi ack/nack — message ở trạng thái "unacked" cho tới khi connection đóng (timeout hoặc consumer restart) mới được requeue lại, có thể trông như "message bị treo" nếu không hiểu cơ chế này.
-- Không có đảm bảo thứ tự toàn cục — chỉ đảm bảo thứ tự trong phạm vi 1 queue với 1 consumer duy nhất; nhiều consumer cùng queue (round-robin) làm mất thứ tự xử lý.
+## Common Real-World Issues
+- **Unbounded queue growth**: a slow or long-down consumer with no queue limit → uncontrolled broker memory growth — configure `x-max-length`/`x-max-length-bytes` or a message TTL to prevent the broker running out of memory when a consumer has an outage.
+- **Memory/disk alarm**: once the broker hits its configured threshold (`vm_memory_high_watermark`), RabbitMQ automatically BLOCKS publishers (rejects new messages) until enough memory is freed — alert on memory/disk usage BEFORE hitting the threshold, not after publishers are already blocked.
+- **Backlog of unacked messages**: a consumer receives a message but crashes before ack/nack — the message stays "unacked" until the connection closes (timeout or consumer restart) and only then gets requeued, which can look like a "stuck message" if this mechanism isn't understood.
+- No global ordering guarantee — ordering is only guaranteed within a single queue with a single consumer; multiple consumers on the same queue (round-robin) lose processing order.
 
-## Exchange Type
-- **Direct**: routing 1-1 rõ ràng theo routing key chính xác.
-- **Topic**: routing theo pattern (`order.*.created`) — dùng khi nhiều consumer quan tâm các phần khác nhau của cùng loại event.
-- **Fanout**: broadcast tới mọi queue bind vào exchange, không quan tâm routing key.
-- **Headers**: routing theo header thay vì routing key — ít dùng, chỉ khi thực sự cần.
+## Exchange Types
+- **Direct**: clear 1:1 routing by exact routing key.
+- **Topic**: pattern-based routing (`order.*.created`) — use when multiple consumers care about different slices of the same event type.
+- **Fanout**: broadcasts to every queue bound to the exchange, ignoring the routing key.
+- **Headers**: routes by header instead of routing key — rarely used, only when genuinely needed.
 
 ## Queue Durability & Reliability
-- Queue/exchange `durable=true` cho dữ liệu quan trọng (sống sót qua restart broker).
-- Message `persistent` nếu cần đảm bảo không mất khi broker crash.
-- Cân nhắc **quorum queue** (thay vì classic mirrored queue) cho high-availability hiện đại — tự chọn quorum queue cho queue MỚI (mặc định khuyến nghị hiện nay). Nếu đổi loại queue của 1 queue đang chạy production, hỏi trước vì việc đổi type yêu cầu tạo lại queue (không đổi tại chỗ), có thể gây downtime/mất message đang chờ xử lý.
+- `durable=true` on queues/exchanges for important data (survives a broker restart).
+- Message `persistent` when data must not be lost on a broker crash.
+- Consider a **quorum queue** (instead of a classic mirrored queue) for modern high availability — default to a quorum queue for a NEW queue (the current general recommendation). If changing the type of a queue already running in production, ask first — changing type requires recreating the queue (not an in-place change), which can cause downtime or lose messages still waiting to be processed.
 
 ## Ack Strategy & Prefetch
-- Manual ack nếu cần đảm bảo xử lý xong mới ack (an toàn hơn nhưng cần xử lý reject/requeue đúng khi lỗi).
-- `prefetch count` hợp lý theo tốc độ xử lý consumer — quá cao gây 1 consumer ôm hết message trong khi consumer khác rảnh, quá thấp giảm throughput.
+- Manual ack when processing must be confirmed complete before acking (safer, but requires correct reject/requeue handling on failure).
+- A sensible `prefetch count` matched to consumer processing speed — too high lets one consumer hoard messages while others sit idle; too low reduces throughput.
 
-## Dead-letter Exchange (DLX)
-- Cấu hình DLX + `x-dead-letter-routing-key` rõ ràng cho message bị reject/hết TTL/hết retry — không để message lỗi bị mất âm thầm.
-- Retry có giới hạn trước khi đẩy sang DLX (tránh loop vô hạn giữa queue chính và DLX).
+## Dead-Letter Exchange (DLX)
+- Configure a DLX + a clear `x-dead-letter-routing-key` for rejected/TTL-expired/retry-exhausted messages — never let a failed message silently disappear.
+- Bound the retry count before routing to the DLX (avoid an infinite loop between the main queue and the DLX).
 
-## Priority Queue (nếu nghiệp vụ cần xử lý ưu tiên)
-`x-max-priority` khi khai báo queue — chỉ dùng khi thực sự có yêu cầu ưu tiên xử lý rõ ràng, không thêm phức tạp không cần thiết nếu FIFO đã đủ.
+## Priority Queue (only if the business actually needs it)
+`x-max-priority` at queue declaration — only use this when there's a genuinely clear processing-priority requirement; don't add the complexity if plain FIFO is already sufficient.
 
 ## Idempotency
-Consumer PHẢI idempotent nếu dùng at-least-once (mặc định phổ biến với manual ack + reject requeue) — dùng dedup key/kiểm tra đã xử lý trước khi side-effect.
+The consumer MUST be idempotent under at-least-once delivery (the common default with manual ack + reject-requeue) — use a dedup key or check whether the message was already processed before performing the side effect.
 
 ## Test
-Testcontainers RabbitMQ cho integration test — test đúng ack/requeue behavior, test DLX khi message lỗi, test idempotency khi nhận trùng.
+Testcontainers RabbitMQ for integration tests — test correct ack/requeue behavior, test DLX behavior on message failure, test idempotency on duplicate delivery.
 
-## Ranh giới
-Với exchange/queue MỚI, tự chọn type phù hợp nhất theo nhu cầu routing đã mô tả (nêu lý do ngắn gọn), đối chiếu `api-contract-skill` nếu đã có contract chốt trước. Chỉ dừng lại trình bày tradeoff và chờ user khi thay đổi ảnh hưởng exchange/queue ĐANG CHẠY production (đổi type, đổi routing của message đang lưu thông) — vì khó đảo ngược mà không downtime.
+## Boundary
+For a NEW exchange/queue, choose the type that best fits the described routing need (state the reasoning briefly), cross-checking `api-contract-skill` if a contract was already finalized there. Only stop to present trade-offs and wait for the user when the change affects an exchange/queue ALREADY RUNNING in production (changing type, changing the routing of messages currently in flight) — these are hard to reverse without downtime.
+
+## Knowledge Reference
+
+Exchange types (direct/topic/fanout/headers), routing keys and bindings, queue durability, quorum queues vs. classic mirrored queues, manual ack and prefetch, dead-letter exchange (DLX), priority queues, at-least-once idempotency.

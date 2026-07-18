@@ -1,50 +1,54 @@
 ---
 name: kafka-skill
-description: Kiến thức chuyên sâu Apache Kafka — thiết kế topic/partition, consumer group, delivery semantics, idempotency, schema evolution, dead-letter, monitoring lag. Dùng khi feature cần Kafka (đã dùng `spring-kafka` hoặc user nêu rõ "Kafka"). Nếu yêu cầu chỉ nói chung "xử lý bất đồng bộ" mà chưa rõ công nghệ, kiểm tra dependency trước — không mặc định Kafka; queue đơn giản xem `rabbitmq-skill`, GCP xem `pubsub-skill`.
+description: In-depth Apache Kafka knowledge — topic/partition design, consumer groups, delivery semantics, idempotency, schema evolution, dead-letter handling, lag monitoring. Use when the feature needs Kafka (project already depends on `spring-kafka` or an equivalent client, or the user names Kafka explicitly). If the request only says "async processing" with no technology named, check the actual dependency first — don't default to Kafka; for a simple queue see `rabbitmq-skill`, for GCP see `pubsub-skill`.
 ---
 
 # Apache Kafka
 
 ## Discover
-Xác nhận project đã dùng Kafka qua dependency (`spring-kafka`, client library tương ứng), đọc topic/config hiện có, đọc `api-contract-skill` nếu đã có message contract được chốt trước (schema, tên topic, delivery semantic yêu cầu) — dùng đúng theo đó, không tự đổi.
+Confirm the project already uses Kafka via its dependency (`spring-kafka` or the equivalent client library), read the existing topic/config, and read `api-contract-skill` if a message contract (schema, topic name, required delivery semantics) was already finalized there — follow it exactly, don't redefine it here.
 
-## Khi nào phù hợp / KHÔNG phù hợp
-Phù hợp: throughput cao, cần replay lịch sử (log-based), nhiều consumer group độc lập cùng đọc 1 dòng sự kiện, event sourcing. Cân nhắc RabbitMQ (`rabbitmq-skill`) thay vì Kafka nếu: cần routing phức tạp theo nội dung message (topic/header exchange), cần priority queue, hoặc quy mô nhỏ không cần throughput lớn — Kafka có chi phí vận hành cao hơn hẳn (broker cluster, tuning partition/consumer group) không đáng để dùng cho task-queue đơn giản.
+## When It Fits / When It Doesn't
+Fits: high throughput, need to replay history (log-based), multiple independent consumer groups reading the same event stream, event sourcing. Prefer RabbitMQ (`rabbitmq-skill`) over Kafka if: complex content-based routing is needed (topic/header exchange), a priority queue is needed, or the scale is small enough that Kafka's much higher operational cost (broker cluster, partition/consumer-group tuning) isn't worth it for a simple task queue.
 
-## Issue thường gặp trong thực tế
-- **Rebalance storm**: consumer join/leave liên tục (crash loop, `session.timeout.ms` quá ngắn) khiến cả consumer group dừng xử lý lặp lại mỗi lần rebalance — cân nhắc cooperative-sticky assignor (rebalance từng phần, không dừng toàn group) thay vì eager assignor mặc định cũ nếu client version hỗ trợ.
-- **Consumer "chết giả"**: xử lý 1 message quá lâu vượt `max.poll.interval.ms` khiến broker coi consumer đã chết và trigger rebalance dù consumer vẫn đang chạy — không phải do mất kết nối, mà do xử lý chậm hơn ngưỡng cho phép giữa 2 lần poll.
-- **Retry tại chỗ làm mất thứ tự**: block retry ngay trong consumer loop cho message lỗi có thể trì hoãn xử lý message khác cùng partition (dù khác key) — cân nhắc retry topic riêng thay vì retry blocking nếu thứ tự giữa các key khác nhau quan trọng.
-- **Message size**: vượt giới hạn mặc định (~1MB) cần tăng ĐỒNG THỜI cả `max.request.size` (producer) và `message.max.bytes`/`replica.fetch.max.bytes` (broker) — tăng 1 bên vẫn lỗi.
-- **Exactly-once có giới hạn phạm vi**: transaction Kafka chỉ đảm bảo trong hệ Kafka (consume-transform-produce). Nếu consumer ghi side-effect ra hệ thống NGOÀI Kafka (DB gọi trực tiếp, HTTP call), effect đó vẫn cần tự idempotent — Kafka transaction không bảo vệ được side-effect bên ngoài nó.
+## Common Real-World Issues
+- **Rebalance storm**: consumers repeatedly joining/leaving (crash loops, `session.timeout.ms` too short) stalls the whole consumer group on every rebalance — consider the cooperative-sticky assignor (partial rebalance, doesn't stop the whole group) instead of the older default eager assignor, if the client version supports it.
+- **False "dead" consumer**: processing one message longer than `max.poll.interval.ms` makes the broker think the consumer died and triggers a rebalance even though it's still running — this is caused by slow processing between polls, not a lost connection.
+- **In-place retry breaks ordering**: blocking retry inside the consumer loop for a failed message can delay processing of other messages on the same partition (even under a different key) — use a separate retry topic instead of blocking retry if ordering across different keys matters.
+- **Message size**: exceeding the default limit (~1MB) requires raising BOTH `max.request.size` (producer) AND `message.max.bytes`/`replica.fetch.max.bytes` (broker) together — raising only one side still fails.
+- **Exactly-once has limited scope**: Kafka transactions only guarantee exactly-once within the Kafka system itself (consume-transform-produce). If a consumer writes a side effect to something OUTSIDE Kafka (a direct DB write, an HTTP call), that effect still needs to be idempotent on its own — a Kafka transaction can't protect a side effect outside its scope.
 
-## Thiết kế Topic & Partition
-- Naming nhất quán convention hiện có (VD: `<domain>.<entity>.<event-past-tense>`).
-- Partition key: chọn key đảm bảo message liên quan cùng 1 entity vào cùng partition (giữ thứ tự xử lý đúng theo entity đó) — KHÔNG chọn key ngẫu nhiên nếu thứ tự quan trọng.
-- Số partition: cân nhắc throughput cần và số consumer instance dự kiến (partition là đơn vị song song hóa tối đa). **Lưu ý cứng**: Kafka KHÔNG hỗ trợ giảm số partition của 1 topic (chỉ tăng được, phải tạo topic mới nếu cần giảm), và việc tăng partition sau này làm vỡ đảm bảo "cùng key luôn vào cùng partition" cho key cũ (do hàm hash % partition-count đổi kết quả) — nếu thứ tự theo entity quan trọng, chọn số partition dư dả ngay từ đầu thay vì tăng dần sau. Với topic MỚI, tự chọn số partition dư dả hợp lý dựa trên throughput/consumer dự kiến đã biết và nêu lý do — vì việc này khó sửa sau nên chỉ hỏi lại user khi không có đủ thông tin để ước lượng throughput (không hỏi nếu chỉ vì đây là "quyết định lớn" nói chung).
+## Topic & Partition Design
+- Naming follows the project's existing convention (e.g. `<domain>.<entity>.<event-past-tense>`).
+- Partition key: choose a key that keeps messages for the same entity on the same partition (preserves per-entity processing order) — do NOT choose a random key if order matters.
+- Partition count: weigh expected throughput against the expected number of consumer instances (partition count is the hard ceiling on parallelism). **Hard constraint**: Kafka does NOT support decreasing a topic's partition count (only increasing — a new topic is required to decrease), and increasing it later breaks the "same key always lands on the same partition" guarantee for existing keys (the hash-modulo-partition-count result changes). If per-entity ordering matters, pick a generous partition count up front rather than growing it later. For a NEW topic, choose a reasonably generous partition count based on the known throughput/consumer expectations and state the reasoning — only ask the user back when there isn't enough information to estimate throughput (not just because this is "a big decision" in the abstract).
 
 ## Consumer Group & Rebalancing
-- Consumer group name rõ ràng theo service tiêu thụ, không dùng chung group cho nhiều service không liên quan (gây cạnh tranh message sai ý).
-- Cân nhắc `max.poll.records`/`session.timeout.ms` nếu xử lý message chậm gây rebalance liên tục — tự đề xuất và áp dụng giá trị hợp lý dựa trên bằng chứng đo được (lag, thời gian xử lý trung bình); nếu chưa có số liệu đo, giữ nguyên config production hiện tại và nêu rõ cần đo trước khi đổi thay vì đoán mò.
+- Clear consumer group names per consuming service — don't share one group across unrelated services (causes unintended message contention).
+- Consider `max.poll.records`/`session.timeout.ms` if slow processing is causing repeated rebalances — propose and apply a reasonable value based on measured evidence (lag, average processing time); if no measurements exist yet, keep the current production config and state that measurement is needed before changing it, rather than guessing.
 
 ## Delivery Semantics & Idempotency
-- At-least-once (phổ biến nhất): consumer PHẢI idempotent (dùng dedup key/kiểm tra đã xử lý chưa trước khi thực hiện side-effect).
-- Exactly-once: dùng Kafka transactions (`transactional.id`, `isolation.level=read_committed`) nếu cần — chi phí phức tạp hơn, chỉ dùng khi thực sự cần thiết, nêu tradeoff.
-- Producer: `acks=all` + `enable.idempotence=true` nếu cần đảm bảo không mất/trùng message ở phía producer.
+- At-least-once (most common): the consumer MUST be idempotent (a dedup key, or checking whether it already processed this message before performing the side effect).
+- Exactly-once: use Kafka transactions (`transactional.id`, `isolation.level=read_committed`) when needed — higher complexity cost, only use when genuinely necessary, and state the trade-off.
+- Producer: `acks=all` + `enable.idempotence=true` when the producer side must not lose or duplicate messages.
 
 ## Schema Evolution
-- Backward-compatible bắt buộc: chỉ thêm field optional, không đổi kiểu/xóa field đang dùng (nếu dùng Schema Registry + Avro/Protobuf, tuân thủ compatibility mode đã cấu hình).
-- Version hóa event nếu breaking change không tránh được — không âm thầm đổi shape event cũ.
+- Backward compatibility is mandatory: only add optional fields, never change the type of or remove a field in use (if using Schema Registry + Avro/Protobuf, follow the configured compatibility mode).
+- Version the event if a breaking change is unavoidable — never silently change an existing event's shape.
 
-## Dead-letter & Error Handling
-- Định nghĩa rõ dead-letter topic khi message xử lý lỗi (không retry vô hạn tại chỗ).
-- `SeekToCurrentErrorHandler`/`DefaultErrorHandler` (Spring Kafka) với retry có giới hạn trước khi đẩy sang DLT.
+## Dead-Letter & Error Handling
+- Define a clear dead-letter topic for messages that fail processing (no infinite in-place retry).
+- `SeekToCurrentErrorHandler`/`DefaultErrorHandler` (Spring Kafka) with bounded retry before routing to the DLT.
 
-## Monitoring cần lưu ý (ghi chú, không tự implement dashboard)
-Consumer lag là chỉ số quan trọng nhất — ghi chú trong output nếu feature có khả năng gây lag cao (xử lý chậm hơn tốc độ produce), để user cân nhắc scale consumer.
+## Monitoring to Flag (note only, don't build a dashboard)
+Consumer lag is the single most important metric — flag in the output if a feature could cause high lag (processing slower than produce rate), so the user can consider scaling the consumer.
 
 ## Test
-Testcontainers Kafka cho integration test — test đúng delivery semantic đã implement, test idempotency khi consume trùng message, test dead-letter khi xử lý lỗi. Unit test business logic thuần túy xem `java-spring-skill`.
+Testcontainers Kafka for integration tests — test the delivery semantics actually implemented, test idempotency on duplicate consumption, test dead-letter behavior on processing failure. For pure business-logic unit tests, see `java-spring-skill`.
 
-## Ranh giới
-Với topic MỚI, tự chọn partition count/delivery semantic hợp lý nhất dựa trên thông tin đã biết (đối chiếu `api-contract-skill` nếu đã chốt trước), nêu rõ lựa chọn và lý do trong báo cáo. Chỉ trình bày tradeoff và chờ user khi thông tin không đủ để ước lượng (không rõ throughput/số consumer dự kiến), hoặc khi thay đổi ảnh hưởng topic ĐANG CHẠY production.
+## Boundary
+For a NEW topic, choose the most sensible partition count/delivery semantics based on what's already known (cross-check `api-contract-skill` if already finalized there), and state the choice and reasoning in the report. Only stop to present trade-offs and wait for the user when there isn't enough information to estimate (throughput/consumer count unknown), or when the change affects a topic ALREADY RUNNING in production.
+
+## Knowledge Reference
+
+Topic/partition design, partition key selection, consumer group rebalancing (eager vs. cooperative-sticky), delivery semantics (at-least-once, exactly-once, transactions), producer idempotence (`acks=all`, `enable.idempotence`), schema evolution/compatibility (Avro/Protobuf, Schema Registry), dead-letter topics, consumer lag monitoring.

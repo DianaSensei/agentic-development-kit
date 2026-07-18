@@ -1,48 +1,52 @@
 ---
 name: pubsub-skill
-description: Kiến thức chuyên sâu Google Cloud Pub/Sub — topic/subscription, push vs pull, ack deadline, ordering key, dead-letter topic, exactly-once delivery. Dùng khi feature cần Pub/Sub (đã dùng client GCP, hoặc hạ tầng đã ở GCP). Nếu yêu cầu chỉ nói chung "xử lý bất đồng bộ" mà chưa rõ công nghệ, kiểm tra dependency/hạ tầng trước — không mặc định Pub/Sub; multi-cloud/on-prem xem `kafka-skill`/`rabbitmq-skill`.
+description: In-depth Google Cloud Pub/Sub knowledge — topics/subscriptions, push vs. pull, ack deadlines, ordering keys, dead-letter topics, exactly-once delivery. Use when the feature needs Pub/Sub (project already uses a GCP client, or the infrastructure already runs on GCP). If the request only says "async processing" with no technology named, check the actual dependency/infrastructure first — don't default to Pub/Sub; for multi-cloud/on-prem see `kafka-skill`/`rabbitmq-skill`.
 ---
 
 # Google Cloud Pub/Sub
 
 ## Discover
-Xác nhận project đã dùng Pub/Sub qua dependency (`spring-cloud-gcp-starter-pubsub` hoặc client library GCP), đọc topic/subscription config hiện có, đọc `api-contract-skill` nếu đã có message contract chốt trước.
+Confirm the project already uses Pub/Sub via its dependency (`spring-cloud-gcp-starter-pubsub` or a direct GCP client library), read the existing topic/subscription config, and read `api-contract-skill` if a message contract was already finalized there.
 
-## Khi nào phù hợp
-Phù hợp nếu hạ tầng đã ở GCP — không phải quản lý broker (fully managed), tự scale theo tải, tích hợp tốt với Cloud Run/Functions/Dataflow. Nếu multi-cloud/on-prem, hoặc cần routing phức tạp như RabbitMQ, cân nhắc kỹ trước khi khóa vào Pub/Sub (vendor lock-in GCP).
+## When It Fits
+Fits when the infrastructure is already on GCP — fully managed (no broker to operate), auto-scales with load, integrates well with Cloud Run/Functions/Dataflow. For multi-cloud/on-prem, or routing as complex as RabbitMQ's, think carefully before locking into Pub/Sub (GCP vendor lock-in).
 
-## Issue thường gặp trong thực tế
-- **Ordering key vẫn có thể nghẽn**: Pub/Sub xử lý tuần tự trong cùng 1 ordering key (tương tự tinh thần partition Kafka nhưng đơn vị khác) — nếu 1 key quá "hot" (nhận traffic vượt trội), throughput của key đó vẫn bị giới hạn dù các key khác vẫn chạy song song bình thường.
-- **Quota theo project GCP**: publish/subscribe throughput, số subscription/topic đều có quota mặc định — cần kiểm tra quota trước khi thiết kế traffic lớn, không chỉ tin vào "serverless nên tự scale vô hạn".
-- **Duplicate vẫn xảy ra dù bật exactly-once**: nếu subscriber crash SAU khi xử lý xong side-effect nhưng TRƯỚC khi ack, Pub/Sub sẽ redeliver — exactly-once của Pub/Sub đảm bảo không duplicate ở tầng nhận message, không đảm bảo side-effect chỉ chạy đúng 1 lần; vẫn cần idempotent thực sự nếu side-effect quan trọng (giao dịch tài chính).
+## Common Real-World Issues
+- **An ordering key can still bottleneck**: Pub/Sub processes sequentially within a single ordering key (similar in spirit to a Kafka partition but a different unit) — if one key is unusually "hot" (disproportionate traffic), that key's throughput is still capped even though other keys run in parallel fine.
+- **Per-project GCP quotas**: publish/subscribe throughput and the number of subscriptions/topics all have default quotas — check quota before designing for large traffic; don't assume "serverless means infinite auto-scale."
+- **Duplicates still happen even with exactly-once enabled**: if a subscriber crashes AFTER completing the side effect but BEFORE acking, Pub/Sub redelivers — Pub/Sub's exactly-once guarantees no duplicate at the message-delivery layer, not that the side effect runs exactly once; a truly important side effect (a financial transaction) still needs to be genuinely idempotent.
 
 ## Topic & Subscription
-- 1 topic có thể có nhiều subscription độc lập (mỗi subscription nhận đủ mọi message — khác Kafka consumer group cùng chia nhau message trong 1 group).
-- Naming nhất quán convention hiện có.
+- One topic can have multiple independent subscriptions (each subscription receives every message — unlike a Kafka consumer group, where members split the messages within one group).
+- Naming follows the project's existing convention.
 
-## Push vs Pull
-- **Pull**: subscriber tự chủ động lấy message (phù hợp khi cần kiểm soát tốc độ xử lý, batch xử lý) — dùng phổ biến cho backend service.
-- **Push**: Pub/Sub tự gọi HTTP endpoint của bạn — phù hợp serverless (Cloud Run/Functions), cần endpoint public/authenticated đúng cách (OIDC token verify).
-- Với subscription MỚI, tự chọn push hoặc pull theo hạ tầng deploy hiện có (serverless → push, backend service tự quản lý tốc độ xử lý → pull) và nêu lý do. Chỉ hỏi lại khi đổi mô hình của 1 subscription ĐANG CHẠY (ảnh hưởng cấu hình deploy/endpoint đang phục vụ traffic thật).
+## Push vs. Pull
+- **Pull**: the subscriber actively fetches messages (good when processing rate needs to be controlled, or batch processing is needed) — the common choice for backend services.
+- **Push**: Pub/Sub calls your HTTP endpoint directly — fits serverless (Cloud Run/Functions), needs a properly public/authenticated endpoint (OIDC token verification).
+- For a NEW subscription, choose push or pull based on the existing deployment model (serverless → push; a backend service that wants to control its own processing rate → pull) and state the reasoning. Only ask back when changing the model of a subscription ALREADY RUNNING (affects the deploy config/endpoint currently serving real traffic).
 
 ## Ack Deadline & Retry
-- Ack deadline mặc định ngắn (thường 10s) — nếu xử lý lâu hơn, PHẢI extend deadline (`modifyAckDeadline`) hoặc cấu hình deadline dài hơn, nếu không message sẽ bị redeliver dù đang xử lý dở (gây trùng xử lý nếu không idempotent).
-- Retry policy: cấu hình exponential backoff thay vì để mặc định redeliver ngay lập tức khi nack.
+- The default ack deadline is short (typically 10s) — if processing takes longer, you MUST extend the deadline (`modifyAckDeadline`) or configure a longer one, otherwise the message gets redelivered mid-processing (causing duplicate processing if not idempotent).
+- Retry policy: configure exponential backoff instead of leaving the default of immediate redelivery on nack.
 
 ## Ordering Key
-Nếu cần đảm bảo thứ tự xử lý theo entity — dùng `ordering key` (yêu cầu bật ordering trên subscription), tương tự vai trò partition key của Kafka nhưng cơ chế khác (Pub/Sub đảm bảo thứ tự trong cùng ordering key, không phải theo partition vật lý).
+When per-entity processing order must be guaranteed, use an `ordering key` (requires enabling ordering on the subscription) — plays a similar role to a Kafka partition key but works differently (Pub/Sub guarantees order within the same ordering key, not via physical partitions).
 
-## Dead-letter Topic
-Cấu hình dead-letter topic + `maxDeliveryAttempts` — sau số lần nack nhất định, message tự động chuyển sang dead-letter topic thay vì retry vô hạn.
+## Dead-Letter Topic
+Configure a dead-letter topic + `maxDeliveryAttempts` — after a set number of nacks, the message automatically moves to the dead-letter topic instead of retrying indefinitely.
 
-## Exactly-once Delivery
-Pub/Sub hỗ trợ exactly-once delivery ở mức subscription (cấu hình riêng) — nhưng vẫn cần consumer idempotent cho các trường hợp edge case (duplicate do publisher retry) trừ khi đã dùng thêm cơ chế dedup phía publisher.
+## Exactly-Once Delivery
+Pub/Sub supports exactly-once delivery at the subscription level (a separate setting) — but the consumer should still be idempotent for edge cases (duplicates from publisher retries) unless a publisher-side dedup mechanism is also in place.
 
 ## Idempotency
-Mặc định coi là at-least-once trừ khi đã bật exactly-once — consumer luôn nên có dedup key/kiểm tra đã xử lý trước khi side-effect, an toàn nhất quán bất kể cấu hình.
+Treat delivery as at-least-once by default unless exactly-once is explicitly enabled — the consumer should always have a dedup key or a check for prior processing before the side effect, which is safe regardless of configuration.
 
 ## Test
-Dùng Pub/Sub emulator (GCP cung cấp) cho integration test local — test ack/nack behavior, test dead-letter khi vượt maxDeliveryAttempts, test idempotency khi nhận trùng.
+Use the Pub/Sub emulator (provided by GCP) for local integration tests — test ack/nack behavior, test dead-letter behavior once `maxDeliveryAttempts` is exceeded, test idempotency on duplicate delivery.
 
-## Ranh giới
-Với topic/subscription MỚI, tự chọn push/pull và có bật ordering/exactly-once hay không theo yêu cầu đã mô tả (đối chiếu `api-contract-skill` nếu đã chốt), nêu lý do trong báo cáo. Chỉ trình bày tradeoff và chờ user khi thay đổi ảnh hưởng subscription ĐANG CHẠY production hoặc yêu cầu không đủ rõ để suy luận (VD: không rõ có cần đảm bảo thứ tự).
+## Boundary
+For a NEW topic/subscription, choose push/pull and whether to enable ordering/exactly-once based on the described requirement (cross-check `api-contract-skill` if already finalized), and state the reasoning in the report. Only present trade-offs and wait for the user when the change affects a subscription ALREADY RUNNING in production, or the request isn't clear enough to infer from (e.g. unclear whether ordering is required).
+
+## Knowledge Reference
+
+Topics and subscriptions (fan-out model), push vs. pull delivery, ack deadlines and `modifyAckDeadline`, ordering keys, dead-letter topics and `maxDeliveryAttempts`, exactly-once delivery, GCP project quotas.

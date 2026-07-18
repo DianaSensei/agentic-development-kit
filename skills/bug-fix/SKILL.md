@@ -1,95 +1,113 @@
 ---
 name: bug-fix
-description: Quy trình xử lý lỗi hoàn chỉnh — thu thập triệu chứng, cố gắng reproduce nếu có thể, chờ user xác nhận trước khi sửa, implement/fix lặp tới khi đạt chất lượng, rồi báo cáo, lưu kiến thức và tạo postmortem. Hoàn toàn abstraction công nghệ — tự quét và dùng các skill kỹ thuật chi tiết khi cần. Dùng cho mọi loại project/stack.
-argument-hint: "[mô tả lỗi/triệu chứng]"
+description: Complete bug-fix workflow — gather symptoms, attempt to reproduce, wait for user confirmation before fixing, implement/fix in a loop until quality is met, then report, capture knowledge, and produce a postmortem. Fully technology-agnostic — invokes whichever technical skills the task needs. Works for any project or stack.
+argument-hint: "[bug/symptom description]"
 ---
 
 # Bug Fix Workflow
 
-Chạy trong 1 agent duy nhất, tuần tự. Skill này KHÔNG chứa kiến thức công nghệ cụ thể — chi tiết kỹ thuật đến từ các skill khác được quét động ở Bước 0.
+Runs as a single agent, sequentially. This skill holds no technology-specific knowledge itself —
+implementation details come from whichever technical skill matches the task.
 
-Yêu cầu đầu vào: `$ARGUMENTS`
+Input: `$ARGUMENTS`
 
-## Bước 0 — Quét & cache skill map (bắt buộc, làm 1 lần đầu mỗi bug)
+## Step 0 — Discover Context
 
-Quét toàn bộ `.claude/skills/*/SKILL.md` (và `~/.claude/skills/` nếu có), đọc `name` + `description` (bỏ qua chính skill này), xây dựng ánh xạ "ngữ cảnh → skill phù hợp", cache cho suốt phiên xử lý bug này. Không cần sửa file này khi có skill kỹ thuật mới — tự nhận diện qua `description`.
+Read `CLAUDE.md`, memory/MCP if connected, and the existing code/logic relevant to the suspected bug
+area. If `workflow-router` already read these in this same session immediately before handing off,
+reuse that — don't re-read from scratch.
 
-Đồng thời đọc `CLAUDE.md`, memory/MCP nếu có, code/logic hiện có liên quan tới khu vực nghi ngờ có bug — nếu `workflow-router` đã đọc các file này ngay trước đó trong cùng session, dùng lại, không đọc lại.
+## Step 1 — Gather Symptoms
 
-## Bước 1 — Thu thập triệu chứng
+Record everything the user knows/observes: expected vs. actual behavior, the conditions it occurs under
+(when, what data, what environment), frequency (always or intermittent), and any error messages/logs.
+If critical diagnostic information is missing, ask immediately — don't guess ahead of having the minimum
+facts needed.
 
-Ghi nhận đầy đủ những gì user biết/quan sát được: hành vi mong đợi vs thực tế, điều kiện xảy ra (khi nào, dữ liệu nào, môi trường nào), tần suất (luôn xảy ra hay ngẫu nhiên), có thông báo lỗi/log nào không. Nếu thiếu thông tin quan trọng để chẩn đoán, hỏi lại NGAY, không cố đoán mò trước khi có đủ dữ kiện tối thiểu.
+## Step 2 — Attempt to Reproduce
 
-## Bước 2 — Cố gắng chứng minh/reproduce
+1. Combine the user's symptoms with project context/knowledge (existing code, the processing flow, logs
+   if available) to reconstruct a scenario that could plausibly cause the bug.
+2. If reproduced: write down the EXACT steps to reproduce it, plus the root cause identified from
+   concrete evidence (not a guess).
+3. If NOT reproduced: say so plainly — never pretend to understand the cause when it isn't understood.
+   Present the plausible hypotheses (each with a confidence level: high/medium/low) and state what
+   additional information from the user (more specific logs, more detailed reproduction steps) would
+   improve the odds of reproducing it.
 
-1. Phối hợp triệu chứng từ user với context/knowledge project (code hiện có, luồng xử lý, log nếu có) để dựng lại kịch bản có khả năng gây ra lỗi.
-2. Nếu reproduce được: ghi rõ CÁC BƯỚC chính xác để tái hiện lỗi + nguyên nhân gốc (root cause) mà bạn xác định được dựa trên bằng chứng cụ thể (không đoán mò).
-3. Nếu KHÔNG reproduce được: nói THẲNG là chưa reproduce được, KHÔNG giả vờ đã hiểu rõ nguyên nhân. Trình bày các giả thuyết có khả năng (kèm mức độ tin cậy: cao/trung bình/thấp) và đề xuất cần thêm thông tin gì từ user (log cụ thể hơn, bước thao tác chi tiết hơn) để tăng khả năng reproduce.
+## Step 3 — Report for User Review/Approval (required CHECKPOINT)
 
-## Bước 3 — Báo cáo cho user review/approve (CHECKPOINT bắt buộc)
+Present: whether it was reproduced, the root cause (if found, with confidence level), the planned fix
+direction (with the technical skill(s) expected to be referenced — kept abstract, no need to spell out
+technology detail), related edge cases that must not recur, and the Definition of Done (what counts as
+fixed).
 
-Trình bày: đã reproduce được hay chưa, root cause (nếu có, kèm độ tin cậy), hướng sửa dự kiến (kèm skill kỹ thuật dự kiến tham khảo — abstraction, không cần nêu chi tiết công nghệ), edge case liên quan cần đảm bảo không lặp lại, DoD (thế nào là coi như đã fix xong).
+**CHECKPOINT**: wait for the user to confirm/approve the fix direction before implementing. Never fix
+code without confirmation — even when very confident about the root cause.
 
-**CHECKPOINT**: chờ user xác nhận/approve hướng sửa trước khi thực thi. KHÔNG tự ý sửa code khi chưa có xác nhận — kể cả khi bạn rất tự tin về root cause.
+## Step 4 — Implement + Retest (loop until quality is met)
 
-## Bước 4 — Implement + Retest (loop tới khi đạt chất lượng)
+### 4.1 Implement the Fix
 
-### 4.1 Implement fix
+Fix the actual root cause approved in Step 3 (not the surface symptom). Before writing any code that
+falls under a technical skill — you MUST `Read` the full `SKILL.md` for that skill at that point, never
+inferring its content from its name alone. A skill's name never substitutes for reading its actual
+content before applying it.
 
-Sửa đúng root cause đã được duyệt ở Bước 3 (không sửa theo triệu chứng bề mặt). Trước khi viết bất kỳ dòng code nào thuộc phạm vi 1 skill kỹ thuật đã ánh xạ ở Bước 0 — BẮT BUỘC gọi `Read` để đọc TOÀN VĂN `SKILL.md` tương ứng NGAY LÚC ĐÓ, không dựa vào tên/mô tả đã cache để suy luận nội dung. Việc cache ở Bước 0 chỉ để biết skill nào tồn tại, không thay thế việc đọc thật khi áp dụng.
-
-Nếu 1 bug/featue liên quan tới NHIỀU skill (VD: vừa Java/Spring vừa Database), đọc TOÀN BỘ các skill liên quan trước khi bắt đầu viết code cho task đó — không đọc từng phần rồi code xen kẽ tùy tiện.
+If one bug/task touches MULTIPLE skills (e.g. both Java/Spring and Database), read all of them fully
+before writing any code for that task — don't read one, code some, then read the next.
 
 ### 4.2 Retest
 
-Viết test case tái hiện đúng bug này (đảm bảo không tái diễn), chạy lại TOÀN BỘ test liên quan (không chỉ test mới) để chắc chắn không phá vỡ chỗ khác.
+Write a test case that reproduces this exact bug (to guard against recurrence), then re-run ALL
+relevant tests (not just the new one) to confirm nothing else broke.
 
-### 4.3 Nếu CHƯA đạt (bug vẫn còn, hoặc phát sinh lỗi mới) — vào loop fix
+### 4.3 If Not Yet Resolved (bug still present, or a new issue appeared) — Enter the Fix Loop
 
-Với MỖI issue/test-case chưa pass (bug gốc chưa hết, hoặc lỗi mới phát sinh do fix):
+For EACH issue/failing test case (the original bug not yet gone, or a new issue introduced by the fix):
 
-1. Chẩn đoán, sửa, retest — tính là lần thử #1 cho issue/test-case đó.
-2. Vẫn fail: thử lại, tăng biến đếm (#2, #3...).
-3. **Tối đa 5 lần thử cho MỖI issue/test-case riêng biệt.** Tới lần thứ 5 vẫn chưa xong — DỪNG LẠI, raise cho user: mô tả issue, đã thử gì mỗi lần, vì sao chưa giải quyết được, đề xuất hướng cần user quyết định.
-4. Issue/test-case MỚI phát sinh có bộ đếm riêng, không cộng dồn với issue khác.
+1. Diagnose, fix, retest — this is **attempt #1** for that issue/test case.
+2. Still failing: retry, incrementing the counter (#2, #3...).
+3. **Maximum 5 attempts per distinct issue/test case.** If still unresolved after the 5th attempt —
+   STOP, raise it to the user: describe the issue, what was tried on each attempt, why it's still
+   unresolved, and what decision is needed from the user.
+4. A NEW issue/test case gets its own counter — never pool attempt counts across different issues.
 
-Lặp lại 4.1 → 4.2 → 4.3 tới khi bug gốc đã fix, test pass đầy đủ, không phát sinh lỗi mới, HOẶC có issue phải raise cho user (dừng tại đó).
+Repeat 4.1 → 4.2 → 4.3 until the original bug is fixed, all tests pass, and no new issue was
+introduced, OR an issue has to be raised to the user (stop the workflow there).
 
-## Bước 5 — Báo cáo kết quả cuối (bắt buộc)
+## Step 5 — Final Report (required)
 
-- Bug gốc đã fix chưa, DoD đạt chưa.
-- Risk/issue phát sinh trong quá trình (kể cả đã fix, kể cả đã raise).
-- Danh sách file đã thay đổi.
-- Số lần lặp fix đã dùng cho từng issue/test-case.
+- Whether the original bug is fixed, whether the DoD is met.
+- Risks/issues encountered throughout (including ones already fixed, including any raised to the user).
+- List of files changed.
+- Number of fix attempts used per issue/test case.
 
-Không cần checkpoint chờ xác nhận riêng ở đây — báo cáo xong làm luôn Bước 6 (ghi log/postmortem là thao tác phụ, ít rủi ro, sửa lại được nếu user phản hồi khác).
+No separate confirmation checkpoint is needed here — proceed straight to Step 6 after reporting
+(logging/postmortem is a low-risk side effect, easy to amend later if the user's feedback changes
+something).
 
-## Bước 6 — Lưu kiến thức, note kinh nghiệm & tạo Postmortem (làm ngay sau Bước 5)
+## Step 6 — Knowledge Capture & Postmortem (immediately after Step 5)
 
-1. Memory/MCP (nếu có kết nối): ghi root cause, cách fix, kết quả cuối.
-2. **Experience log (tích lũy, KHÔNG ghi đè)**: append vào `docs/knowledge/experience-log.md` theo đúng format như ở feature-development (ngày, mô tả issue, nguyên nhân, số lần thử, kết quả, cách fix hoặc hướng KHÔNG hiệu quả).
-3. **Postmortem (bắt buộc riêng cho bug-fix)**: tạo `docs/postmortems/<bug-slug>.md` gồm:
+1. Memory/MCP (if connected): record the root cause, the fix, and the final outcome.
+2. **Experience log (cumulative, never overwritten)**: append to `docs/knowledge/experience-log.md`
+   using the same format as `feature-development` (date, issue description, cause, attempts used,
+   outcome, the fix or the approaches that did NOT work).
+3. **Postmortem (required, specific to bug-fix)**: create `docs/postmortems/<bug-slug>.md` using the
+   template in `references/postmortem-template.md`.
 
-   ```markdown
-   # Postmortem: <tên bug> <thời gian phát hiện>
+If the bug could NOT be reproduced/fixed (already raised to the user and stopped there), still create
+a postmortem with an "Unresolved" section stating the hypotheses tried, why work stopped, and the
+recommended next step — so the next person (or future you) doesn't have to start over from scratch.
 
-   ## Thời gian phát hiện
+## Boundaries
 
-   ## Timeline of events (timeline) — các mốc quan trọng từ khi bug được phát hiện tới khi fix xong, kèm thời gian cụ thể, ai làm gì, kết quả ra sao.
-
-   ## Triệu chứng ban đầu
-
-   ## Root cause
-
-   ## Impact (phạm vi ảnh hưởng, mức độ nghiêm trọng)
-
-   ## Cách phát hiện/reproduce
-
-   ## Cách fix
-
-   ## Test đã bổ sung để tránh tái diễn
-
-   ## Bài học / Đề xuất phòng ngừa (nếu có pattern chung có thể áp dụng nơi khác)
-   ```
-
-Nếu KHÔNG reproduce/fix được (đã raise cho user và dừng ở đó), vẫn tạo postmortem với phần "Chưa giải quyết được" ghi rõ giả thuyết đã thử, lý do dừng, đề xuất bước tiếp theo — để lần sau (ai đó khác hoặc chính bạn) không phải bắt đầu lại từ đầu.
+- This skill is for **behavior that is currently wrong** — a genuine defect. If the current behavior is
+  actually correct and the request is to add/change capability, that's `feature-development`'s job; if
+  it's a behavior-preserving structural cleanup, that's `refactor`'s job. `workflow-router` makes this
+  classification when routing; if invoked directly, check first that this really is a defect fix.
+- This skill owns the *workflow* (symptoms → reproduce → checkpoint → implement/retest loop → report →
+  postmortem) — it holds no language/framework-specific knowledge itself. Technical implementation
+  detail comes from the matching technical skill, read in full at the point it's applied (Step 4.1).
+- Deep test-design questions beyond "write a test that reproduces this bug" (test architecture, mocking
+  strategy) are the relevant technical skill's job and, for broader strategy, `test-master`'s.

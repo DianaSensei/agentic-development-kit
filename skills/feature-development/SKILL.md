@@ -1,94 +1,189 @@
 ---
 name: feature-development
-description: Quy trình phát triển 1 tính năng mới hoàn chỉnh — từ phân tích yêu cầu, đề xuất giải pháp, tới implement/test/fix lặp cho tới khi đạt chất lượng, rồi báo cáo và lưu kiến thức. Hoàn toàn abstraction công nghệ — tự quét và dùng các skill kỹ thuật chi tiết khi cần. Dùng cho mọi loại project/stack.
-argument-hint: "[mô tả yêu cầu tính năng]"
+description: End-to-end workflow for building a new feature — requirements analysis, solution proposal, implement/test/fix loop until quality bar is met, then reporting and knowledge capture. Fully technology-agnostic — invokes whichever technical skills the task needs. Works for any project or stack.
+argument-hint: "[feature request description]"
 ---
 
 # Feature Development Workflow
 
-Chạy trong 1 agent duy nhất, tuần tự. Skill này KHÔNG chứa kiến thức công nghệ cụ thể — mọi chi tiết kỹ thuật (ngôn ngữ, framework, DB, messaging...) đến từ các skill khác được quét động ở Bước 0.
+Runs as a single agent, sequentially. This skill holds no technology-specific knowledge itself —
+implementation details (language, framework, database, messaging, etc.) come from whichever technical
+skill matches the task.
 
-Yêu cầu đầu vào: `$ARGUMENTS`
+Input: `$ARGUMENTS`
 
-## Bước 0 — Quét & cache skill map (bắt buộc, làm 1 lần đầu mỗi feature)
+## Step 0 — Discover Context
 
-Quét toàn bộ `.claude/skills/*/SKILL.md` (và `~/.claude/skills/` nếu có), đọc `name` + `description` của từng skill (bỏ qua chính skill này). Xây dựng 1 bảng ánh xạ tạm trong đầu: "ngữ cảnh nào → skill nào phù hợp" dựa trên `description`. Cache lại bảng này cho suốt phiên làm feature — KHÔNG quét lại mỗi lần cần dùng skill, chỉ quét lại nếu bạn nghi ngờ danh sách skill đã thay đổi (VD: user vừa nói đã thêm skill mới).
+Read `CLAUDE.md`, memory/MCP if connected, and the existing code/logic relevant to this request. If
+`workflow-router` already read these in this same session immediately before handing off, reuse that —
+don't re-read from scratch.
 
-Mục đích: khi sau này có thêm skill kỹ thuật mới (VD: 1 skill cho ngôn ngữ khác), workflow này KHÔNG cần sửa gì — tự nhận diện qua `description` mà không cần bảng cứng ghi tên trước.
+This skill also has its own `references/` for requirement-gathering *method* (not technology
+knowledge) — load each when its matching step is reached: `ears-syntax.md`, `interview-questions.md`,
+`acceptance-criteria.md`, `specification-template.md`, `diagram-guide.md`, `definition-of-done.md`,
+`report-and-logs.md`.
 
-Đồng thời phát hiện bối cảnh project: đọc `CLAUDE.md`, memory/MCP nếu có, code/logic hiện có liên quan — nếu `workflow-router` đã đọc các file này ngay trước đó trong cùng session, dùng lại, không đọc lại. KHÔNG gọi tên công nghệ cụ thể trong phần diễn giải với user ở các bước sau trừ khi cần thiết để truyền đạt quyết định kỹ thuật.
+**Optional pre-discovery**: if the feature touches 3+ distinct system layers (auth, DB, UI...), the
+codebase is unfamiliar or undocumented, or concrete technical facts are needed before requirements can
+be asked intelligently — launch parallel Task subagents invoking the relevant technical skills to
+gather that context *before* Step 1's interview, so the interview focuses on decisions instead of
+exploration. Skip this for a well-scoped, single-domain feature or a codebase already well understood.
+See `references/interview-questions.md` → "Multi-Agent Pre-Discovery" for the full pattern.
 
-## Bước 1 — Phân tích yêu cầu (vai trò Business Analyst, abstraction)
+## Step 1 — Requirements Analysis (dual role: PM + Dev, technology-agnostic)
 
-Diễn giải lại yêu cầu bằng lời (re-verify), liệt kê giả định + câu hỏi mơ hồ. Dừng hỏi user nếu có sai lệch — không tự suy đoán ý định.
+Restate the request in your own words (re-verify understanding), and list assumptions plus ambiguous
+points. Stop and ask the user if anything doesn't add up — never guess at intent.
 
-## Bước 2 — Đề xuất giải pháp (abstraction, tham chiếu skill kỹ thuật khi liệt kê task)
+Interview using two perspectives in parallel (see `references/interview-questions.md` for the full
+question sets per category):
+- **PM lens**: user value, the problem being solved, scope (in/out, MVP vs. full), success criteria,
+  priority.
+- **Dev lens**: technical feasibility, systems/APIs/DBs touched, security requirements (auth, sensitive
+  data), performance, edge cases, external dependencies.
 
-1. Đọc kiến trúc/convention hiện có — đề xuất nhất quán, KHÔNG tạo kiến trúc lạ nếu không có lý do rõ ràng.
-2. Nếu có nhiều hướng hợp lý, đưa nhiều đề xuất riêng biệt. Mỗi đề xuất PHẢI có đủ diagram Mermaid mô tả phương án đó — Flow diagram + Sequence diagram LUÔN bắt buộc (mô tả trực tiếp hành vi/luồng xử lý); Architecture diagram và Component diagram bắt buộc nếu phương án đổi ranh giới hệ thống/thêm-bớt service-module (bỏ qua nếu chỉ sửa nội bộ 1 module, không đổi cấu trúc lớn); ERD bắt buộc nếu phương án đổi data model/schema (bỏ qua nếu không đụng tới dữ liệu lưu trữ). Không vẽ diagram không áp dụng được cho phạm vi thay đổi. Ngoài diagram, mỗi đề xuất còn gồm: Tradeoff giữa các hướng; Acceptance Criteria (Given-When-Then) + Edge Case + Definition of Done theo phương án; danh sách task cần hoàn thành — với mỗi task, ghi chú skill kỹ thuật (từ bảng ánh xạ Bước 0) dự kiến sẽ tham khảo lúc thực thi, KHÔNG cần nêu chi tiết công nghệ ở đây.
-3. Ghi toàn bộ nội dung Bước 2 (mọi đề xuất, đầy đủ diagram + tradeoff + AC/Edge Case/DoD + task list) ra file `docs/plans/<feature-slug>.md` — đây là bản lưu để tham chiếu lại, KHÔNG thay thế việc trình bày đầy đủ trực tiếp cho user ngay trong hội thoại.
-4. Có thể gợi ý 1 đề xuất kèm lý do, KHÔNG tự chọn thay user.
+Use `AskUserQuestion` for any question with a finite, enumerable set of likely answers (priority,
+format, MVP vs. full scope, etc.); use open-ended questions only when the answer space can't be
+enumerated in advance (e.g. "describe the user journey in your own words"). Don't ask a free-text
+question when a structured choice would work just as well.
 
-**CHECKPOINT (bắt buộc)**: trình bày đầy đủ đề xuất (đã ghi ở `docs/plans/<feature-slug>.md`), chờ user xác nhận requirement/solution. KHÔNG sang Bước 3 khi chưa có xác nhận rõ ràng.
+## Step 2 — Solution Proposal (technology-agnostic; references technical skills only by name)
 
-Ngay sau khi user chọn xong ở CHECKPOINT: cập nhật lại `docs/plans/<feature-slug>.md` — đưa phương án đã chọn lên đầu, đánh dấu rõ ràng (VD: `## ✅ Phương án đã chọn: <tên>`); các phương án KHÔNG được chọn đẩy xuống dưới, mỗi phương án bọc trong `<details><summary>Phương án không chọn: <tên></summary> ... </details>` để mặc định thu gọn (collapsed) khi xem trên renderer hỗ trợ (GitHub, VS Code preview...).
+1. Read the existing architecture/conventions — propose something consistent with them; don't invent
+   an unfamiliar pattern without a clear reason.
+2. Write the Functional Requirements in EARS format (see `references/ears-syntax.md`) — each
+   requirement is one unambiguous sentence: `While <precondition>, when <trigger>, the system shall
+   <response>` (or the matching Ubiquitous/Event/State/Optional variant).
+3. If more than one direction is reasonable, present them as separate, distinct proposals. Every
+   proposal must include the diagrams that actually apply to it (see `references/diagram-guide.md` for
+   which diagram types are mandatory vs. conditional vs. skip, with templates) — Flow and Sequence
+   diagrams are always required; Architecture/Component diagrams are required only if the proposal
+   changes system boundaries or adds/removes a service/module; an ERD is required only if the proposal
+   changes the data model/schema. Don't draw a diagram type that doesn't apply to the change's scope.
+   Beyond diagrams, every proposal also includes:
+   - Relevant Non-Functional Requirements (performance, security, scalability) where there's a concrete
+     constraint — never invent a number when it isn't known; write "needs confirmation" instead of
+     guessing.
+   - Trade-offs versus the other proposal(s).
+   - Acceptance Criteria in Given/When/Then form, meeting the INVEST bar (see
+     `references/acceptance-criteria.md`), plus Edge Cases and a Definition of Done for this proposal.
+   - An Error Handling table (error condition → response/status → message) for any new logic, where
+     applicable.
+   - The task list to complete — for each task, note which technical skill it's expected to draw on
+     when implemented; no need to spell out technology detail here.
+4. Write the full contents of this step (every proposal — FR/EARS, diagrams, NFRs, trade-offs,
+   AC/Edge Cases/DoD, error handling, task list) to `docs/plans/<feature-slug>.md`, following the
+   section layout in `references/specification-template.md`. This file is the durable record for later
+   reference — it does not replace presenting the full proposal directly to the user in conversation.
+5. A recommended proposal with rationale is fine to offer; never pick one on the user's behalf.
 
-## Bước 3 — Implement + Test (loop tới khi đạt chất lượng)
+**CHECKPOINT (required)**: present the full proposal (already written to `docs/plans/<feature-slug>.md`)
+and wait for the user to confirm the requirements/solution. Do not proceed to Step 3 without an
+explicit confirmation.
+
+Immediately after the user decides at the CHECKPOINT: update `docs/plans/<feature-slug>.md` — move the
+chosen proposal to the top, clearly marked (e.g. `## ✅ Chosen: <name>`); move rejected proposals below
+it, each wrapped in `<details><summary>Rejected: <name></summary> ... </details>` so they render
+collapsed by default on renderers that support it (GitHub, VS Code preview, etc.).
+
+## Step 3 — Implement + Test (loop until the quality bar is met)
 
 ### 3.1 Implement
 
-Trước khi viết BẤT KỲ dòng code nào cho 1 phần việc thuộc phạm vi 1 skill kỹ thuật đã ánh xạ ở Bước 0 (VD: phần liên quan Java/Spring → `java-spring-skill`, phần liên quan DB → `database-skill`) — BẮT BUỘC gọi `Read` để đọc TOÀN VĂN file `SKILL.md` tương ứng NGAY LÚC ĐÓ, không dựa vào tên/mô tả 1 dòng đã cache ở Bước 0 để suy luận nội dung. Việc cache ở Bước 0 CHỈ để biết skill nào tồn tại và tên chính xác của nó — KHÔNG thay thế việc đọc nội dung thật khi thực sự áp dụng.
+Before writing any code for a piece of work that falls under a technical skill (e.g. the Java/Spring
+part → `java-spring-skill`, the DB part → `database-skill`) — you MUST `Read` the full `SKILL.md` for
+that skill at that point, never inferring its content from its name alone. A skill's name never
+substitutes for reading its actual content before applying it.
 
-**Quan trọng — không dùng lại cache từ yêu cầu TRƯỚC trong cùng session**: nếu đây là 1 yêu cầu MỚI của user (khác yêu cầu đã xử lý trước đó trong cùng hội thoại), PHẢI `Read` lại từ đầu, KỂ CẢ nếu bạn "nhớ" đã đọc skill này ở lượt trước — nội dung file có thể đã thay đổi giữa 2 lượt (user có thể vừa sửa skill). Chỉ được coi là "đã đọc đủ" trong phạm vi CÙNG 1 yêu cầu/task đang xử lý liên tục, không kéo dài qua nhiều yêu cầu khác nhau.
+**Don't reuse a previous request's read within the same session**: if this is a NEW user request
+(different from one already handled earlier in this conversation), `Read` the relevant skill again from
+scratch, even if you "remember" reading it last turn — its content may have changed between turns (the
+user may have just edited it). A skill only counts as "already read" within the continuous scope of the
+SAME request/task currently being worked, never carried across separate requests.
 
-Nếu 1 task liên quan tới NHIỀU skill (VD: vừa Java/Spring vừa Database), đọc TOÀN BỘ các skill liên quan trước khi bắt đầu viết code cho task đó — không đọc từng phần rồi code xen kẽ tùy tiện.
+If one task touches MULTIPLE skills (e.g. both Java/Spring and Database), read all of them fully before
+writing any code for that task — don't read one, code some, then read the next.
 
-Sau khi đọc, làm task theo đúng convention/kiến thức trong file đó, KHÔNG tự bịa cách làm dựa trên kiến thức nền chung nếu skill tương ứng đã có hướng dẫn cụ thể khác.
+Once read, follow that skill's conventions/knowledge exactly — don't invent an approach from general
+background knowledge when the matching skill already specifies one.
 
 ### 3.2 Test
 
-Viết và chạy test đầy đủ theo skill kỹ thuật tương ứng (unit/integration/functional/tùy loại project). Đối chiếu kết quả với:
+Write and run tests per the relevant technical skill (unit/integration/functional, as fits the project).
+Check results against:
 
-- Từng Acceptance Criteria đã chốt ở Bước 2.
-- Từng Edge Case đã liệt kê.
-- Definition of Done.
-- **Ngưỡng chất lượng**: test phải pass, không có lỗi nghiêm trọng còn mở, coverage đủ cho các AC quan trọng (không chấp nhận "test cho có" mà bỏ sót AC).
+- Every Acceptance Criterion finalized in Step 2.
+- Every listed Edge Case.
+- The Definition of Done.
+- **Quality bar** (see `references/definition-of-done.md` for the full checklist): tests pass, no
+  open severe defects, coverage is adequate for every important AC — a token test that skips an AC
+  does not count.
 
-### 3.3 Nếu CHƯA đạt ngưỡng — vào loop fix
+### 3.3 If the quality bar isn't met — enter the fix loop
 
-Với MỖI issue/lỗi phát hiện (test fail, review tự phát hiện vấn đề):
+For EACH issue/failure found (a failing test, a problem self-identified during review):
 
-1. Chẩn đoán nguyên nhân, sửa, chạy lại test liên quan.
-2. Tính đây là **lần thử #1** cho issue này.
-3. Nếu vẫn fail: thử lại, tăng biến đếm cho issue đó (#2, #3...).
-4. **Tối đa 5 lần thử cho MỖI issue riêng biệt.** Nếu tới lần thứ 5 vẫn chưa giải quyết được — DỪNG LẠI, KHÔNG thử tiếp, raise vấn đề này cho user: mô tả issue, đã thử gì ở mỗi lần, tại sao chưa giải quyết được, đề xuất hướng cần user quyết định (đổi cách tiếp cận, chấp nhận giới hạn, hay cần thêm thông tin).
-5. Issue MỚI phát sinh (khác issue đang xử lý) được tính là 1 bộ đếm riêng, có 5 lần thử riêng — không cộng dồn số lần thử của issue khác vào nhau.
-6. Sau khi 1 issue được giải quyết, chạy lại TOÀN BỘ test liên quan (không chỉ test của issue đó) để đảm bảo không phá vỡ chỗ khác, rồi quay lại 3.2.
+1. Diagnose the cause, fix it, re-run the relevant tests. This is **attempt #1** for this issue.
+2. Still failing: retry, incrementing the counter for that issue (#2, #3...).
+3. **Maximum 5 attempts per distinct issue.** If still unresolved after the 5th attempt — STOP, do not
+   try again, raise it to the user: describe the issue, what was tried on each attempt, why it's still
+   unresolved, and what decision is needed from the user (a different approach, accepting a limitation,
+   or more information).
+4. A NEW issue (distinct from the one being worked) gets its own counter with its own 5 attempts — never
+   pool attempt counts across different issues.
+5. Once an issue is resolved, re-run ALL relevant tests (not just that issue's test) to confirm nothing
+   else broke, then return to 3.2.
 
-Lặp lại 3.1 → 3.2 → 3.3 cho tới khi đạt đủ ngưỡng chất lượng + AC + DoD, HOẶC có issue phải raise cho user (thì dừng workflow tại đó, không tự ý coi như xong).
+Repeat 3.1 → 3.2 → 3.3 until the quality bar, AC, and DoD are all met, OR an issue has to be raised to
+the user (stop the workflow there — never treat it as done unilaterally).
 
-## Bước 4 — Báo cáo kết quả cuối (bắt buộc)
+## Step 4 — Final Report (required)
 
-- AC/DoD nào đạt / chưa đạt.
-- Risk/issue phát sinh trong suốt quá trình (kể cả đã fix) — bao gồm cả issue đã raise cho user nếu có.
-- Danh sách file đã thay đổi.
-- Số lần lặp fix đã dùng cho từng issue (để user thấy độ khó thực tế).
+Report format: see `references/report-and-logs.md` → "Final Report Template". Cover at minimum:
+- Which AC/DoD items were met vs. not met.
+- Risks/issues encountered throughout (including ones already fixed) — including any that were raised
+  to the user.
+- List of files changed.
+- Number of fix attempts used per issue (so the user can see the actual difficulty).
 
-Không cần checkpoint chờ xác nhận riêng ở đây — báo cáo xong làm luôn Bước 5 (ghi log là thao tác phụ, ít rủi ro, sửa lại được nếu user phản hồi khác sau khi đọc báo cáo).
+No separate confirmation checkpoint is needed here — proceed straight to Step 5 after reporting (logging
+is a low-risk side effect, easy to amend later if the user's feedback on the report changes something).
 
-## Bước 5 — Lưu kiến thức & note kinh nghiệm (làm ngay sau Bước 4, không chờ checkpoint)
+## Step 5 — Knowledge Capture (immediately after Step 4, no checkpoint needed)
 
-1. Memory/MCP (nếu có kết nối): ghi quyết định quan trọng, kết quả cuối.
-2. File changelog: `docs/changelog/<feature-slug>.md` — kế thừa từ `docs/plans/<feature-slug>.md` (phương án đã chọn + diagram tương ứng, cập nhật lại nếu diagram/thiết kế có đổi trong lúc implement), cộng thêm: lý do chọn phương án, AC/DoD cuối (đạt/chưa đạt), risk còn tồn đọng, danh sách file đã thay đổi. Đây là bản ghi những gì THỰC SỰ đã build cho feature này (khác `docs/plans/` — nơi chỉ ghi các phương án lúc đề xuất), không đặt trong `docs/decisions/` vì sau khi hoàn thành nó không còn là 1 quyết định thuần túy mà là nhật ký thay đổi thực tế của feature.
-3. **Experience log (bắt buộc, tích lũy lâu dài, KHÔNG ghi đè)**: append vào `docs/knowledge/experience-log.md` — với mỗi issue đã gặp trong Bước 3.3 (dù đã fix hay chưa fix được), ghi theo format:
+Templates for both files below: see `references/report-and-logs.md`.
 
-   ```markdown
-   ## [<ngày>] <feature-slug> — <mô tả issue ngắn gọn>
+1. Memory/MCP (if connected): record key decisions and the final outcome.
+2. Changelog file: `docs/changelog/<feature-slug>.md` — derived from `docs/plans/<feature-slug>.md`
+   (the chosen proposal + its diagrams, updated if the design changed during implementation), plus: the
+   rationale for the chosen proposal, final AC/DoD status (met/not met), remaining risk, and the list of
+   files changed. This is the record of what was ACTUALLY built for this feature (unlike `docs/plans/`,
+   which only records the proposals at decision time) — it does not belong in `docs/decisions/` because
+   once complete it's a change log, not a standalone decision record.
+3. **Experience log (required, cumulative, never overwritten)**: append to
+   `docs/knowledge/experience-log.md` — for every issue hit in Step 3.3 (whether fixed or not), one
+   entry per issue using the template in `references/report-and-logs.md`.
 
-   - Nguyên nhân: ...
-   - Số lần thử: X/5
-   - Kết quả: Đã fix | Chưa fix (raised cho user)
-   - Cách fix (nếu có) / Hướng đã thử mà KHÔNG hiệu quả (để lần sau không lặp lại)
-   ```
+Purpose: the next time a similar issue comes up (same project or a different one), reading this file
+first avoids retrying an approach already known not to work.
 
-Mục đích: lần sau gặp issue tương tự (cùng project hoặc project khác), đọc file này trước để tránh thử lại đúng những hướng đã biết là không hiệu quả.
+## Boundaries
+
+- This skill owns the *workflow* (requirements → proposal → implement/test loop → report → knowledge
+  capture) — it holds no language/framework/database-specific knowledge itself. Any technical
+  implementation detail comes from the matching technical skill, read in full at the point it's applied
+  (Step 3.1); never improvise technical conventions this workflow doesn't own.
+- This skill is for **new capability or intentionally changed behavior** only. If the current behavior
+  is actually wrong (a defect), that's `bug-fix`'s job, even if the user phrases the request as
+  "improve X" — `workflow-router` makes this classification; if invoked directly without going through
+  the router, check first whether the request is really a defect fix in disguise. If the request must
+  NOT change any external behavior (pure structural/performance cleanup), that's `refactor`'s job.
+- This skill decides *what* to test and *when* in the loop (Step 3.2's quality gate) — the actual test
+  design, mocking strategy, and test architecture depend on the relevant technical skill and, for
+  broader test strategy questions, `test-master`.
+- Step 2 produces a requirements/design document (`docs/plans/<feature-slug>.md`) as part of this
+  workflow, not as a standalone deliverable — if the user wants only a requirements document with no
+  implementation to follow, say so explicitly after Step 2's CHECKPOINT instead of silently continuing
+  into Step 3.
+- This skill does not perform a dedicated security or architecture review beyond what's needed to reach
+  the DoD — for a deeper pass, coordinate with `secure-code-guardian` or `architecture-designer`.

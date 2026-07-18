@@ -1,46 +1,50 @@
 ---
 name: redis-skill
-description: Kiến thức chuyên sâu Redis — caching, distributed lock, queue NHẸ, ranking/leaderboard. Dùng khi feature cần cache, khóa phân tán, hàng đợi chấp nhận mất mát tối thiểu, hoặc bảng xếp hạng. Cần durability/delivery guarantee mạnh (retry, dead-letter, replay) → xem `kafka-skill`/`rabbitmq-skill` thay vì Redis.
+description: In-depth Redis knowledge — caching, distributed locks, lightweight queues, ranking/leaderboards. Use when the feature needs a cache, a distributed lock, a queue that can tolerate minimal loss, or a leaderboard. If strong durability/delivery guarantees are needed (retry, dead-letter, replay), see `kafka-skill`/`rabbitmq-skill` instead of Redis.
 ---
 
-# Redis — Đa dụng theo Use-case
+# Redis — Multi-Purpose by Use Case
 
 ## Discover
-Xác nhận project đã dùng Redis qua dependency (`spring-boot-starter-data-redis`, `lettuce`/`jedis`), đọc cấu hình cluster/standalone hiện có, TTL convention đang dùng.
+Confirm the project already uses Redis via its dependency (`spring-boot-starter-data-redis`, `lettuce`/`jedis`), read the existing cluster/standalone config and the TTL convention already in use.
 
-## Khi nào phù hợp / KHÔNG phù hợp
-Phù hợp: cache, session, distributed lock ngắn hạn, queue nhẹ chấp nhận mất mát tối thiểu, leaderboard/counter tốc độ cao. **KHÔNG phù hợp** làm nguồn dữ liệu chính (source of truth) cho dữ liệu quan trọng cần durability mạnh — kể cả bật AOF/RDB, Redis vẫn "best-effort": RDB mất dữ liệu giữa 2 lần snapshot, AOF (`appendfsync everysec`, mặc định) có thể mất tới ~1s dữ liệu nếu crash. Nếu nghiệp vụ không chấp nhận mất dữ liệu này, dữ liệu đó phải nằm ở RDBMS (`database-skill`), Redis chỉ nên là cache/tăng tốc phía trên.
+## When It Fits / When It Doesn't
+Fits: caching, sessions, short-lived distributed locks, lightweight queues that can tolerate minimal loss, high-speed leaderboards/counters. **Does NOT fit** as the primary source of truth for important data that needs strong durability — even with AOF/RDB enabled, Redis is still "best-effort": RDB loses data between snapshots, and AOF (`appendfsync everysec`, the default) can lose up to ~1s of data on a crash. If the business can't accept that loss, that data belongs in an RDBMS (`database-skill`) — Redis should only be a cache/accelerator layered on top.
 
-## Issue thường gặp trong thực tế
-- **Big key**: hash/set/sorted set quá lớn (hàng trăm nghìn field/member) làm block event loop đơn luồng của Redis khi thao tác trên nó (VD: `KEYS *`, `DEL` trên key lớn) — dùng `SCAN` thay `KEYS`, `UNLINK` thay `DEL` (xóa bất đồng bộ, không block).
-- **Hot key**: 1 key bị truy cập cực nhiều (viral) dồn tải vào đúng 1 node dù cluster có nhiều node (do key chỉ thuộc 1 slot) — cân nhắc cache tầng ứng dụng phía trước hoặc tách nhỏ key nếu gặp tình huống này.
-- **Eviction policy sai**: khi đạt `maxmemory`, policy (`allkeys-lru`/`volatile-ttl`/...) quyết định key nào bị xóa trước — chọn `allkeys-lru` mà có key quan trọng KHÔNG đặt TTL sẽ khiến key đó có thể bị evict ngoài ý muốn; chọn `volatile-*` nếu cần bảo vệ key không TTL khỏi bị evict.
-- **Pub/Sub (kênh `PUBLISH`/`SUBSCRIBE`, khác Streams)**: KHÔNG có persistence — subscriber offline lúc publish sẽ mất message vĩnh viễn, không phù hợp nếu cần đảm bảo nhận đủ (dùng Streams nếu cần durability + replay).
+## Common Real-World Issues
+- **Big keys**: an oversized hash/set/sorted set (hundreds of thousands of fields/members) blocks Redis's single-threaded event loop during an operation on it (e.g. `KEYS *`, `DEL` on a large key) — use `SCAN` instead of `KEYS`, `UNLINK` instead of `DEL` (async deletion, non-blocking).
+- **Hot key**: one key gets disproportionately high traffic (viral), concentrating load on a single node even in a multi-node cluster (because a key belongs to exactly one slot) — consider an application-tier cache in front, or splitting the key, if this happens.
+- **Wrong eviction policy**: once `maxmemory` is reached, the policy (`allkeys-lru`/`volatile-ttl`/etc.) decides which key gets evicted first — choosing `allkeys-lru` while an important key has NO TTL set means that key can be evicted unintentionally; choose a `volatile-*` policy if TTL-less keys need protection from eviction.
+- **Pub/Sub (the `PUBLISH`/`SUBSCRIBE` channel, distinct from Streams)**: has NO persistence — a subscriber offline at publish time loses that message permanently; not suitable when reliable delivery is required (use Streams if durability + replay is needed).
 
 ## 1. Caching
-- **Key naming**: nhất quán convention hiện có (VD: `<domain>:<entity>:<id>`).
-- **TTL**: luôn đặt TTL rõ ràng cho cache — không cache vô thời hạn trừ khi có lý do rõ ràng và cơ chế invalidation chủ động đi kèm.
-- **Invalidation strategy**: write-through (cập nhật cache ngay khi ghi DB), write-behind, hoặc cache-aside (invalidate khi ghi, load lại khi đọc miss) — tự chọn theo mức độ chấp nhận stale data của nghiệp vụ (mặc định cache-aside nếu không có tín hiệu khác, đơn giản và an toàn nhất), nêu ngắn gọn lý do đã chọn. Chỉ hỏi lại nếu cache này phục vụ dữ liệu nhạy cảm mà stale data có thể gây hậu quả nghiệp vụ nghiêm trọng (giá/tồn kho/số dư).
-- **Cache stampede**: cân nhắc lock hoặc jitter TTL khi nhiều request cùng miss cache 1 lúc (tránh tất cả cùng đánh vào DB).
+- **Key naming**: follows the project's existing convention (e.g. `<domain>:<entity>:<id>`).
+- **TTL**: always set an explicit TTL for cache entries — never cache indefinitely unless there's a clear reason and an accompanying active-invalidation mechanism.
+- **Invalidation strategy**: write-through (update the cache immediately on DB write), write-behind, or cache-aside (invalidate on write, reload on a read miss) — choose based on how much stale data the business can tolerate (default to cache-aside if there's no other signal — simplest and safest), stating the reasoning briefly. Only ask back if this cache serves sensitive data where staleness could cause a serious business consequence (price, inventory, balance).
+- **Cache stampede**: consider a lock or TTL jitter when many requests can miss the cache simultaneously (to avoid all of them hitting the DB at once).
 
 ## 2. Distributed Lock
-- Dùng `SET key value NX PX <ttl>` (hoặc thư viện Redisson) — LUÔN đặt TTL cho lock để tránh deadlock vĩnh viễn nếu process giữ lock crash.
-- Cân nhắc thuật toán **Redlock** nếu cần lock tin cậy qua nhiều Redis instance độc lập (không chỉ 1 instance/cluster đơn) — chỉ dùng khi thực sự cần độ tin cậy cao, có tranh cãi kỹ thuật về Redlock nên cân nhắc kỹ trước khi áp dụng cho nghiệp vụ tài chính quan trọng.
-- Giải phóng lock đúng chủ sở hữu (dùng token/value ngẫu nhiên, kiểm tra trước khi xóa — tránh giải phóng nhầm lock của process khác).
+- Use `SET key value NX PX <ttl>` (or the Redisson library) — ALWAYS set a TTL on the lock to avoid a permanent deadlock if the holding process crashes.
+- Consider the **Redlock** algorithm only when a lock needs to be reliable across multiple independent Redis instances (not just one instance/cluster) — only use it when reliability truly demands it; there's genuine technical debate about Redlock, so weigh it carefully before applying it to a critical financial operation.
+- Release the lock only if owned by the releaser (use a random token/value, check it before deleting — avoid releasing another process's lock by mistake).
 
-## 3. Queue nhẹ
-- **List** (`LPUSH`/`BRPOP`) cho queue đơn giản FIFO, không cần độ tin cậy cao.
-- **Redis Streams** (`XADD`/`XREADGROUP`) nếu cần consumer group, ack, replay — gần với Kafka hơn nhưng nhẹ hơn, phù hợp khi không muốn thêm hạ tầng Kafka/RabbitMQ mới. Nếu nghiệp vụ cần độ tin cậy/durability cao hơn Streams cung cấp, cân nhắc `kafka-skill`/`rabbitmq-skill` thay vì cố ép Redis làm queue chính.
+## 3. Lightweight Queue
+- **List** (`LPUSH`/`BRPOP`) for a simple FIFO queue that doesn't need high reliability.
+- **Redis Streams** (`XADD`/`XREADGROUP`) when consumer groups, acks, or replay are needed — closer to Kafka in spirit but lighter weight, useful when new Kafka/RabbitMQ infrastructure isn't worth adding. If the business needs more reliability/durability than Streams provides, consider `kafka-skill`/`rabbitmq-skill` instead of forcing Redis into the role of primary queue.
 
 ## 4. Ranking / Leaderboard
-- **Sorted Set** (`ZADD`/`ZRANGE`/`ZRANK`) — cấu trúc chuẩn cho bảng xếp hạng, tra cứu rank O(log N).
-- Cân nhắc cập nhật điểm bằng `ZINCRBY` thay vì đọc-sửa-ghi thủ công (tránh race condition).
+- **Sorted Set** (`ZADD`/`ZRANGE`/`ZRANK`) — the standard structure for leaderboards, O(log N) rank lookup.
+- Prefer `ZINCRBY` for score updates over a manual read-modify-write (avoids race conditions).
 
-## Cluster & High Availability (ghi chú, không tự đổi hạ tầng)
-Nếu project đã dùng Redis Cluster, lưu ý 1 số lệnh không hỗ trợ multi-key qua nhiều slot khác nhau (dùng hash tag `{...}` nếu cần đảm bảo key liên quan cùng 1 slot).
+## Cluster & High Availability (note only, don't change infrastructure unprompted)
+If the project already uses Redis Cluster, note that some commands don't support multi-key operations across different slots (use a hash tag `{...}` when related keys must share a slot).
 
 ## Test
-Testcontainers Redis cho integration test — test TTL/invalidation đúng, test lock không bị giữ vượt TTL, test sorted set trả đúng thứ hạng.
+Testcontainers Redis for integration tests — test TTL/invalidation correctness, test that a lock is never held past its TTL, test that a sorted set returns the correct rank.
 
-## Ranh giới
-Nếu yêu cầu đã đủ rõ mục đích (VD: "cache kết quả API X", "khóa để tránh xử lý trùng đơn hàng") — tự suy ra use-case tương ứng (cache/lock/queue/ranking) và chọn cấu trúc dữ liệu Redis phù hợp mà không cần hỏi lại. Chỉ hỏi lại khi mô tả quá mơ hồ để suy luận đúng use-case (VD: "lưu tạm dữ liệu này vào Redis" không rõ có cần TTL, có cần đọc lại theo thứ tự, hay chỉ cần tồn tại tạm thời).
+## Boundary
+If the request already makes the purpose clear (e.g. "cache the result of API X", "lock to prevent processing the same order twice") — infer the corresponding use case (cache/lock/queue/ranking) and choose the matching Redis data structure without asking back. Only ask when the description is too vague to infer the right use case (e.g. "temporarily store this in Redis" with no indication of whether TTL is needed, ordered reads are needed, or it's just transient existence).
+
+## Knowledge Reference
+
+Cache-aside/write-through/write-behind invalidation, cache stampede, distributed locking (`SET NX PX`, Redlock), Redis Streams vs. Pub/Sub, sorted sets for leaderboards, eviction policies, big key / hot key issues.

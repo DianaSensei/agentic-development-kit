@@ -1,35 +1,39 @@
 ---
 name: ui-ux-design-skill
-description: Kiến thức chuyên sâu UI/UX design — nguyên tắc usability, accessibility, consistency, responsive/cross-platform cho desktop app. Dùng khi feature có thành phần giao diện cần thiết kế trước khi implement, phối hợp với tauri-react-skill.
+description: In-depth UI/UX design knowledge — usability, accessibility, and consistency principles, and responsive/cross-platform design for desktop apps. Use when a feature has a UI component that needs design before implementation; coordinates with `tauri-react-skill` for the actual build.
 ---
 
 # UI/UX Design
 
 ## Discover
-Đọc design system hiện có (nếu có): design token (màu, spacing, typography), component library đang dùng, style guide trong `CLAUDE.md` hoặc file convention riêng. Giữ nhất quán, không tự tạo pattern UI mới nếu đã có chuẩn.
+Read the existing design system, if any: design tokens (color, spacing, typography), the component library in use, the style guide in `CLAUDE.md` or a dedicated convention file. Stay consistent — don't invent a new UI pattern when a standard already exists.
 
-## Usability Heuristics (Nielsen, áp dụng thực tế)
-- **Visibility of system status**: luôn cho user biết đang xảy ra gì (loading, progress, đã lưu chưa) — không để UI im lặng khi đang xử lý.
-- **Error prevention & recovery**: validate trước khi submit khi có thể, thông báo lỗi rõ ràng kèm cách khắc phục, không chỉ báo "Error" chung chung.
-- **Consistency**: cùng 1 hành động phải có cùng 1 cách thực hiện xuyên suốt app (không nơi này dùng nút, nơi khác dùng gesture cho cùng chức năng).
-- **User control**: luôn có đường lùi (Cancel/Undo) cho hành động không thể hoàn tác ngay lập tức nếu khả thi.
+## Usability Heuristics (Nielsen, applied practically)
+- **Visibility of system status**: always tell the user what's happening (loading, progress, saved or not) — never let the UI go silent while something is processing.
+- **Error prevention & recovery**: validate before submit where possible, show a clear error message with how to fix it, not just a generic "Error."
+- **Consistency**: the same action must work the same way everywhere in the app (don't use a button in one place and a gesture in another for the same function).
+- **User control**: always provide a way back (Cancel/Undo) for an action that isn't immediately irreversible, where feasible.
 
 ## Accessibility (a11y)
-- Contrast màu đủ (WCAG AA tối thiểu: 4.5:1 cho text thường).
-- Hỗ trợ điều hướng bàn phím đầy đủ (Tab/Enter/Esc) — quan trọng với desktop app hơn cả mobile vì user quen dùng bàn phím.
-- Label rõ ràng cho input/button (không chỉ icon không có text/aria-label).
-- Size touch/click target đủ lớn (tối thiểu ~44x44px) dù là desktop, vì màn hình cảm ứng (tablet chạy Windows) vẫn có thể dùng app.
+- Sufficient color contrast (WCAG AA minimum: 4.5:1 for normal text).
+- Full keyboard navigation support (Tab/Enter/Esc) — matters even more for a desktop app than mobile, since desktop users are accustomed to keyboard-driven interaction.
+- Clear labels for inputs/buttons (not just an icon with no text/aria-label).
+- Touch/click targets large enough (minimum ~44x44px) even on desktop, since a touch-capable screen (a Windows tablet) may still run the app.
 
-## Responsive & Cross-platform (đặc thù desktop app)
-- Test layout ở nhiều kích thước cửa sổ (user có thể resize tùy ý, khác hẳn mobile app cố định) — tránh layout vỡ khi cửa sổ nhỏ lại.
-- Tôn trọng convention UI riêng từng OS khi hợp lý (menu bar macOS ở trên cùng màn hình vs trong window ở Windows/Linux) — nhưng vẫn giữ nhất quán trải nghiệm cốt lõi.
-- Dark mode/light mode: nếu hỗ trợ, đảm bảo mọi màu sắc dùng token thay vì hardcode, tránh sót 1 vài chỗ không đổi theo theme.
+## Responsive & Cross-Platform (desktop-app-specific)
+- Test the layout at multiple window sizes (the user can resize freely, unlike a fixed mobile app) — avoid a layout that breaks when the window shrinks.
+- Respect each OS's own UI conventions where it makes sense (macOS menu bar at the top of the screen vs. inside the window on Windows/Linux) — while still keeping the core experience consistent.
+- Dark mode/light mode: if supported, ensure every color uses a token instead of a hardcoded value, to avoid a few spots that don't follow the theme.
 
 ## Information Architecture
-Trước khi thiết kế màn hình cụ thể, xác định rõ: user cần thấy thông tin gì đầu tiên (độ ưu tiên hiển thị), luồng thao tác chính (bao nhiêu bước để hoàn thành tác vụ chính, càng ít càng tốt nhưng không hy sinh rõ ràng).
+Before designing a specific screen, clarify: what information the user needs to see first (display priority), and the main interaction flow (how many steps to complete the primary task — fewer is better, but not at the cost of clarity).
 
-## Khi có nhiều hướng thiết kế hợp lý
-Với màn hình/luồng nhỏ, phạm vi rõ (thêm 1 form, 1 danh sách, 1 dialog...) — tự chọn phương án tốt nhất theo usability heuristics ở trên (ưu tiên quen thuộc/nhất quán với pattern hiện có của app hơn là sáng tạo mới), nêu ngắn gọn lý do đã chọn thay vì hỏi trước. Chỉ trình bày 2-3 phương án kèm tradeoff (đơn giản hơn vs linh hoạt hơn, quen thuộc vs mới lạ) và để user chọn khi đây là luồng/màn hình LỚN, ảnh hưởng nhiều phần khác của app hoặc đổi mental model người dùng đã quen — quyết định khó đảo ngược sau khi user đã quen dùng.
+## When Multiple Reasonable Design Directions Exist
+For a small screen/flow with a clear scope (adding one form, one list, one dialog, etc.) — choose the best option per the usability heuristics above (favor familiarity/consistency with the app's existing patterns over novelty), stating the reasoning briefly instead of asking first. Only present 2-3 options with trade-offs (simpler vs. more flexible, familiar vs. novel) and let the user choose when it's a LARGE screen/flow that affects many other parts of the app or changes a mental model users are already used to — a decision that's hard to reverse once users have adapted to it.
 
-## Ranh giới
-Skill này thiết kế Ý TƯỞNG/layout/luồng UX — việc implement code cụ thể (component React, command Tauri) thuộc về `tauri-react-skill`. Nếu cần mockup trực quan, có thể tạo bằng HTML/React artifact tạm để user hình dung trước khi code thật.
+## Boundaries
+This skill designs the IDEA/layout/UX flow — implementing the actual code (a React component, a Tauri command) belongs to `tauri-react-skill`. If a visual mockup is needed, a temporary HTML/React artifact can be created to help the user visualize it before real code is written.
+
+## Knowledge Reference
+
+Nielsen's usability heuristics, WCAG accessibility contrast/keyboard-navigation requirements, design tokens, responsive layout at variable window sizes, per-OS UI conventions, dark/light theming, information architecture.
