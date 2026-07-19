@@ -1,24 +1,27 @@
-# Message Contract (Kafka/RabbitMQ/Pub-Sub) — chuẩn AsyncAPI
+# Message Contract (Kafka/RabbitMQ/Pub-Sub) — AsyncAPI standard
 
-Skill này quyết định PHẦN HỢP ĐỒNG của giao tiếp bất đồng bộ. Chi tiết hạ tầng broker cụ
-thể (partition, consumer group, ack mode, exchange type) thuộc về `kafka-skill`/
-`rabbitmq-skill`/`pubsub-skill` khi triển khai — không quyết định ở đây.
+This skill decides the CONTRACT portion of asynchronous communication. Specific broker
+infrastructure details (partitions, consumer groups, ack mode, exchange type) belong to
+`kafka-skill`/`rabbitmq-skill`/`pubsub-skill` at implementation time — they are not
+decided here.
 
-**AsyncAPI là chuẩn bắt buộc cho message contract** — đóng vai trò tương đương OpenAPI
-cho REST. Với project mới hoặc chưa có convention nào cho message contract, luôn dùng
-AsyncAPI, không tự bịa format JSON rời rạc hay tài liệu mô tả tự do. Nếu project đã có
-sẵn 1 convention khác đang dùng nhất quán (VD Avro schema qua Schema Registry), giữ
-nguyên convention đó thay vì áp đặt AsyncAPI lên trên.
+**AsyncAPI is the mandatory standard for message contracts** — it plays the same role
+for asynchronous messaging that OpenAPI plays for REST. For new projects or projects
+without an existing message contract convention, always use AsyncAPI rather than
+inventing an ad-hoc JSON format or free-form descriptive documentation. If the project
+already has a different convention in consistent use (e.g. Avro schema via Schema
+Registry), keep that convention instead of imposing AsyncAPI on top of it.
 
-## Event Schema — viết bằng AsyncAPI 3.x
-- Định nghĩa `channels` (topic/queue), `messages` (payload schema), `operations`
-  (send/receive) theo đúng cấu trúc AsyncAPI 3.x — xem skeleton mẫu bên dưới.
-- Payload bên trong mỗi message mô tả bằng JSON Schema — đây không phải 2 lựa chọn tách
-  biệt, AsyncAPI dùng JSON Schema làm ngôn ngữ mô tả payload của chính nó.
-- Naming topic/queue/exchange nhất quán convention hiện có (VD Kafka:
-  `<domain>.<entity>.<event-past-tense>`, VD `order.payment.completed`).
+## Event Schema — written in AsyncAPI 3.x
+- Define `channels` (topic/queue), `messages` (payload schema), `operations`
+  (send/receive) following the correct AsyncAPI 3.x structure — see the sample
+  skeleton below.
+- The payload inside each message is described using JSON Schema — these are not two
+  separate choices; AsyncAPI uses JSON Schema as its own payload description language.
+- Name topics/queues/exchanges consistently with existing conventions (e.g. Kafka:
+  `<domain>.<entity>.<event-past-tense>`, e.g. `order.payment.completed`).
 
-## AsyncAPI 3.x — cấu trúc tối thiểu
+## AsyncAPI 3.x — minimal structure
 
 ```yaml
 asyncapi: "3.0.0"
@@ -51,31 +54,38 @@ components:
 ```
 
 ## Schema Versioning & Compatibility
-- Chiến lược evolution BẮT BUỘC backward-compatible: chỉ thêm field optional, không đổi
-  kiểu field cũ, không xóa field đang dùng — đây là ràng buộc cứng để tránh phá vỡ
-  consumer đang chạy phiên bản cũ (consumer không được deploy đồng bộ với producer trong
-  hệ bất đồng bộ).
-- Nếu dùng Schema Registry (Avro/Protobuf), tuân thủ compatibility mode đã cấu hình
-  (BACKWARD/FORWARD/FULL) — không tự đổi mode nếu chưa hiểu rõ tác động.
-- Breaking change không tránh được → version hóa event (VD field `event_version` trong
-  payload, hoặc topic mới) — không âm thầm đổi shape event cũ.
+- The evolution strategy MUST be backward-compatible: only add optional fields, never
+  change the type of an existing field, never remove a field that's in use — this is a
+  hard constraint to avoid breaking consumers still running an older version (in an
+  asynchronous system, consumers aren't guaranteed to deploy in sync with producers).
+- If using a Schema Registry (Avro/Protobuf), follow the configured compatibility mode
+  (BACKWARD/FORWARD/FULL) — don't change the mode without understanding the impact.
+- If a breaking change is unavoidable → version the event (e.g. an `event_version`
+  field in the payload, or a new topic) — don't silently change the shape of an
+  existing event.
 
-## Delivery Semantic — đây là YÊU CẦU/hợp đồng, không phải cấu hình kỹ thuật
-- Xác định nghiệp vụ cần **at-least-once** (phổ biến, chấp nhận trùng, consumer phải
-  idempotent) hay **exactly-once** (phức tạp hơn, chỉ dùng khi thực sự cần thiết — VD
-  giao dịch tài chính không chấp nhận double-processing).
-- Ghi rõ delivery semantic yêu cầu vào contract — cơ chế triển khai cụ thể (Kafka
-  transaction, RabbitMQ manual ack, Pub/Sub exactly-once subscription) do skill kỹ thuật
-  broker tương ứng quyết định, miễn tuân thủ đúng yêu cầu này.
+## Delivery Semantics — this is a REQUIREMENT/contract, not a technical config
+- Determine whether the business needs **at-least-once** (common, duplicates
+  acceptable, consumer must be idempotent) or **exactly-once** (more complex, only use
+  when truly necessary — e.g. financial transactions that cannot tolerate
+  double-processing).
+- Record the required delivery semantic clearly in the contract — the specific
+  implementation mechanism (Kafka transactions, RabbitMQ manual ack, Pub/Sub
+  exactly-once subscription) is decided by the corresponding broker's technical skill,
+  as long as it satisfies this requirement.
 
 ## Consumer Contract (Dead-letter)
-- Mô tả rõ consumer nên xử lý gì khi nhận message lỗi/không parse được: có tồn tại
-  dead-letter topic/queue không, ai chịu trách nhiệm xử lý message ở đó — không đi sâu
-  cấu hình broker cụ thể (retry count, backoff) ở tầng contract này.
+- Clearly describe what a consumer should do when it receives a malformed/unparseable
+  message: is there a dead-letter topic/queue, who is responsible for handling messages
+  there — don't go deep into specific broker configuration (retry count, backoff) at
+  this contract layer.
 
-## Chọn Broker (tham khảo nhanh, quyết định chi tiết ở skill kỹ thuật tương ứng)
-- **Kafka**: throughput cao, cần replay lịch sử, nhiều consumer group độc lập.
-- **RabbitMQ**: routing linh hoạt, task queue kinh điển, quy mô vừa phải.
-- **Google Pub/Sub**: hạ tầng đã ở GCP, không muốn tự quản lý broker.
-- Nếu project đã dùng 1 broker cụ thể, luôn thiết kế contract tương thích với broker đó
-  — không đề xuất đổi broker chỉ vì lý thuyết "phù hợp hơn" nếu không có yêu cầu rõ ràng.
+## Choosing a Broker (quick reference — detailed decisions belong to the corresponding
+technical skill)
+- **Kafka**: high throughput, need historical replay, many independent consumer groups.
+- **RabbitMQ**: flexible routing, classic task queues, moderate scale.
+- **Google Pub/Sub**: infrastructure already on GCP, don't want to self-manage a
+  broker.
+- If the project already uses a specific broker, always design the contract to be
+  compatible with that broker — don't suggest switching brokers just because it seems
+  "more suitable" in theory without a clear requirement.

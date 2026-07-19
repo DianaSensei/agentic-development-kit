@@ -1,52 +1,54 @@
 # Agentic Development Kit
 
-Bộ cấu hình Claude Code cho phát triển phần mềm có hỗ trợ AI: 1 thư viện skill dùng trong 1 agent duy
-nhất, 1 pipeline multi-agent theo tầng, và cấu hình MCP để Claude Code kết nối ra ngoài phạm vi code
-(database, dashboard, ticket tracker). Dùng cho bất kỳ project/stack nào — phần lõi (workflow, quy
-trình) không phụ thuộc công nghệ cụ thể, chi tiết công nghệ nằm ở các module riêng.
+A Claude Code configuration kit for AI-assisted software development: 1 skill library used within a
+single agent, 1 tiered multi-agent pipeline, and MCP configuration so Claude Code can connect beyond
+the codebase (database, dashboard, ticket tracker). Usable for any project/stack — the core (workflow,
+process) has no dependency on any specific technology; tech-specific details live in their own modules.
 
-## Cấu trúc thư mục
+## Directory structure
 
-| Thư mục | Là gì | Xem thêm |
+| Directory | What it is | See also |
 |---|---|---|
-| [`skills/`](./skills/README.md) | Thư viện 28 Claude Code Skill — workflow (feature/bug-fix/refactor), kiến thức kỹ thuật theo ngôn ngữ/hạ tầng, chất lượng/bảo mật, tích hợp MCP. Claude Code tự nhận diện skill phù hợp qua `description`, không cần gọi tay (trừ vài skill đánh dấu manual-only). | [`skills/README.md`](./skills/README.md) |
-| [`agents/`](./agents/README.md) | Pipeline Task subagent nhiều tầng (Tier 1 làm rõ yêu cầu + lên phương án, Tier 2 triển khai chuyên biệt), nói chuyện với nhau qua JSON contract cố định. | [`agents/README.md`](./agents/README.md) |
-| [`mcp/`](./mcp/README.md) | Cấu hình MCP server để Claude Code kết nối hệ thống ngoài: database (PostgreSQL/Redis/MongoDB, chỉ đọc), Grafana, Jira/Confluence tự host. | [`mcp/README.md`](./mcp/README.md) |
+| [`skills/`](./skills/README.md) | A library of 28 Claude Code Skills — workflow (feature/bug-fix/refactor), technical knowledge by language/infrastructure, quality/security, MCP integration. Claude Code automatically recognizes the right skill via its `description`, no manual invocation needed (except a few skills marked manual-only). | [`skills/README.md`](./skills/README.md) |
+| [`agents/`](./agents/README.md) | A tiered Task subagent pipeline (Tier 1 clarifies requirements + proposes solutions, Tier 2 implements specialized work), communicating via a fixed JSON contract. | [`agents/README.md`](./agents/README.md) |
+| [`mcp/`](./mcp/README.md) | MCP server configuration so Claude Code can connect to external systems: database (PostgreSQL/Redis/MongoDB, read-only), Grafana, self-hosted Jira/Confluence. | [`mcp/README.md`](./mcp/README.md) |
 
-## `skills/` và `agents/` khác nhau thế nào?
+## How do `skills/` and `agents/` differ?
 
-Hai hệ thống này **độc lập, hiện chưa tham chiếu lẫn nhau** — cả hai đều nhắm tới việc phát triển tính
-năng có cấu trúc, nhưng theo 2 mô hình khác nhau:
+These two systems are **independent and currently don't reference each other** — both aim at structured
+feature development, but follow 2 different models:
 
-- **`skills/`** — 1 agent (phiên Claude Code hiện tại) tự đọc skill phù hợp và làm toàn bộ việc trong
-  cùng 1 phiên, tuần tự. Bắt đầu từ `workflow-router` (skill), phân loại yêu cầu rồi chuyển cho
-  `feature-development`/`bug-fix`/`refactor`, các skill này tự đọc thêm skill kỹ thuật (`java-spring-
-  skill`, `database-skill`...) khi cần.
-- **`agents/`** — nhiều Task subagent tách biệt, mỗi agent 1 vai trò cố định (`business-analyst` →
-  `solution-architect` → Tier-2 specialist), input/output là JSON có schema rõ ràng, cho phép chạy song
-  song nhiều Tier-2 agent không phụ thuộc nhau.
+- **`skills/`** — 1 agent (the current Claude Code session) reads the appropriate skill itself and does
+  all the work in the same session, sequentially. It starts from `workflow-router` (a skill), classifies
+  the request, then hands off to `feature-development`/`bug-fix`/`refactor`, and these skills read further
+  technical skills (`java-spring-skill`, `database-skill`...) as needed.
+- **`agents/`** — multiple separate Task subagents, each agent with a fixed role (`business-analyst` →
+  `solution-architect` → Tier-2 specialist), input/output as JSON with a clear schema, allowing multiple
+  independent Tier-2 agents to run in parallel.
 
-Dùng cái nào tùy tình huống — `skills/` phù hợp khi muốn 1 luồng liền mạch, dễ theo dõi trong 1 phiên;
-`agents/` phù hợp khi muốn tách rõ trách nhiệm từng vai trò và có thể chạy song song nhiều phần việc độc
-lập.
+Which to use depends on the situation — `skills/` is suited when you want a single continuous flow, easy
+to follow within one session; `agents/` is suited when you want clear separation of responsibility per
+role and the ability to run multiple independent pieces of work in parallel.
 
-## Bắt đầu nhanh
+## Quick start
 
-1. **Skill**: không cần setup gì thêm — mở Claude Code trong repo này, mô tả yêu cầu, `workflow-router`
-   sẽ tự nhận diện và điều phối. Xem danh sách đầy đủ tại [`skills/README.md`](./skills/README.md).
-2. **Agent**: gọi trực tiếp qua Task tool, bắt đầu từ `business-analyst` cho yêu cầu mới. Xem
-   [`agents/README.md`](./agents/README.md) để biết thứ tự và schema input/output từng agent.
-3. **MCP**: nếu cần Claude Code truy cập database/Grafana/Jira-Confluence, làm theo
-   [`mcp/README.md`](./mcp/README.md) — hoặc yêu cầu thẳng "setup giúp tôi MCP Grafana", Claude Code sẽ
-   tự đọc README tương ứng và làm theo (hoặc dùng skill `mcp-setup` cho MCP server khác không có sẵn ở
-   đây).
+1. **Skill**: no extra setup needed — open Claude Code in this repo, describe your request,
+   `workflow-router` will recognize and route it automatically. See the full list at
+   [`skills/README.md`](./skills/README.md).
+2. **Agent**: invoke directly via the Task tool, starting from `business-analyst` for a new request. See
+   [`agents/README.md`](./agents/README.md) for the order and input/output schema of each agent.
+3. **MCP**: if you need Claude Code to access database/Grafana/Jira-Confluence, follow
+   [`mcp/README.md`](./mcp/README.md) — or just ask directly, e.g. "set up Grafana MCP for me", and
+   Claude Code will read the corresponding README and follow it (or use the `mcp-setup` skill for an MCP
+   server not already covered here).
 
-## Quy ước chung
+## General conventions
 
-- Phần điều phối/workflow (trong cả `skills/` và `agents/`) được thiết kế để không phụ thuộc ngôn ngữ/
-  framework cụ thể — mọi chi tiết công nghệ nằm ở các module chuyên biệt (skill kỹ thuật hoặc Tier-2
-  agent), tự nhận diện qua bằng chứng thật (dependency, cấu hình, code hiện có), không giả định trước.
-- Thay đổi ảnh hưởng hành vi bên ngoài (feature mới, sửa lỗi) luôn có checkpoint chờ user xác nhận
-  trước khi thực thi; refactor thuần cấu trúc bắt buộc giữ nguyên 100% hành vi quan sát được.
-- File bí mật/credential không commit vào repo — xem từng `README.md` trong `mcp/*/` về cách dùng
-  `.env` (không track bởi git).
+- The orchestration/workflow part (both in `skills/` and `agents/`) is designed to be independent of any
+  specific language/framework — all tech-specific detail lives in specialized modules (technical skills
+  or Tier-2 agents), auto-detected from real evidence (dependencies, configuration, existing code), never
+  assumed in advance.
+- Changes affecting external behavior (new features, bug fixes) always have a checkpoint waiting for user
+  confirmation before execution; purely structural refactors must preserve 100% of observable behavior.
+- Secret/credential files are never committed to the repo — see each `README.md` under `mcp/*/` for how
+  to use `.env` (not tracked by git).

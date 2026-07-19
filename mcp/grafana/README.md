@@ -1,56 +1,54 @@
 # Grafana MCP
 
-Cấu hình cho [server chính thức của Grafana](https://github.com/grafana/mcp-grafana),
-chạy local qua `uvx`, không yêu cầu Docker hay server riêng. Sau khi kết
-nối, có thể yêu cầu Claude Code: "liệt kê dashboard hiện có", "alert nào
-đang active", "CPU của service X trong một giờ qua" mà không cần mở giao
-diện Grafana.
+Configuration for the [official Grafana server](https://github.com/grafana/mcp-grafana),
+run locally via `uvx`, no Docker or dedicated server required. Once connected, you can ask
+Claude Code things like: "list existing dashboards", "which alerts are active", "what's
+service X's CPU usage over the last hour" without opening the Grafana UI.
 
-## Cài đặt
+## Installation
 
-Cách cài và chạy chính thức nằm ở
-[README của grafana/mcp-grafana](https://github.com/grafana/mcp-grafana#quick-start)
-— tham khảo trang đó nếu gợi ý dưới đây không còn đúng. Repo này mặc định
-dùng cách chạy qua `uv`/`uvx` vì đơn giản nhất, không yêu cầu Docker:
+The official install and run instructions are in the
+[grafana/mcp-grafana README](https://github.com/grafana/mcp-grafana#quick-start)
+— refer to that page if the suggestions below become outdated. This repo defaults to
+running via `uv`/`uvx` since it's the simplest option, requiring no Docker:
 
 ```bash
 brew install uv
 uvx --version
 ```
 
-Nếu không dùng macOS hoặc không có Homebrew, xem hướng dẫn cài đặt `uv` tại
+If you're not on macOS or don't have Homebrew, see the `uv` installation guide at
 [docs.astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/).
-`uvx mcp-grafana` (dùng ở bước đăng ký bên dưới) luôn lấy bản phát hành mới
-nhất, không cần chỉ định version.
+`uvx mcp-grafana` (used in the registration step below) always fetches the latest release,
+no need to specify a version.
 
-## Tạo Service Account token
+## Create a Service Account token
 
-Đường dẫn thao tác trên giao diện Grafana có thể thay đổi theo phiên bản —
-tham khảo
-[tài liệu chính thức về Service Accounts](https://grafana.com/docs/grafana/latest/administration/service-accounts/)
-nếu các bước dưới đây không khớp với giao diện bạn đang thấy.
+The exact UI navigation in Grafana can change between versions — refer to the
+[official Service Accounts documentation](https://grafana.com/docs/grafana/latest/administration/service-accounts/)
+if the steps below don't match what you see.
 
-Vào Grafana → **Administration** → **Service accounts** → **Add service
-account**, đặt tên bất kỳ (ví dụ `mcp-claude-code`). Chọn role **Viewer**
-nếu chỉ cần đọc dữ liệu — mức quyền an toàn hơn. Chọn Editor/Admin nếu cần
-Claude Code tạo hoặc chỉnh sửa dashboard.
+Go to Grafana → **Administration** → **Service accounts** → **Add service
+account**, give it any name (e.g. `mcp-claude-code`). Choose the **Viewer** role
+if you only need to read data — a safer permission level. Choose Editor/Admin if you need
+Claude Code to create or edit dashboards.
 
-Vào service account vừa tạo, chọn **Add service account token**, và sao
-chép token ngay lúc đó — token chỉ hiển thị một lần.
+Open the newly created service account, choose **Add service account token**, and copy the
+token right away — it's only shown once.
 
-## Cấu hình `.env`
+## Configure `.env`
 
 ```bash
 cp .env.example .env
 ```
 
-| Biến | Bắt buộc | Ghi chú |
+| Variable | Required | Note |
 |---|---|---|
-| `GRAFANA_URL` | Có | `http://localhost:3000` (tự host) hoặc `https://<instance>.grafana.net` (Cloud) |
-| `GRAFANA_SERVICE_ACCOUNT_TOKEN` | Có | token vừa tạo |
-| `GRAFANA_ORG_ID` | Chỉ với instance nhiều org | ID số của org |
+| `GRAFANA_URL` | Yes | `http://localhost:3000` (self-hosted) or `https://<instance>.grafana.net` (Cloud) |
+| `GRAFANA_SERVICE_ACCOUNT_TOKEN` | Yes | the token you just created |
+| `GRAFANA_ORG_ID` | Only for multi-org instances | the org's numeric ID |
 
-## Đăng ký với Claude Code
+## Register with Claude Code
 
 ```bash
 set -a && source .env && set +a
@@ -60,34 +58,34 @@ claude mcp add grafana --scope user \
   -- uvx mcp-grafana
 ```
 
-Hai dòng đầu nạp giá trị từ `.env` vào shell, dòng cuối đăng ký server và
-lấy token trực tiếp từ đó — không cần nhập thủ công. `--scope user` áp dụng
-cho mọi project trên máy hiện tại; nếu dùng nhiều máy, cần lặp lại các bước
-này trên từng máy vì `.env` không tự đồng bộ.
+The first two lines load values from `.env` into the shell, the last line registers the
+server and grabs the token directly from it — no need to type it manually. `--scope user`
+applies to every project on this machine; if you use multiple machines, you'll need to
+repeat these steps on each one since `.env` doesn't sync automatically.
 
-Xác nhận:
+Confirm:
 
 ```bash
 claude mcp list
 ```
 
-Trạng thái `✔ Connected` cạnh `grafana` là hoàn tất. Nếu thấy
-`✘ Failed to connect`, kiểm tra `GRAFANA_URL` có truy cập được và token
-chưa bị thu hồi.
+A `✔ Connected` status next to `grafana` means it's done. If you see
+`✘ Failed to connect`, check whether `GRAFANA_URL` is reachable and whether the token has
+been revoked.
 
-## Kiểm tra sau khi kết nối
+## Verify after connecting
 
-- "Liệt kê dashboard trên Grafana"
-- "Alert nào đang active?"
-- "CPU của service checkout trong một giờ qua?"
+- "List the dashboards on Grafana"
+- "Which alerts are active?"
+- "What's the checkout service's CPU over the last hour?"
 
 ---
 
-## Cấu hình nâng cao
+## Advanced configuration
 
-**Đăng ký qua file config thay vì lệnh CLI** — phạm vi cá nhân, sửa
-`~/.claude.json`. File này không lên git nên có thể ghi token thật trực
-tiếp:
+**Registering via a config file instead of the CLI command** — personal scope, edit
+`~/.claude.json`. This file is not committed to git so it's safe to put the real token
+directly in it:
 
 ```json
 {
@@ -98,16 +96,16 @@ tiếp:
       "args": ["mcp-grafana"],
       "env": {
         "GRAFANA_URL": "http://localhost:3000",
-        "GRAFANA_SERVICE_ACCOUNT_TOKEN": "<token từ .env>"
+        "GRAFANA_SERVICE_ACCOUNT_TOKEN": "<token from .env>"
       }
     }
   }
 }
 ```
 
-Chia sẻ với team, tạo `.mcp.json` ở gốc project và commit vào git. Không
-được ghi token thật vào file này — dùng cú pháp `${TÊN_BIẾN}`, mỗi thành
-viên tự khai báo giá trị trên máy họ:
+To share with the team, create `.mcp.json` at the project root and commit it to git. Do NOT
+put the real token in this file — use the `${VARIABLE_NAME}` syntax, each team member
+declares their own value on their machine:
 
 ```json
 {
@@ -125,17 +123,15 @@ viên tự khai báo giá trị trên máy họ:
 }
 ```
 
-Ghi rõ trong README/CLAUDE.md của project rằng mỗi thành viên cần chạy
-`set -a && source mcp/grafana/.env && set +a` trước khi mở Claude Code.
-`.mcp.json` chỉ được đọc lại khi mở phiên làm việc mới.
+Note clearly in the project's README/CLAUDE.md that each team member needs to run
+`set -a && source mcp/grafana/.env && set +a` before opening Claude Code.
+`.mcp.json` is only re-read when a new session is opened.
 
-**Phương thức chạy khác** — Docker, hoặc chạy như HTTP server dùng chung cho
-nhiều người dùng, xem [README gốc](https://github.com/grafana/mcp-grafana#usage).
-Cách `uvx` ở trên là đơn giản nhất cho một người dùng, nên được dùng làm mặc
-định ở đây.
+**Other run methods** — Docker, or running as a shared HTTP server for multiple users, see
+the [upstream README](https://github.com/grafana/mcp-grafana#usage).
+The `uvx` approach above is the simplest for a single user, so it's used as the default here.
 
-**Giới hạn chỉ đọc** — Grafana MCP không có công tắc read-only riêng trong
-cấu hình; quyền truy cập phụ thuộc hoàn toàn vào role của Service Account.
-Để đảm bảo Claude Code không thể chỉnh sửa dashboard hay ghi annotation,
-tạo Service Account với role Viewer, không cấp Editor/Admin trừ khi thực sự
-cần các tool có khả năng ghi.
+**Read-only limitation** — Grafana MCP has no dedicated read-only switch in its
+configuration; access depends entirely on the Service Account's role. To ensure Claude Code
+can't edit dashboards or write annotations, create the Service Account with the Viewer role,
+and don't grant Editor/Admin unless you genuinely need write-capable tools.

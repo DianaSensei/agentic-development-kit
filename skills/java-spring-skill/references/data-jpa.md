@@ -61,14 +61,14 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @Query("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.orders WHERE u.department.id = :deptId")
     List<User> findByDepartmentWithOrders(@Param("deptId") Long deptId);
 
-    // Projection — chỉ lấy field cần, không load cả entity
+    // Projection — fetch only the fields needed, without loading the whole entity
     @Query("""
         SELECT new com.example.dto.UserSummary(u.id, u.email, u.username, COUNT(o))
         FROM User u LEFT JOIN u.orders o WHERE u.active = true GROUP BY u.id, u.email, u.username
         """)
     List<UserSummary> findActiveUsersSummary();
 
-    // Pagination — tránh count query full-table khi không cần chính xác tuyệt đối
+    // Pagination — avoid a full-table count query when exact accuracy isn't needed
     @Query(value = "SELECT u FROM User u WHERE u.active = true", countQuery = "SELECT COUNT(u) FROM User u WHERE u.active = true")
     Page<User> findActiveUsers(Pageable pageable);
 
@@ -78,11 +78,11 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 }
 ```
 
-`@EntityGraph`/`JOIN FETCH` là 2 cách khác nhau giải quyết N+1 — `@EntityGraph` khai báo tại repository, không cần viết lại JPQL; `JOIN FETCH` linh hoạt hơn khi câu query đã phức tạp sẵn. Chọn 1 trong 2 theo convention hiện có của project, không trộn lẫn tùy hứng trong cùng codebase.
+`@EntityGraph`/`JOIN FETCH` are two different ways of solving N+1 — `@EntityGraph` is declared on the repository without rewriting the JPQL; `JOIN FETCH` is more flexible when the query is already complex. Pick one according to the project's existing convention — don't mix them arbitrarily within the same codebase.
 
 ## Dynamic Query — Specifications
 
-Dùng khi filter là tổ hợp nhiều điều kiện optional (search form nhiều field) — tránh viết N phương thức `findByXAndY...` bùng nổ tổ hợp.
+Use this when the filter is a combination of many optional conditions (a multi-field search form) — avoiding an explosion of `findByXAndY...` method combinations.
 
 ```java
 public class UserSpecifications {
@@ -115,31 +115,31 @@ public class OrderService {
 
     @Transactional
     public Order createOrder(OrderCreateRequest request) {
-        // toàn bộ trong 1 transaction — throw bất kỳ đâu trong method này sẽ rollback hết
+        // everything happens within a single transaction — a throw anywhere in this method rolls back all of it
         Order order = buildOrder(request);
         order = orderRepository.save(order);
-        paymentService.processPayment(order); // throw → rollback cả order vừa save
+        paymentService.processPayment(order); // throw → rolls back the order that was just saved too
         return order;
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logOrderEvent(Long orderId, String event) {
-        // Transaction riêng — vẫn commit dù transaction cha rollback (dùng cho audit log không nên mất)
+        // Separate transaction — still commits even if the parent transaction rolls back (used for audit logs that must not be lost)
         orderEventRepository.save(new OrderEvent(orderId, event));
     }
 
     @Transactional(noRollbackFor = NotificationException.class)
     public void completeOrder(Long orderId) {
-        // Lỗi gửi notification không nên làm rollback việc complete order đã thành công
+        // A failure sending the notification shouldn't roll back an order that already completed successfully
         Order order = orderRepository.findById(orderId).orElseThrow();
         order.setStatus(OrderStatus.COMPLETED);
         orderRepository.save(order);
-        notificationService.sendCompletionEmail(order); // exception loại này không rollback
+        notificationService.sendCompletionEmail(order); // this exception type doesn't trigger a rollback
     }
 }
 ```
 
-## Batch Insert/Update (bulk, không qua Hibernate first-level cache tích lũy)
+## Batch Insert/Update (bulk, without accumulating in the Hibernate first-level cache)
 
 ```java
 @Transactional
@@ -149,14 +149,14 @@ public void batchInsert(List<User> users) {
         entityManager.persist(users.get(i));
         if (i % batchSize == 0 && i > 0) {
             entityManager.flush();
-            entityManager.clear(); // tránh OOM khi insert dataset lớn — clear persistence context định kỳ
+            entityManager.clear(); // avoid OOM when inserting a large dataset — periodically clear the persistence context
         }
     }
     entityManager.flush();
 }
 ```
 
-## Auditing (`createdBy`/`updatedBy` tự động)
+## Auditing (automatic `createdBy`/`updatedBy`)
 
 ```java
 @Configuration
@@ -188,18 +188,18 @@ CREATE TABLE users (
 CREATE INDEX idx_users_email ON users(email);
 ```
 
-Thiết kế schema/bảng/quan hệ ban đầu là phạm vi của `database-skill` — file migration ở đây chỉ hiện thực hóa schema đã quyết định, không tự ý đổi thiết kế bảng khi viết migration.
+The initial schema/table/relationship design is the scope of `database-skill` — the migration file here only implements a schema decision that's already been made; don't redesign tables on the fly while writing a migration.
 
 ## Quick Reference
 
 | Pattern | Use Case |
 |---------|----------|
-| `@EntityGraph` / `JOIN FETCH` | Ngăn N+1 |
-| DTO Projection (constructor expression) | Query read-only, chỉ lấy field cần |
-| `@BatchSize` | Batch fetch collection con |
-| `Specification` | Filter động nhiều điều kiện optional |
+| `@EntityGraph` / `JOIN FETCH` | Prevent N+1 |
+| DTO Projection (constructor expression) | Read-only queries, fetching only needed fields |
+| `@BatchSize` | Batch fetch child collections |
+| `Specification` | Dynamic filtering with many optional conditions |
 | `@Modifying` | Bulk update/delete |
-| `Propagation.REQUIRES_NEW` | Transaction con độc lập, không rollback theo cha |
-| `noRollbackFor` | Loại trừ exception cụ thể khỏi rollback |
-| `entityManager.clear()` theo batch | Tránh OOM khi insert/update dataset lớn |
-| `@EnableJpaAuditing` | Tự động `createdAt`/`createdBy`/`updatedAt`/`updatedBy` |
+| `Propagation.REQUIRES_NEW` | Independent child transaction, not rolled back with the parent |
+| `noRollbackFor` | Exclude specific exceptions from rollback |
+| `entityManager.clear()` per batch | Avoid OOM when inserting/updating large datasets |
+| `@EnableJpaAuditing` | Automatic `createdAt`/`createdBy`/`updatedAt`/`updatedBy` |

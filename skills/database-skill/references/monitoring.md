@@ -1,22 +1,23 @@
 # Monitoring & Alert Thresholds
 
-Setup container test (Testcontainers) xem `testcontainers-skill`. File này là truy vấn theo dõi sức khỏe DB **thật** (staging/production), không phải test.
+For container-based testing (Testcontainers), see `testcontainers-skill`. This file covers health-monitoring
+queries for a **real** database (staging/production), not tests.
 
-## Baseline trước khi tối ưu — LUÔN đo trước/sau mỗi thay đổi, không đổi nhiều thứ cùng lúc
+## Baseline before optimizing — ALWAYS measure before/after every change, don't change multiple things at once
 
 ```sql
--- PostgreSQL: top query theo tổng thời gian (cần pg_stat_statements)
+-- PostgreSQL: top queries by total time (requires pg_stat_statements)
 SELECT substring(query, 1, 100) AS short_query, calls,
        round(mean_exec_time::numeric, 2) AS mean_ms,
        round((100 * total_exec_time / sum(total_exec_time) OVER ())::numeric, 2) AS pct_total
 FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 20;
 
--- MySQL: tương đương qua performance_schema
+-- MySQL: equivalent via performance_schema
 SELECT DIGEST_TEXT, COUNT_STAR AS exec_count, ROUND(SUM_TIMER_WAIT / 1e12, 3) AS total_sec
 FROM performance_schema.events_statements_summary_by_digest ORDER BY SUM_TIMER_WAIT DESC LIMIT 20;
 ```
 
-## Health Check nhanh (chạy định kỳ hoặc khi nghi ngờ sự cố)
+## Quick Health Check (run periodically or when you suspect an incident)
 
 ```sql
 -- PostgreSQL
@@ -30,18 +31,18 @@ FROM pg_statio_user_tables;
 SELECT 'connections' AS metric, (SELECT COUNT(*) FROM information_schema.processlist) AS current, @@max_connections AS max;
 ```
 
-## Alert Threshold tham khảo (điều chỉnh theo baseline thật của project, không copy máy móc)
+## Reference Alert Thresholds (adjust to the project's real baseline, don't copy blindly)
 
 | Metric | WARNING | CRITICAL |
 |--------|---------|----------|
-| Connection pool usage | >80% max | >90% max |
+| Connection pool usage | >80% of max | >90% of max |
 | Cache hit ratio | <95% | <90% |
 | Replication lag | >10s | >60s |
-| Dead tuple % (Postgres) | >10% chưa autovacuum | >20% |
-| Slow query (>1s) tăng đột biến | tăng >2x baseline | tăng >5x baseline |
+| Dead tuple % (Postgres) | >10% and autovacuum hasn't run | >20% |
+| Sudden spike in slow queries (>1s) | >2x baseline | >5x baseline |
 
 ```sql
--- PostgreSQL: cảnh báo connection pool
+-- PostgreSQL: connection pool alert
 SELECT count(*) AS current, current_setting('max_connections')::int AS max,
     CASE WHEN count(*) > current_setting('max_connections')::int * 0.9 THEN 'CRITICAL'
          WHEN count(*) > current_setting('max_connections')::int * 0.8 THEN 'WARNING'
@@ -49,7 +50,7 @@ SELECT count(*) AS current, current_setting('max_connections')::int AS max,
 FROM pg_stat_activity;
 ```
 
-## Sequential scan trên bảng lớn — dấu hiệu sớm nhất của thiếu index (kiểm tra định kỳ, không chỉ 1 lần lúc launch)
+## Sequential scans on large tables — the earliest sign of a missing index (check regularly, not just once at launch)
 
 ```sql
 -- PostgreSQL
@@ -66,7 +67,7 @@ WHERE INDEX_NAME IS NULL AND COUNT_STAR > 0 ORDER BY SUM_NO_INDEX_USED DESC;
 
 ## Monitoring Best Practices
 
-1. Ghi lại baseline khi hệ thống chạy bình thường — không có baseline thì không biết "chậm hơn bình thường" nghĩa là gì.
-2. Theo dõi xu hướng (daily/weekly), không chỉ nhìn giá trị tức thời.
-3. Alert tự động (Prometheus/Grafana/Datadog) thay vì kiểm tra thủ công — tool cụ thể xem `monitoring-expert` skill.
-4. Test optimization ở staging trước, revert ngay nếu write performance/replication lag xấu đi sau khi áp dụng production.
+1. Record a baseline while the system is running normally — without a baseline, "slower than normal" is meaningless.
+2. Track trends (daily/weekly), not just point-in-time values.
+3. Use automated alerting (Prometheus/Grafana/Datadog) instead of manual checks — for specific tooling, see the `monitoring-expert` skill.
+4. Test optimizations in staging first, revert immediately if write performance/replication lag worsens after applying to production.

@@ -1,66 +1,77 @@
 # REST Patterns
 
 ## Resource & URI
-- Resource-oriented URL, danh từ số nhiều: `/users`, `/users/{id}/orders` — KHÔNG nhét
-  verb vào URI (`/getUser/{id}` sai, `/users/{id}` đúng — verb đã nằm trong HTTP method).
-- Nested resource tối đa 2 cấp (`/users/{id}/orders`) — sâu hơn nên dùng query param lọc
-  thay vì lồng thêm (`/orders?user_id=...`) để tránh URI quá phức tạp.
-- HTTP method đúng ngữ nghĩa: `GET` (đọc, idempotent, safe), `POST` (tạo mới/action không
-  idempotent), `PUT` (thay thế toàn bộ, idempotent), `PATCH` (sửa 1 phần), `DELETE` (xóa,
-  idempotent).
-- Status code đúng ngữ cảnh: `200` OK, `201` Created (kèm header `Location`), `204` No
-  Content (xóa thành công không trả body), `400` Bad Request (input sai), `401`
-  Unauthorized (chưa auth), `403` Forbidden (đã auth nhưng không đủ quyền), `404` Not
-  Found, `409` Conflict (xung đột state), `422` Unprocessable Entity (validate business
-  rule fail), `429` Too Many Requests.
+- Resource-oriented URLs, plural nouns: `/users`, `/users/{id}/orders` — do NOT put
+  verbs in the URI (`/getUser/{id}` is wrong, `/users/{id}` is correct — the verb
+  already lives in the HTTP method).
+- Nested resources at most 2 levels deep (`/users/{id}/orders`) — deeper nesting should
+  use a query param filter instead (`/orders?user_id=...`) to avoid an overly complex
+  URI.
+- HTTP methods with correct semantics: `GET` (read, idempotent, safe), `POST` (create/
+  non-idempotent action), `PUT` (full replacement, idempotent), `PATCH` (partial
+  update), `DELETE` (delete, idempotent).
+- Status codes matching context: `200` OK, `201` Created (with `Location` header),
+  `204` No Content (successful deletion, no body returned), `400` Bad Request (invalid
+  input), `401` Unauthorized (not authenticated), `403` Forbidden (authenticated but
+  insufficient permission), `404` Not Found, `409` Conflict (state conflict), `422`
+  Unprocessable Entity (business rule validation failed), `429` Too Many Requests.
 
 ## Pagination
-- **Cursor-based** (khuyến nghị cho dataset lớn/phân trang sâu): trả `next_cursor` +
-  `has_more`, client không cần biết offset — tránh vấn đề "trang bị lệch" khi dữ liệu
-  thay đổi giữa các lần gọi.
-- **Offset-based** (`?page=2&limit=20`): đơn giản, dễ hiểu, chấp nhận được cho dataset
-  nhỏ/UI có "nhảy tới trang N" — nhưng chậm dần với offset lớn và có thể lệch dữ liệu.
-- Luôn có giới hạn `limit` tối đa (VD `maximum: 100`) để tránh client xin nguyên bảng.
+- **Cursor-based** (recommended for large datasets/deep pagination): return
+  `next_cursor` + `has_more`, the client doesn't need to know the offset — avoids the
+  "shifted page" problem when data changes between calls.
+- **Offset-based** (`?page=2&limit=20`): simple, easy to understand, acceptable for
+  small datasets/UIs that need to "jump to page N" — but slows down with large offsets
+  and can produce shifted data.
+- Always enforce a maximum `limit` (e.g. `maximum: 100`) to prevent a client from
+  requesting the entire table.
 
 ## Filtering & Sorting
-- Query param nhất quán: `?status=active&sort=-created_at` (dấu `-` = giảm dần).
-- Validate giá trị filter/sort field — không cho sort theo field bất kỳ (rủi ro lộ field
-  nội bộ hoặc N+1 nếu sort theo field không có index).
+- Consistent query params: `?status=active&sort=-created_at` (the `-` prefix means
+  descending).
+- Validate filter/sort field values — don't allow sorting by an arbitrary field (risk
+  of exposing internal fields or causing N+1 queries if sorting by an unindexed field).
 
 ## Versioning
-- Chọn 1 chiến lược nhất quán: URL path (`/v1/users`) rõ ràng/dễ debug nhất, khuyến nghị
-  mặc định trừ khi project đã theo header versioning (`Accept:
-  application/vnd.api+json;version=1` — sạch hơn về mặt REST thuần túy nhưng khó test/
-  debug bằng tay hơn URL path).
-- Chỉ dùng major version (`v1`, `v2`) — không version hóa từng field lẻ tẻ (`v1.1`, `v1.2`
-  gây rối, khó biết khi nào thực sự breaking).
-- **Deprecation phải có cơ chế báo hiệu rõ ràng, không chỉ nói bằng lời**: trả header
-  `Deprecation: true` + `Sunset: <ngày tắt, RFC 8594>` + `Link: <url-version-mới>;
-  rel="successor-version"` trên mọi response của version sắp bị tắt. Sau ngày sunset, trả
-  `410 Gone` kèm message hướng dẫn migrate — không tắt đột ngột không báo trước.
-- Thời hạn hỗ trợ song song 2 version tối thiểu vài tháng (tùy mức độ ảnh hưởng consumer
-  thực tế) — không tự ý rút ngắn nếu chưa xác nhận consumer đã migrate xong.
-- Field-level thay đổi nhỏ (thêm field optional) KHÔNG cần bump version — chỉ bump khi
-  breaking (đổi type, xóa field, đổi ngữ nghĩa).
+- Pick one consistent strategy: URL path (`/v1/users`) is the clearest/easiest to
+  debug, recommended as the default unless the project already follows header
+  versioning (`Accept: application/vnd.api+json;version=1` — cleaner in pure REST
+  terms but harder to test/debug manually than URL path).
+- Only use major versions (`v1`, `v2`) — don't version individual fields piecemeal
+  (`v1.1`, `v1.2` creates confusion about when something is truly breaking).
+- **Deprecation must have a clear, explicit signaling mechanism, not just a verbal
+  notice**: return the header `Deprecation: true` + `Sunset: <shutdown date, RFC 8594>`
+  + `Link: <new-version-url>; rel="successor-version"` on every response of the version
+  being phased out. After the sunset date, return `410 Gone` with a message guiding
+  migration — don't shut it down abruptly without notice.
+- Support both versions in parallel for at least a few months (depending on actual
+  consumer impact) — don't shorten this arbitrarily unless it's confirmed that
+  consumers have finished migrating.
+- Small field-level changes (adding an optional field) do NOT require a version bump —
+  only bump when the change is breaking (type change, field removal, semantic change).
 
 ## Caching (conditional requests)
-- `Cache-Control` cho response cacheable (`public, max-age=3600` cho dữ liệu ít đổi,
-  `private, no-cache` cho dữ liệu riêng user, `no-store` cho dữ liệu nhạy cảm không nên
-  cache).
-- `ETag` cho response cần validate cache chính xác: client gửi lại `If-None-Match: <etag>`
-  ở lần sau, server trả `304 Not Modified` (không body) nếu chưa đổi — tiết kiệm băng
-  thông cho resource lớn/ít đổi.
-- `If-Match` cho ghi có điều kiện (tránh lost update khi 2 client cùng sửa 1 resource):
-  client gửi kèm ETag đã biết, server trả `412 Precondition Failed` nếu resource đã đổi
-  từ lúc đó — dùng khi nghiệp vụ cần optimistic concurrency ở tầng HTTP thay vì chỉ ở DB.
+- `Cache-Control` for cacheable responses (`public, max-age=3600` for rarely-changing
+  data, `private, no-cache` for user-specific data, `no-store` for sensitive data that
+  should never be cached).
+- `ETag` for responses that need precise cache validation: the client resends
+  `If-None-Match: <etag>` on the next request, and the server returns `304 Not
+  Modified` (no body) if nothing changed — saves bandwidth for large/rarely-changing
+  resources.
+- `If-Match` for conditional writes (to avoid lost updates when two clients edit the
+  same resource concurrently): the client sends the known ETag, and the server returns
+  `412 Precondition Failed` if the resource has changed since then — use this when the
+  business logic needs optimistic concurrency at the HTTP layer rather than only at the
+  DB layer.
 
-## HATEOAS (áp dụng chọn lọc, không bắt buộc)
-- Trả link điều hướng liên quan trong response (`_links: { self, next, related }`) nếu
-  client cần discover API động — hầu hết REST API nội bộ/CRUD đơn giản KHÔNG cần mức độ
-  này, chỉ áp dụng khi có yêu cầu rõ ràng về khả năng tự khám phá API.
+## HATEOAS (apply selectively, not mandatory)
+- Return related navigation links in the response (`_links: { self, next, related }`)
+  if the client needs to dynamically discover the API — most internal/simple CRUD REST
+  APIs do NOT need this level of sophistication; only apply it when there's a clear
+  requirement for API self-discoverability.
 
 ## Idempotency
-- `PUT`/`DELETE` phải idempotent tự nhiên theo spec HTTP.
-- `POST` không idempotent tự nhiên — nếu nghiệp vụ cần (VD tạo đơn hàng, thanh toán),
-  dùng header `Idempotency-Key` do client gửi, server dedup theo key đó trong 1 khoảng
-  thời gian hợp lý.
+- `PUT`/`DELETE` must be naturally idempotent per the HTTP spec.
+- `POST` is not naturally idempotent — if the business logic requires it (e.g. creating
+  an order, payment), use a client-supplied `Idempotency-Key` header, and have the
+  server deduplicate by that key within a reasonable time window.

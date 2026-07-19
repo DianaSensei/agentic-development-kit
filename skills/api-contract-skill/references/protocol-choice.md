@@ -1,45 +1,57 @@
-# So sánh giao thức — REST vs GraphQL vs RPC vs Message
+# Protocol Comparison — REST vs GraphQL vs RPC vs Message
 
-Chọn đúng giao thức cho ĐÚNG loại giao tiếp — sai lựa chọn ở đây khó sửa sau vì nhiều
-client/consumer sẽ phụ thuộc vào nó.
+Choose the right protocol for the RIGHT type of communication — a wrong choice here is
+hard to fix later because many clients/consumers will depend on it.
 
 ## REST (OpenAPI)
-- Phù hợp: public API, API hướng browser trực tiếp, cần cache HTTP tự nhiên (GET
-  cacheable), client đa dạng không kiểm soát được (mobile, third-party).
-- Ưu điểm: dễ debug (curl/browser), tooling phổ biến, HTTP semantic quen thuộc.
-- Nhược điểm: over-fetching/under-fetching (client phải gọi nhiều endpoint hoặc nhận dư
-  field), versioning phải quản lý thủ công qua URL/header.
+- Suitable for: public APIs, APIs facing the browser directly, needing native HTTP
+  caching (cacheable GET), diverse clients you don't control (mobile, third-party).
+- Advantages: easy to debug (curl/browser), widespread tooling, familiar HTTP
+  semantics.
+- Disadvantages: over-fetching/under-fetching (clients must call multiple endpoints or
+  receive excess fields), versioning must be managed manually via URL/header.
 
 ## GraphQL
-- Phù hợp: client cần linh hoạt chọn field trả về (mobile muốn ít field hơn web), nhiều
-  loại client với nhu cầu dữ liệu khác nhau cho CÙNG 1 domain, tránh over-fetching.
-- Ưu điểm: 1 endpoint, schema tự mô tả (self-documenting), versioning qua deprecation
-  field thay vì URL.
-- Nhược điểm: cache HTTP không tự nhiên như REST (cần cache tầng ứng dụng/persisted
-  query), rủi ro N+1 ở tầng resolver nếu không cẩn thận, phức tạp hơn để bảo mật đúng
-  (rate-limit theo query complexity, không phải theo request count).
+- Suitable for: clients that need flexibility in choosing which fields to return
+  (mobile wants fewer fields than web), many different client types with different
+  data needs for the SAME domain, avoiding over-fetching.
+- Advantages: single endpoint, self-documenting schema, versioning via field
+  deprecation instead of URL.
+- Disadvantages: HTTP caching isn't as natural as REST (needs application-layer
+  caching/persisted queries), risk of N+1 at the resolver layer if not careful, harder
+  to secure correctly (rate-limiting by query complexity, not request count).
 
 ## RPC (gRPC/Protobuf)
-- Phù hợp: giao tiếp service-to-service NỘI BỘ cần hiệu năng cao, streaming (server/
-  client/bidirectional), type-safe qua codegen giữa các service cùng hệ sinh thái.
-- Ưu điểm: nhanh hơn REST (binary + HTTP/2 multiplexing), hợp đồng chặt chẽ qua `.proto`.
-- Nhược điểm: KHÔNG phù hợp cho public API hướng browser trực tiếp (cần proxy như
-  grpc-web), khó debug bằng tay hơn REST (cần tool riêng như `grpcurl`).
+- Suitable for: INTERNAL service-to-service communication needing high performance,
+  streaming (server/client/bidirectional), type-safety via codegen between services in
+  the same ecosystem.
+- Advantages: faster than REST (binary + HTTP/2 multiplexing), tight contracts via
+  `.proto`.
+- Disadvantages: NOT suitable for a public API facing the browser directly (needs a
+  proxy like grpc-web), harder to debug manually than REST (needs a dedicated tool
+  like `grpcurl`).
 
 ## Message (Kafka/RabbitMQ/Pub-Sub)
-- Phù hợp: giao tiếp BẤT ĐỒNG BỘ — không cần response ngay, cần decouple producer/
-  consumer, cần khả năng retry/replay, 1-nhiều consumer cùng quan tâm 1 sự kiện.
-- Không phù hợp: cần response ngay trong cùng request (dùng REST/RPC), luồng nghiệp vụ
-  yêu cầu tính nhất quán mạnh ngay lập tức (dùng transaction đồng bộ).
-- Xem `references/message-contract.md` để chọn đúng broker (Kafka vs RabbitMQ vs Pub/Sub)
-  — quyết định đó nằm ở skill kỹ thuật broker tương ứng, không phải skill này.
+- Suitable for: ASYNCHRONOUS communication — no immediate response needed, need to
+  decouple producer/consumer, need retry/replay capability, one-to-many consumers
+  interested in the same event.
+- Not suitable for: needing an immediate response within the same request (use
+  REST/RPC), business flows requiring strong consistency right away (use synchronous
+  transactions).
+- See `references/message-contract.md` to choose the right broker (Kafka vs RabbitMQ
+  vs Pub/Sub) — that decision belongs to the corresponding broker's technical skill,
+  not this skill.
 
-## Quy tắc quyết định nhanh
-1. Cần response ngay + public/browser-facing → **REST**.
-2. Cần response ngay + client cần linh hoạt field/nhiều loại client khác nhau → **GraphQL**.
-3. Cần response ngay + nội bộ service-to-service + hiệu năng cao → **RPC**.
-4. KHÔNG cần response ngay, cần decouple/replay/nhiều consumer → **Message**.
+## Quick decision rules
+1. Need an immediate response + public/browser-facing → **REST**.
+2. Need an immediate response + client needs field flexibility/many different client
+   types → **GraphQL**.
+3. Need an immediate response + internal service-to-service + high performance →
+   **RPC**.
+4. Don't need an immediate response, need decoupling/replay/multiple consumers →
+   **Message**.
 
-Nếu 1 nhu cầu có thể hợp lý theo nhiều hướng — tự chọn theo quy tắc trên và nêu lý do
-ngắn gọn trong báo cáo, không cần hỏi trừ khi đây là quyết định ảnh hưởng nhiều service
-đang chạy production (đổi giao thức giao tiếp giữa các service đã tồn tại).
+If a requirement could reasonably go multiple ways — decide using the rules above and
+briefly state the reasoning in the report; no need to ask unless this is a decision
+that affects many services already running in production (changing the communication
+protocol between existing services).

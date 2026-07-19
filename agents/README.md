@@ -1,55 +1,58 @@
 # Agents
 
-Bộ Claude Code subagent (`.claude/agents/*.md`, gọi qua Task tool) tạo thành 1 pipeline nhiều tầng cho
-việc phát triển tính năng: Tier 1 làm rõ yêu cầu + lên phương án, Tier 2 triển khai chuyên biệt theo
-từng mảng kỹ thuật. Mỗi agent nhận input/trả output theo JSON contract cố định, để agent sau dùng thẳng
-không cần suy đoán lại.
+A set of Claude Code subagents (`.claude/agents/*.md`, invoked via the Task tool) forming a tiered
+pipeline for feature development: Tier 1 clarifies requirements + proposes a plan, Tier 2 implements
+specialized work per technical area. Each agent receives input and returns output following a fixed JSON
+contract, so the next agent can use it directly without having to re-infer anything.
 
-> **Khác với `skills/`**: thư mục này là 1 hệ thống multi-agent riêng (nhiều Task subagent tách biệt,
-> nói chuyện với nhau qua JSON), độc lập với `skills/` (thư viện skill dùng trong 1 agent duy nhất qua
-> Skill tool). Hai thư mục hiện KHÔNG tham chiếu lẫn nhau.
+> **How this differs from `skills/`**: this directory is a separate multi-agent system (multiple
+> distinct Task subagents talking to each other via JSON), independent from `skills/` (a skill library
+> used within a single agent via the Skill tool). The two directories currently do NOT reference each
+> other.
 
 ## Pipeline
 
 ```
-business-analyst  →  solution-architect  →  Tier-2 specialist(s), theo task_breakdown
-   (Tier 1)              (Tier 1)              (song song hoặc tuần tự, tùy dependency)
+business-analyst  →  solution-architect  →  Tier-2 specialist(s), per task_breakdown
+   (Tier 1)              (Tier 1)              (parallel or sequential, depending on dependencies)
 ```
 
-| Bước | Agent | Vai trò |
+| Step | Agent | Role |
 |------|-------|---------|
-| 1 | [`business-analyst`](./business-analyst.md) | Đọc hiện trạng, làm rõ yêu cầu, đánh giá tính khả thi. Hoàn toàn agnostic — không biết/không cần biết stack. Output: draft AC/Edge Case/DoD + impact assessment sơ bộ. |
-| 2 | [`solution-architect`](./solution-architect.md) | Nhận output của Bước 1, xác định stack (`CLAUDE.md` → memory/MCP → bằng chứng code), đưa 1+ proposal đầy đủ diagram/tradeoff/AC-DoD đã chốt + `task_breakdown` gán việc cho đúng Tier-2 agent. KHÔNG viết code, KHÔNG chốt schema/công nghệ lưu trữ cụ thể. |
-| 3 | Tier-2 specialist(s) | Mỗi agent trong `task_breakdown` triển khai đúng phần việc được gán, có thể chạy song song nếu không phụ thuộc nhau (`can_run_parallel_with`). |
+| 1 | [`business-analyst`](./business-analyst.md) | Reviews current state, clarifies requirements, assesses feasibility. Completely agnostic — doesn't know/need to know the stack. Output: draft AC/Edge Case/DoD + a preliminary impact assessment. |
+| 2 | [`solution-architect`](./solution-architect.md) | Takes the output from Step 1, identifies the stack (`CLAUDE.md` → memory/MCP → code evidence), produces 1+ proposal(s) complete with diagrams/tradeoffs/finalized AC-DoD + a `task_breakdown` assigning work to the right Tier-2 agent. Does NOT write code, does NOT finalize a specific storage schema/technology. |
+| 3 | Tier-2 specialist(s) | Each agent in `task_breakdown` implements exactly the assigned piece of work, can run in parallel if independent (`can_run_parallel_with`). |
 
-`solution-architect` **không dùng danh sách tên agent cố định** — nó tự đọc `agents/*.md` (Bước 0.5
-trong file của nó) để biết Tier-2 agent nào đang thực sự tồn tại và mô tả làm gì, rồi mới gán việc.
-Nghĩa là thêm 1 Tier-2 agent mới vào thư mục này không cần sửa `solution-architect.md`.
+`solution-architect` **does not use a hardcoded list of agent names** — it reads `agents/*.md` itself
+(Step 0.5 in its own file) to find out which Tier-2 agents actually exist and what they do, before
+assigning work. This means adding a new Tier-2 agent to this directory doesn't require editing
+`solution-architect.md`.
 
-## Tier-2 Specialists Hiện Có
+## Existing Tier-2 Specialists
 
-| Agent | Chuyên trách | Gọi sau |
+| Agent | Specialty | Called after |
 |-------|--------------|---------|
-| [`api-spec-designer`](./api-spec-designer.md) | Contract API — REST (OpenAPI) đồng bộ + message contract (Kafka/RabbitMQ/Pub-Sub, kiểu AsyncAPI) bất đồng bộ. Chỉ ra contract, không implement server/broker. | `solution-architect` |
-| [`data-storage-architect`](./data-storage-architect.md) | Thiết kế data storage cho MỌI công nghệ (Oracle/PostgreSQL/MySQL/Redis/MongoDB/Elasticsearch/SQLite local). Tự phát hiện công nghệ đang dùng, luôn trình bày tradeoff, không tự quyết. | `solution-architect` |
-| [`java-ecosystem-engineer`](./java-ecosystem-engineer.md) | Implement + tự test business/functional flow Java Spring Boot (MVC/WebFlux, Spring Data, Security, Kafka, RabbitMQ, resilience). | `data-storage-architect` + `api-spec-designer` (nếu áp dụng) |
-| [`tauri-react-engineer`](./tauri-react-engineer.md) | Implement + tự test Tauri (Rust command) + React (UI) cho desktop app cross-platform. | `data-storage-architect` (nếu cần persisted data) + `api-spec-designer` (nếu áp dụng) |
+| [`api-spec-designer`](./api-spec-designer.md) | API contracts — synchronous REST (OpenAPI) + asynchronous message contracts (Kafka/RabbitMQ/Pub-Sub, AsyncAPI-style). Defines the contract only, does not implement the server/broker. | `solution-architect` |
+| [`data-storage-architect`](./data-storage-architect.md) | Designs data storage for ANY technology (Oracle/PostgreSQL/MySQL/Redis/MongoDB/Elasticsearch/local SQLite). Auto-detects the technology in use, always presents tradeoffs, never decides unilaterally. | `solution-architect` |
+| [`java-ecosystem-engineer`](./java-ecosystem-engineer.md) | Implements + self-tests Java Spring Boot business/functional flows (MVC/WebFlux, Spring Data, Security, Kafka, RabbitMQ, resilience). | `data-storage-architect` + `api-spec-designer` (if applicable) |
+| [`tauri-react-engineer`](./tauri-react-engineer.md) | Implements + self-tests Tauri (Rust commands) + React (UI) for a cross-platform desktop app. | `data-storage-architect` (if persisted data is needed) + `api-spec-designer` (if applicable) |
 
-Mỗi agent implement (Tier 2) đều tự viết VÀ tự chạy test cho phần mình làm trước khi báo hoàn thành,
-không để lại việc verify cho bước sau.
+Every implementing (Tier 2) agent writes AND runs its own tests for the part it did before reporting
+done, leaving no verification work for a later step.
 
-## Quy ước chung
+## General conventions
 
-- **JSON output có cấu trúc** — mỗi agent trả 1 JSON object theo schema cố định trong file của nó, để
-  agent/bước sau dùng thẳng, không phải parse lại văn bản tự do.
-- **`checkpoint`** — hầu hết output có field `checkpoint` (`required`, `type`, `summary`) đánh dấu rõ
-  khi nào cần dừng lại chờ user xác nhận (VD: chọn 1 trong nhiều proposal của `solution-architect`)
-  trước khi đi tiếp.
-- **`context_sources_used` / `provenance`** — agent luôn ghi rõ thông tin lấy từ đâu (CLAUDE.md, memory/
-  MCP, hay đọc code) để bước sau biết độ tin cậy, không coi mọi input như đã được xác nhận chắc chắn.
-- **Tier 1 không phụ thuộc stack, Tier 2 thì có** — `business-analyst` cố tình được thiết kế hoàn toàn
-  agnostic (dùng được cho mọi loại project); từ `solution-architect` trở đi mới cần xác định stack cụ
-  thể để route đúng specialist.
-- **Mỗi proposal của `solution-architect` phải tự đủ (self-contained)** — vì agent này chỉ chạy 1 lần
-  trong luồng bình thường, sau khi user chọn 1 proposal thì lead-agent dùng thẳng AC/Edge Case/DoD/
-  task_breakdown của đúng proposal đó, không gọi lại `solution-architect` để hỏi thêm.
+- **Structured JSON output** — each agent returns a JSON object following a fixed schema defined in its
+  own file, so the next agent/step can use it directly rather than parsing free-form text.
+- **`checkpoint`** — most outputs have a `checkpoint` field (`required`, `type`, `summary`) that clearly
+  marks when to pause and wait for user confirmation (e.g., choosing among multiple `solution-architect`
+  proposals) before proceeding.
+- **`context_sources_used` / `provenance`** — agents always record where information came from
+  (CLAUDE.md, memory/MCP, or reading code) so the next step knows how much to trust it, rather than
+  treating every input as already confirmed.
+- **Tier 1 is stack-agnostic, Tier 2 is not** — `business-analyst` is deliberately designed to be
+  completely agnostic (usable for any type of project); starting from `solution-architect` onward, the
+  stack must be identified in order to route to the right specialist.
+- **Every `solution-architect` proposal must be self-contained** — since this agent runs only once in
+  the normal flow, once the user picks a proposal, the lead agent uses that proposal's AC/Edge
+  Case/DoD/task_breakdown directly, without calling `solution-architect` again for more input.

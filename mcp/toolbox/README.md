@@ -1,132 +1,131 @@
 # Database MCP (PostgreSQL, Redis, MongoDB)
 
-Cấu hình cho [MCP Toolbox](https://github.com/googleapis/mcp-toolbox) của
-Google — một binary chạy trên máy, đứng giữa Claude Code và database. Sau
-khi kết nối, có thể yêu cầu Claude Code trực tiếp: "liệt kê bảng trong
-database primary", "lấy giá trị key user:123 trong Redis", thay vì tự mở
-client của từng database.
+Configuration for Google's [MCP Toolbox](https://github.com/googleapis/mcp-toolbox) — a
+locally-run binary that sits between Claude Code and your database. Once connected, you can
+ask Claude Code directly: "list the tables in the primary database", "get the value of key
+user:123 in Redis", instead of opening each database's own client.
 
-Cấu hình sẵn hai nguồn PostgreSQL (`primary`, `analytics`), một Redis, một
-MongoDB. Không bắt buộc dùng đủ cả bốn — nguồn nào không có thông tin kết
-nối thì bỏ qua, không ảnh hưởng các nguồn còn lại.
+Pre-configured for two PostgreSQL sources (`primary`, `analytics`), one Redis, and one
+MongoDB. You don't have to use all four — any source without connection info is simply
+skipped, without affecting the others.
 
-Lưu ý quan trọng: phần PostgreSQL trong cấu hình này chỉ đọc dữ liệu, không
-có tool nào ghi/xoá/sửa bảng. Lý do và cách đảm bảo điều này được nói ở cuối
-tài liệu.
+Important note: the PostgreSQL portion of this configuration is read-only, with no tool
+that writes/deletes/modifies tables. The reasoning and how this is enforced are described
+at the end of this document.
 
-## Cài binary
+## Install the binary
 
-Cách cài đặt chính thức, cập nhật theo phiên bản mới nhất, nằm ở
-[trang giới thiệu MCP Toolbox](https://mcp-toolbox.dev/documentation/introduction/#installing-the-server)
-và [trang Releases trên GitHub](https://github.com/googleapis/mcp-toolbox/releases)
-— tham khảo hai trang này nếu gợi ý dưới đây không còn đúng.
+The official installation instructions, updated for the latest version, are at the
+[MCP Toolbox introduction page](https://mcp-toolbox.dev/documentation/introduction/#installing-the-server)
+and the [GitHub Releases page](https://github.com/googleapis/mcp-toolbox/releases)
+— refer to these two pages if the suggestions below become outdated.
 
-Trên macOS, cách nhanh nhất là qua Homebrew (tự lấy bản mới nhất, không cần
-tự tải theo version):
+On macOS, the fastest way is via Homebrew (always fetches the latest version, no need to
+download a specific version yourself):
 
 ```bash
 brew install mcp-toolbox
 ```
 
-Lệnh này cài binary tên `toolbox`. Chạy `toolbox --version` để xác nhận.
-Không dùng Homebrew hoặc dùng Linux/Windows thì tải binary trực tiếp từ
-trang Releases ở trên, chọn đúng bản ứng với hệ điều hành.
+This installs a binary named `toolbox`. Run `toolbox --version` to confirm. If you're not
+using Homebrew, or on Linux/Windows, download the binary directly from the Releases page
+above, choosing the right build for your OS.
 
-Ngoài ra cần thông tin kết nối database, xin từ người quản trị hệ thống.
-Riêng PostgreSQL, yêu cầu tài khoản có quyền chỉ đọc (read-only), không
-dùng tài khoản admin.
+You'll also need database connection info — request it from your system administrator.
+For PostgreSQL specifically, request an account with read-only permissions, not an admin
+account.
 
-## Cấu hình `.env`
+## Configure `.env`
 
 ```bash
 cp .env.example .env
 ```
 
-| Biến | Áp dụng cho | Ghi chú |
+| Variable | Applies to | Note |
 |---|---|---|
-| `POSTGRES_PRIMARY_*` | PostgreSQL #1 | host/port/database/user/password — user phải là tài khoản read-only |
-| `POSTGRES_ANALYTICS_*` | PostgreSQL #2 | tương tự, nếu có nguồn thứ hai |
-| `REDIS_ADDRESS` | Redis | dạng `host:port` |
-| `REDIS_USERNAME` / `REDIS_PASSWORD` | Redis | để trống nếu không dùng xác thực |
-| `REDIS_DATABASE` | Redis | số thứ tự database, mặc định `0` |
-| `MONGODB_URI` | MongoDB | connection string đầy đủ |
-| `MONGODB_DATABASE` / `MONGODB_COLLECTION` | MongoDB | database/collection mặc định |
+| `POSTGRES_PRIMARY_*` | PostgreSQL #1 | host/port/database/user/password — the user must be a read-only account |
+| `POSTGRES_ANALYTICS_*` | PostgreSQL #2 | same, if there's a second source |
+| `REDIS_ADDRESS` | Redis | in the form `host:port` |
+| `REDIS_USERNAME` / `REDIS_PASSWORD` | Redis | leave blank if no auth is used |
+| `REDIS_DATABASE` | Redis | database index, defaults to `0` |
+| `MONGODB_URI` | MongoDB | the full connection string |
+| `MONGODB_DATABASE` / `MONGODB_COLLECTION` | MongoDB | default database/collection |
 
-Nguồn nào không dùng có thể giữ nguyên giá trị mẫu.
+Any source you're not using can keep its sample value.
 
-## Chạy thử
+## Try it out
 
-Trong thư mục này (dùng `toolbox` nếu cài qua Homebrew, hoặc `./toolbox` nếu
-tải binary trực tiếp vào thư mục này):
+In this directory (use `toolbox` if installed via Homebrew, or `./toolbox` if you
+downloaded the binary directly into this directory):
 
 ```bash
 set -a && source .env && set +a
 toolbox --config tools.yaml
 ```
 
-Thấy dòng `Server ready to serve!` là khởi động thành công. Giữ nguyên
-process này chạy, không đóng terminal.
+Seeing `Server ready to serve!` means it started successfully. Keep this process running,
+don't close the terminal.
 
-Nếu gặp lỗi, nguyên nhân thường nằm ở giá trị sai trong `.env` — message
-lỗi thường chỉ rõ trường nào không hợp lệ.
+If you run into an error, it's usually caused by an incorrect value in `.env` — the error
+message typically points out which field is invalid.
 
-## Đăng ký với Claude Code
+## Register with Claude Code
 
-Mở một terminal khác (không tắt process toolbox đang chạy):
+Open a different terminal (don't close the running toolbox process):
 
 ```bash
 claude mcp add toolbox --scope user --transport http http://127.0.0.1:5000/mcp
 ```
 
-Xác nhận:
+Confirm:
 
 ```bash
 claude mcp list
 ```
 
-Trạng thái `✔ Connected` cạnh `toolbox` là hoàn tất. Nếu thấy
-`✘ Failed to connect`, kiểm tra lại process toolbox ở bước trước có còn
-chạy hay không.
+A `✔ Connected` status next to `toolbox` means it's done. If you see
+`✘ Failed to connect`, check whether the toolbox process from the previous step is still
+running.
 
-## Kiểm tra sau khi kết nối
+## Verify after connecting
 
-Thử một vài yêu cầu với Claude Code:
-- "Liệt kê các bảng trong database primary"
-- "Query 10 dòng đầu bảng users trong database analytics"
-- "Lấy giá trị key session:abc123 trong Redis"
-- "Tìm document có status=active trong MongoDB"
+Try a few requests with Claude Code:
+- "List the tables in the primary database"
+- "Query the first 10 rows of the users table in the analytics database"
+- "Get the value of key session:abc123 in Redis"
+- "Find documents with status=active in MongoDB"
 
-Nêu rõ nguồn dữ liệu (primary/analytics/Redis/MongoDB) trong yêu cầu, Claude
-Code sẽ tự chọn đúng tool tương ứng.
+Mention the data source explicitly (primary/analytics/Redis/MongoDB) in your request,
+Claude Code will pick the right tool accordingly.
 
 ---
 
-## Cấu hình nâng cao
+## Advanced configuration
 
-**Chạy dưới dạng stdio thay vì giữ process HTTP** — Claude Code sẽ tự khởi
-động toolbox khi cần, không phải giữ terminal chạy liên tục:
+**Running as stdio instead of keeping an HTTP process alive** — Claude Code will start
+toolbox itself when needed, no need to keep a terminal running continuously:
 
 ```bash
-claude mcp add toolbox --scope user -- toolbox --stdio --config /đường-dẫn-tuyệt-đối/tools.yaml
+claude mcp add toolbox --scope user -- toolbox --stdio --config /absolute-path/tools.yaml
 ```
 
-Cách này yêu cầu các biến trong `.env` phải được nạp vào môi trường trước
-khi Claude Code khởi động process — phức tạp hơn HTTP, nên chỉ dùng khi có
-lý do cụ thể.
+This approach requires the variables in `.env` to be loaded into the environment before
+Claude Code starts the process — more complex than HTTP, so only use it if you have a
+specific reason.
 
-**Giới hạn phạm vi kết nối, ví dụ chỉ mở Redis** — thêm tên toolset vào
-cuối URL:
+**Limiting connection scope, e.g. only exposing Redis** — add the toolset name to the end
+of the URL:
 
 ```bash
 claude mcp add redis-only --scope user --transport http http://127.0.0.1:5000/mcp/redis-toolset
 ```
 
-Các toolset có sẵn: `postgres-primary-toolset`, `postgres-analytics-toolset`,
-`redis-toolset`, `mongodb-toolset`, `all` (mặc định).
+Available toolsets: `postgres-primary-toolset`, `postgres-analytics-toolset`,
+`redis-toolset`, `mongodb-toolset`, `all` (default).
 
-**Đăng ký qua file config thay vì lệnh CLI** — `claude mcp add` về bản chất
-chỉ ghi vào một file cấu hình, có thể chỉnh trực tiếp. Phạm vi cá nhân, sửa
-`~/.claude.json`:
+**Registering via a config file instead of the CLI command** — `claude mcp add`
+essentially just writes to a config file, which can be edited directly. Personal scope,
+edit `~/.claude.json`:
 
 ```json
 {
@@ -136,8 +135,8 @@ chỉ ghi vào một file cấu hình, có thể chỉnh trực tiếp. Phạm v
 }
 ```
 
-Chia sẻ với team, tạo `.mcp.json` ở gốc project và commit vào git (mỗi
-thành viên vẫn tự chạy toolbox trên máy họ):
+To share with the team, create `.mcp.json` at the project root and commit it to git (each
+team member still runs toolbox on their own machine):
 
 ```json
 {
@@ -151,27 +150,26 @@ thành viên vẫn tự chạy toolbox trên máy họ):
 }
 ```
 
-Claude Code chỉ đọc lại `.mcp.json` khi mở phiên làm việc mới.
+Claude Code only re-reads `.mcp.json` when a new session is opened.
 
-**Thêm datasource PostgreSQL thứ ba** — sao chép một khối `kind: source`
-trong `tools.yaml` (ví dụ `postgres-analytics-source`), đổi tên, trỏ sang
-bộ biến môi trường mới (ví dụ `POSTGRES_REPORTING_*`), bổ sung các biến đó
-vào `.env` và `.env.example`. Sao chép luôn hai tool `*_query_data` và
-`*_list_tables` đi kèm, thêm vào một toolset.
+**Adding a third PostgreSQL data source** — copy a `kind: source` block in `tools.yaml`
+(e.g. `postgres-analytics-source`), rename it, point it to a new set of environment
+variables (e.g. `POSTGRES_REPORTING_*`), and add those variables to `.env` and
+`.env.example`. Also copy the accompanying `*_query_data` and `*_list_tables` tools and add
+them to a toolset.
 
-## Vì sao PostgreSQL chỉ đọc
+## Why PostgreSQL is read-only
 
-Toolbox không kiểm tra nội dung câu SQL trước khi thực thi — câu lệnh nào
-đưa vào cũng được chạy nguyên văn, miễn tài khoản kết nối có quyền thực
-hiện. `tools.yaml` chủ động không định nghĩa tool ghi/xoá/sửa nào, nhưng đó
-chỉ là một lớp bảo vệ ở mức cấu hình, không phải giới hạn kỹ thuật cứng.
+Toolbox doesn't inspect the content of SQL statements before executing them — whatever is
+passed in gets run verbatim, as long as the connecting account has the permission to
+execute it. `tools.yaml` deliberately doesn't define any write/delete/modify tool, but this
+is only a protection layer at the configuration level, not a hard technical limit.
 
-Lớp bảo vệ thực sự nằm ở tài khoản PostgreSQL khai báo trong `.env`. Tài
-khoản này cần chỉ có quyền SELECT — không có INSERT/UPDATE/DELETE, không sở
-hữu bảng, không có quyền DDL. Khi đó, dù có yêu cầu thực thi câu lệnh ghi,
-PostgreSQL sẽ từ chối bằng lỗi permission denied, độc lập với nội dung
-`tools.yaml`.
+The real protection layer is the PostgreSQL account declared in `.env`. This account should
+only have SELECT permission — no INSERT/UPDATE/DELETE, doesn't own any tables, has no DDL
+permission. In that case, even if a write statement is requested, PostgreSQL will reject it
+with a permission-denied error, regardless of `tools.yaml`'s content.
 
-Repo này không tạo hay chỉnh sửa quyền của tài khoản đó — cần xin tài khoản
-read-only từ người quản trị database, tương tự quy trình cấp quyền cho bất
-kỳ công cụ báo cáo chỉ-đọc nào khác.
+This repo doesn't create or modify that account's permissions — request a read-only
+account from your database administrator, the same as the process for granting access to
+any other read-only reporting tool.

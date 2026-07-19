@@ -1,20 +1,22 @@
 # RPC (gRPC/Protobuf)
 
-## Khi nào dùng
-- Giao tiếp service-to-service NỘI BỘ cần hiệu năng cao, hoặc cần streaming (server-side,
-  client-side, hoặc bidirectional streaming).
-- KHÔNG phù hợp cho public API hướng browser trực tiếp — browser không gọi gRPC thuần
-  được, cần proxy như `grpc-web` nếu bắt buộc phải expose ra browser.
+## When to use
+- INTERNAL service-to-service communication that needs high performance, or needs
+  streaming (server-side, client-side, or bidirectional streaming).
+- NOT suitable for a public API facing the browser directly — browsers cannot call
+  plain gRPC, a proxy such as `grpc-web` is needed if it must be exposed to the browser.
 
-## Thiết kế `.proto`
-- **Field number KHÔNG được đổi/tái sử dụng sau khi đã publish** — đây là breaking change
-  nghiêm trọng nhất trong Protobuf vì wire format dựa vào field number, không phải tên.
-  Chỉ thêm field mới với số field mới; đánh dấu `reserved N;` cho field number đã xóa để
-  tránh ai đó vô tình dùng lại số đó sau này.
-- Field mới PHẢI optional (hoặc có default value hợp lý) để không phá vỡ client cũ chưa
-  update — nguyên tắc backward-compatible giống REST/GraphQL.
-- Đặt tên message/field theo convention `snake_case` cho field (chuẩn Protobuf), message
-  name `PascalCase`.
+## Designing the `.proto`
+- **Field numbers must NEVER be changed/reused after being published** — this is the
+  most serious breaking change in Protobuf, since the wire format relies on field
+  numbers, not names. Only add new fields with new field numbers; mark deleted field
+  numbers as `reserved N;` to prevent anyone from accidentally reusing that number
+  later.
+- New fields MUST be optional (or have a sensible default value) so as not to break
+  older clients that haven't updated — the same backward-compatibility principle as
+  REST/GraphQL.
+- Name messages/fields following convention: `snake_case` for fields (Protobuf
+  standard), `PascalCase` for message names.
 
 ## Service Definition
 ```protobuf
@@ -23,23 +25,26 @@ service OrderService {
   rpc StreamOrderUpdates(StreamRequest) returns (stream OrderUpdate); // server streaming
 }
 ```
-- Method name là verb rõ ràng (`GetOrder`, `CreateOrder`) — khác REST, RPC method tên có
-  verb là bình thường vì đây không phải resource-oriented.
+- Method names are clear verbs (`GetOrder`, `CreateOrder`) — unlike REST, having a verb
+  in the RPC method name is normal since this isn't resource-oriented.
 
 ## Versioning
-- Đóng gói version vào package name (`package com.example.order.v1;`) nếu cần breaking
-  change — tạo package `v2` mới thay vì cố nhồi backward-compat vào cùng 1 message khi
-  thay đổi quá lớn để giữ đúng nghĩa "1 version = 1 contract cố định".
+- Encode the version into the package name (`package com.example.order.v1;`) when a
+  breaking change is needed — create a new `v2` package instead of trying to cram
+  backward compatibility into the same message when the change is too large, to
+  preserve the meaning of "1 version = 1 fixed contract".
 
 ## Deadline & Timeout
-- Luôn set deadline phía client cho mọi RPC call — tránh chờ vô hạn khi service downstream
-  chậm/treo. Không dựa vào timeout mặc định của thư viện (thường quá dài hoặc không có).
-- Deadline nên truyền xuyên suốt chuỗi gọi (deadline propagation) nếu A gọi B gọi C — C
-  không nên có deadline dài hơn thời gian còn lại của deadline gốc từ A.
+- Always set a client-side deadline for every RPC call — to avoid waiting indefinitely
+  when a downstream service is slow/hung. Don't rely on the library's default timeout
+  (usually too long or nonexistent).
+- Deadlines should propagate through the whole call chain (deadline propagation) if A
+  calls B calls C — C should not have a deadline longer than the remaining time of the
+  original deadline from A.
 
 ## Error Handling
-- Dùng status code chuẩn của gRPC (`INVALID_ARGUMENT`, `NOT_FOUND`, `PERMISSION_DENIED`,
-  `DEADLINE_EXCEEDED`...) thay vì tự định nghĩa error code riêng — client/tooling gRPC đã
-  hiểu sẵn các status này.
-- Dùng `google.rpc.ErrorDetails` (hoặc tương đương) để mang thông tin lỗi có cấu trúc khi
-  cần chi tiết hơn status code đơn thuần.
+- Use gRPC's standard status codes (`INVALID_ARGUMENT`, `NOT_FOUND`,
+  `PERMISSION_DENIED`, `DEADLINE_EXCEEDED`...) instead of defining custom error codes —
+  gRPC clients/tooling already understand these statuses.
+- Use `google.rpc.ErrorDetails` (or an equivalent) to carry structured error information
+  when more detail than a plain status code is needed.

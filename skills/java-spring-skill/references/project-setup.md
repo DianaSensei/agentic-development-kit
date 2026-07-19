@@ -1,6 +1,6 @@
 # Project Setup — Spring Boot 3.x / Java 21
 
-## Cấu trúc project (Clean Architecture, tham khảo — không bắt buộc nếu project đã có layout khác)
+## Project structure (Clean Architecture, reference only — not mandatory if the project already has a different layout)
 
 ```
 src/main/java/com/example/
@@ -20,7 +20,7 @@ src/main/java/com/example/
     └── rest/           # REST controllers
 ```
 
-Nếu project đã có layout khác (VD Controller/Service/Repository phẳng) — giữ nguyên convention hiện có, không tự đổi cấu trúc thư mục giữa chừng.
+If the project already has a different layout (e.g. flat Controller/Service/Repository) — keep the existing convention, don't change the directory structure midway on your own.
 
 ## pom.xml (Spring Boot 3.2, Java 21)
 
@@ -117,7 +117,7 @@ management:
       prometheus: { enabled: true }
 ```
 
-`ddl-auto: validate` (không phải `update`) — schema thật quản lý qua Flyway migration, JPA chỉ validate khớp schema chứ không tự sinh DDL trong môi trường thật (tránh lệch schema âm thầm giữa các instance).
+`ddl-auto: validate` (not `update`) — the real schema is managed via Flyway migrations; JPA only validates that it matches the schema rather than auto-generating DDL in real environments (avoiding silent schema drift between instances).
 
 ## Main Application Class
 
@@ -131,7 +131,7 @@ public class DemoServiceApplication {
 }
 ```
 
-## OpenAPI Config (nếu project expose Swagger UI)
+## OpenAPI Config (if the project exposes Swagger UI)
 
 ```java
 @Configuration
@@ -146,15 +146,15 @@ public class OpenApiConfig {
 }
 ```
 
-Nội dung spec thật (path, schema, security scheme) là phạm vi của `api-contract-skill` — file này chỉ setup bean hiển thị Swagger UI từ spec đã có.
+The actual spec content (paths, schemas, security schemes) is the scope of `api-contract-skill` — this file only sets up the bean that renders Swagger UI from an existing spec.
 
 ## Quick Reference
 
 | Component | Purpose |
 |-----------|---------|
 | `@SpringBootApplication` | Entry point |
-| `@Configuration` / `@Bean` | Khai báo bean thủ công |
-| `@Value` / `@ConfigurationProperties` | Inject config (ưu tiên `@ConfigurationProperties` cho nhóm property liên quan, type-safe hơn) |
-| `@Profile` | Bean theo môi trường |
-| `@EnableJpaAuditing` | Tự động field audit (`@CreatedDate`/`@LastModifiedDate`) |
-| `ProblemDetail` | RFC 7807 error response — xem `references/web-layer.md` |
+| `@Configuration` / `@Bean` | Manual bean declaration |
+| `@Value` / `@ConfigurationProperties` | Inject config (prefer `@ConfigurationProperties` for groups of related properties — more type-safe) |
+| `@Profile` | Environment-specific beans |
+| `@EnableJpaAuditing` | Automatic audit fields (`@CreatedDate`/`@LastModifiedDate`) |
+| `ProblemDetail` | RFC 7807 error response — see `references/web-layer.md` |

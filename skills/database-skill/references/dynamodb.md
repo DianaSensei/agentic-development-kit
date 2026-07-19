@@ -1,37 +1,40 @@
 # DynamoDB (+ ScyllaDB Alternator) — Key-Value / Wide-Column NoSQL
 
-DynamoDB khác biệt căn bản so với RDBMS/MongoDB: không có JOIN, không có ad-hoc query linh hoạt —
-schema/index phải thiết kế THEO access pattern biết trước, không phải theo cấu trúc dữ liệu. Thiết kế
-sai từ đầu (không đủ GSI cho pattern đọc cần) thường không sửa được nếu không tạo lại bảng.
+DynamoDB is fundamentally different from RDBMS/MongoDB: there's no JOIN, no flexible ad-hoc queries —
+the schema/indexes must be designed AROUND known access patterns, not around the data structure. Getting
+the design wrong from the start (not enough GSIs for a needed read pattern) usually can't be fixed without
+recreating the table.
 
-**ScyllaDB dùng chung file này** — ScyllaDB có API tương thích DynamoDB gọi là **Alternator**, implement
-lại đúng DynamoDB API (PutItem/Query/GSI/`ConditionExpression`...) trên engine ScyllaDB. Khi project dùng
-ScyllaDB qua Alternator (thay vì CQL native), toàn bộ nội dung thiết kế data model bên dưới áp dụng y
-hệt DynamoDB — chỉ khác ở tầng vận hành hạ tầng (xem mục "ScyllaDB Alternator — khác biệt vận hành" cuối
-file). Nếu project dùng ScyllaDB qua CQL native (không qua Alternator) thì đó là data model khác hẳn —
-xem `references/cassandra.md` thay vì file này.
+**ScyllaDB shares this file** — ScyllaDB has a DynamoDB-compatible API called **Alternator**, which
+reimplements the actual DynamoDB API (PutItem/Query/GSI/`ConditionExpression`...) on top of the ScyllaDB
+engine. When a project uses ScyllaDB via Alternator (instead of native CQL), everything about data model
+design below applies identically to DynamoDB — the only differences are at the infrastructure/operations
+layer (see the "ScyllaDB Alternator — operational differences" section at the end of this file). If a
+project uses ScyllaDB via native CQL (not through Alternator), that's an entirely different data model —
+see `references/cassandra.md` instead of this file.
 
-## Nguyên tắc thiết kế: Access Pattern trước, sau đó mới tới bảng
+## Design principle: Access patterns first, then tables
 
-Liệt kê TOÀN BỘ query pattern ứng dụng cần (VD "lấy đơn hàng theo customer", "lấy đơn hàng theo trạng
-thái trong khoảng ngày") TRƯỚC khi thiết kế partition key/sort key — ngược hoàn toàn với RDBMS (normalize
-trước, query sau). Không có pattern nào có thể bổ sung dễ dàng sau khi bảng đã có dữ liệu lớn mà không
-tạo GSI mới (tốn chi phí backfill) hoặc thiết kế lại.
+List EVERY query pattern the application needs (e.g. "get orders by customer," "get orders by status
+within a date range") BEFORE designing the partition key/sort key — the complete opposite of RDBMS
+(normalize first, query later). No pattern can easily be added later once a table already holds a large
+amount of data without either creating a new GSI (costly backfill) or redesigning the table.
 
 ## Partition Key & Sort Key
 
 ```
-Bảng "Orders":
+Table "Orders":
   PK (partition key): CUSTOMER#<customer_id>
   SK (sort key):       ORDER#<order_id>
 ```
 
-- **Partition key** quyết định phân phối dữ liệu vật lý — chọn cột có cardinality cao, tránh "hot
-  partition" (VD dùng `status` làm PK khi status chỉ có vài giá trị → toàn bộ traffic dồn vào vài partition).
-- **Sort key** cho phép query range trong cùng 1 partition (`begins_with`, `between`) — dùng để nhét nhiều
-  loại entity liên quan vào cùng 1 item collection (**single-table design**).
+- **Partition key** determines physical data distribution — choose a column with high cardinality, avoid
+  "hot partitions" (e.g. using `status` as PK when status only has a few values → all traffic piles onto a
+  handful of partitions).
+- **Sort key** enables range queries within the same partition (`begins_with`, `between`) — used to pack
+  multiple related entity types into the same item collection (**single-table design**).
 
-### Single-Table Design (pattern phổ biến nhất trong production)
+### Single-Table Design (the most common pattern in production)
 
 ```
 PK                  | SK                  | Attributes
@@ -40,131 +43,138 @@ CUSTOMER#123        | ORDER#2024-01-15-01 | total, status, ...
 CUSTOMER#123        | ORDER#2024-02-01-02 | total, status, ...
 ```
 
-1 `Query` với `PK = CUSTOMER#123` lấy được cả profile khách hàng lẫn toàn bộ order — thay thế cho JOIN
-của RDBMS. Đánh đổi: khó đọc hơn nhiều so với bảng riêng biệt, và mọi access pattern phải biết trước khi
-thiết kế key. Chỉ dùng single-table khi đã xác nhận rõ pattern; nếu access pattern còn chưa chắc chắn
-(giai đoạn sớm của sản phẩm), multi-table đơn giản hơn dễ maintain hơn dù kém tối ưu chi phí.
+A single `Query` with `PK = CUSTOMER#123` retrieves both the customer profile and all their orders —
+replacing an RDBMS JOIN. Trade-off: much harder to read than separate tables, and every access pattern
+must be known before designing the keys. Only use single-table design once patterns are confirmed; if
+access patterns are still uncertain (early product stage), a simpler multi-table design is easier to
+maintain even though it's less cost-optimized.
 
 ## Global Secondary Index (GSI) & Local Secondary Index (LSI)
 
-- **GSI**: partition key + sort key KHÁC với bảng gốc — dùng để hỗ trợ access pattern thứ 2 (VD tra cứu
-  order theo `status` thay vì theo `customer_id`). Có `WriteCapacity`/eventual consistency riêng, tạo/xóa
-  được sau khi bảng đã tồn tại (nhưng cần backfill nếu bảng đã có dữ liệu).
-- **LSI**: cùng partition key với bảng gốc, chỉ khác sort key — PHẢI khai báo lúc tạo bảng, không thêm được
-  sau. Giới hạn 20GB dữ liệu mỗi partition key value khi có LSI. Ít linh hoạt hơn GSI — chỉ dùng khi cần
-  strongly consistent read trên 1 pattern phụ và chắc chắn ngay từ đầu.
+- **GSI**: partition key + sort key DIFFERENT from the base table — used to support a second access
+  pattern (e.g. looking up orders by `status` instead of by `customer_id`). Has its own
+  `WriteCapacity`/eventual consistency, can be created/deleted after the table already exists (but
+  requires a backfill if the table already has data).
+- **LSI**: same partition key as the base table, only the sort key differs — MUST be declared at table
+  creation time, cannot be added later. Limited to 20GB of data per partition key value when an LSI
+  exists. Less flexible than GSI — only use it when you need strongly consistent reads on a secondary
+  pattern and are certain about it from the start.
 
 ```
 GSI "StatusIndex": PK = STATUS#<status>, SK = ORDER#<created_at>
-→ Query đơn hàng theo status, sort theo thời gian tạo, không cần Scan toàn bảng.
+→ Query orders by status, sorted by creation time, without a full-table Scan.
 ```
 
-## Query vs Scan — LUÔN ưu tiên Query, Scan là red flag hiệu năng
+## Query vs Scan — ALWAYS prefer Query; Scan is a performance red flag
 
 ```
-Query: đọc theo PK (và tùy chọn điều kiện SK) — hiệu quả, chi phí tỷ lệ với số item trả về.
-Scan:  đọc TOÀN BỘ bảng rồi filter — chi phí tỷ lệ với TOÀN BỘ bảng bất kể filter match bao nhiêu item.
+Query: reads by PK (and optionally an SK condition) — efficient, cost scales with the number of items returned.
+Scan:  reads the ENTIRE table then filters — cost scales with the ENTIRE table regardless of how many items match the filter.
 ```
 
-Nếu cần `Scan` thường xuyên cho 1 access pattern → dấu hiệu thiết kế key/GSI sai, không phải vấn đề tối
-ưu query. Filter Expression trong Query/Scan chỉ giảm dữ liệu TRẢ VỀ, KHÔNG giảm chi phí đọc — DynamoDB
-vẫn tính capacity theo số item quét trước khi filter.
+If a `Scan` is needed frequently for one access pattern → that's a sign of a bad key/GSI design, not a
+query-optimization problem. A Filter Expression in Query/Scan only reduces the data RETURNED, NOT the read
+cost — DynamoDB still charges capacity for the number of items scanned before filtering.
 
 ## Capacity Mode
 
-- **On-Demand**: trả theo request thật, tự scale — phù hợp traffic khó dự đoán hoặc giai đoạn đầu chưa
-  rõ pattern tải. Chi phí/request cao hơn Provisioned khi traffic ổn định và lớn.
-- **Provisioned** (+ Auto Scaling): rẻ hơn khi traffic dự đoán được và ổn định, nhưng cần theo dõi
-  throttling (`ProvisionedThroughputExceededException`) — traffic v ượt capacity đặt sẵn bị từ chối chứ
-  không tự động scale ngay lập tức như On-Demand.
+- **On-Demand**: pay per actual request, auto-scales — suits unpredictable traffic or early stages where
+  the load pattern isn't clear yet. Higher cost per request than Provisioned when traffic is stable and
+  high.
+- **Provisioned** (+ Auto Scaling): cheaper when traffic is predictable and stable, but requires watching
+  for throttling (`ProvisionedThroughputExceededException`) — traffic that exceeds the set capacity is
+  rejected rather than auto-scaling immediately the way On-Demand does.
 
-Mặc định chọn On-Demand cho feature mới/chưa rõ traffic pattern; chuyển sang Provisioned khi đã đo được
-traffic ổn định và cần tối ưu chi phí — đây là quyết định vận hành, không phải quyết định thiết kế schema,
-có thể đổi qua lại mà không ảnh hưởng dữ liệu.
+Default to On-Demand for new features/unclear traffic patterns; switch to Provisioned once stable traffic
+has been measured and cost optimization matters — this is an operational decision, not a schema-design
+decision, and can be switched back and forth without affecting data.
 
 ## Consistency & Concurrency
 
-- Đọc mặc định là **eventually consistent** (rẻ hơn) — dùng `ConsistentRead: true` khi nghiệp vụ cần đọc
-  đúng giá trị vừa ghi ngay lập tức (tốn gấp đôi read capacity so với eventual).
-- **Conditional writes** — cơ chế atomic tương đương optimistic locking/atomic UPDATE của RDBMS, không có
-  transaction dài như RDBMS:
+- Reads default to **eventually consistent** (cheaper) — use `ConsistentRead: true` when the business logic
+  needs to read the exact value just written immediately (costs double the read capacity compared to
+  eventual).
+- **Conditional writes** — an atomic mechanism equivalent to optimistic locking/atomic UPDATE in RDBMS,
+  without long-running RDBMS-style transactions:
 
 ```
-PutItem/UpdateItem với ConditionExpression, VD:
-  ConditionExpression: "attribute_not_exists(PK)"          -- chỉ insert nếu chưa tồn tại
-  ConditionExpression: "version = :expected_version"        -- optimistic locking kiểu version column
+PutItem/UpdateItem with ConditionExpression, e.g.:
+  ConditionExpression: "attribute_not_exists(PK)"          -- only insert if it doesn't already exist
+  ConditionExpression: "version = :expected_version"        -- version-column-style optimistic locking
   UpdateExpression: "SET stock = stock - :qty"
-  ConditionExpression: "stock >= :qty"                       -- tương đương atomic conditional UPDATE của RDBMS
+  ConditionExpression: "stock >= :qty"                       -- equivalent to an atomic conditional UPDATE in RDBMS
 ```
 
-- **TransactWriteItems**: hỗ trợ multi-item ACID transaction (tối đa 100 item, cùng region) — dùng khi
-  thực sự cần atomicity xuyên nhiều item/bảng, tốn chi phí gấp đôi write capacity so với write thường, chỉ
-  dùng khi `ConditionExpression` trên 1 item không đủ giải quyết bài toán.
+- **TransactWriteItems**: supports multi-item ACID transactions (up to 100 items, same region) — use when
+  you genuinely need atomicity across multiple items/tables, costs double the write capacity of a normal
+  write, only use when a `ConditionExpression` on a single item isn't enough to solve the problem.
 
-## Item Size & Design Constraint
+## Item Size & Design Constraints
 
-- Giới hạn 400KB/item — dữ liệu lớn (file, blob) lưu ở S3, DynamoDB chỉ giữ reference/metadata.
-- Không có `ALTER TABLE`/schema migration theo nghĩa RDBMS — DynamoDB schemaless ở attribute level (mỗi
-  item có thể có attribute khác nhau), chỉ PK/SK và index là cố định lúc tạo bảng. "Migration" thực chất
-  là thay đổi cách ứng dụng ghi/đọc attribute, hoặc backfill GSI mới — không phải DDL.
+- 400KB/item limit — large data (files, blobs) should live in S3, with DynamoDB holding only a
+  reference/metadata.
+- No `ALTER TABLE`/schema migration in the RDBMS sense — DynamoDB is schemaless at the attribute level
+  (each item can have different attributes); only the PK/SK and indexes are fixed at table creation.
+  "Migration" really means changing how the application writes/reads attributes, or backfilling a new
+  GSI — not DDL.
 
 ## DynamoDB Streams & TTL
 
-- **Streams**: capture thay đổi item (INSERT/MODIFY/REMOVE) theo thời gian thực, trigger Lambda — dùng cho
-  side-effect bất đồng bộ (audit log, sync sang hệ thống khác, cập nhật aggregate) thay vì trigger SQL của
-  RDBMS.
-- **TTL**: tự động xóa item hết hạn (dựa trên epoch timestamp attribute) — dùng cho session/cache data,
-  không tính write capacity khi xóa qua TTL (khác với xóa thủ công).
+- **Streams**: captures item changes (INSERT/MODIFY/REMOVE) in real time, triggers Lambda — used for
+  asynchronous side effects (audit logs, syncing to other systems, updating aggregates) instead of
+  RDBMS-style SQL triggers.
+- **TTL**: automatically deletes expired items (based on an epoch timestamp attribute) — used for
+  session/cache data; deletion via TTL doesn't consume write capacity (unlike a manual delete).
 
 ## DAX (DynamoDB Accelerator)
 
-Cache layer riêng cho DynamoDB (tương tự Redis nhưng tích hợp sẵn, microsecond latency) — chỉ thêm khi đã
-xác nhận read-heavy workload cần latency thấp hơn nữa và đã tối ưu key design, không phải bước đầu tiên
-khi thấy chậm.
+A dedicated cache layer for DynamoDB (similar to Redis but built in, microsecond latency) — only add it
+once you've confirmed a read-heavy workload needs even lower latency and the key design is already
+optimized, not as a first response to seeing slowness.
 
-## ScyllaDB Alternator — khác biệt vận hành so với DynamoDB thật
+## ScyllaDB Alternator — operational differences from real DynamoDB
 
-- **Self-hosted/multi-cloud**: ScyllaDB không bị khóa vào AWS như DynamoDB — chọn Alternator khi muốn data
-  model/API của DynamoDB nhưng cần tự vận hành hạ tầng (on-prem, multi-cloud, hoặc đã có cluster ScyllaDB
-  sẵn cho mục đích khác qua CQL).
-- **Không có khái niệm On-Demand/Provisioned capacity kiểu AWS billing** — throughput giới hạn bởi tài
-  nguyên cluster thật (CPU/RAM/disk của node), cần tự capacity-plan như mọi hệ self-hosted, không tự động
-  scale theo request như DynamoDB On-Demand thật.
-- **Không có DAX, Streams giới hạn hơn** — 1 số tính năng managed-only của AWS (DAX cache layer, Streams
-  tích hợp Lambda) không có sẵn hoặc cần tự dựng tương đương; kiểm tra tài liệu Alternator hiện tại của
-  ScyllaDB trước khi giả định tính năng nào khả dụng.
-- **Vận hành cluster** (compaction, repair, GC-less shard-per-core) giống hệt phần Ops của ScyllaDB khi
-  dùng CQL — xem `references/cassandra.md` mục cuối để hiểu kiến trúc shard-per-core, dù ở đây dùng qua
-  Alternator API chứ không phải CQL.
+- **Self-hosted/multi-cloud**: ScyllaDB isn't locked into AWS the way DynamoDB is — choose Alternator when
+  you want DynamoDB's data model/API but need to run your own infrastructure (on-prem, multi-cloud, or you
+  already have a ScyllaDB cluster running for other purposes via CQL).
+- **No On-Demand/Provisioned capacity concept in the AWS billing sense** — throughput is limited by the
+  actual cluster resources (node CPU/RAM/disk), requiring self-managed capacity planning like any
+  self-hosted system, and it does not auto-scale per request the way real DynamoDB On-Demand does.
+- **No DAX, more limited Streams** — some AWS managed-only features (the DAX cache layer, Lambda-integrated
+  Streams) aren't available or need a self-built equivalent; check ScyllaDB's current Alternator
+  documentation before assuming a feature is available.
+- **Cluster operations** (compaction, repair, GC-less shard-per-core) are identical to ScyllaDB's Ops
+  section when used via CQL — see the end of `references/cassandra.md` to understand the shard-per-core
+  architecture, even though here it's accessed via the Alternator API rather than CQL.
 
 ## Testcontainers / Local Testing
 
-Dùng `amazon/dynamodb-local` image (DynamoDB thật) hoặc `scylladb/scylla` với cờ bật Alternator (ScyllaDB)
-qua `testcontainers-skill` cho integration test — hành vi Query/GSI/conditional write tái hiện đúng như
-production, khác với mock SDK thuần (mock không bắt được lỗi thiết kế key/GSI).
+Use the `amazon/dynamodb-local` image (real DynamoDB) or `scylladb/scylla` with the Alternator flag enabled
+(ScyllaDB) via `testcontainers-skill` for integration tests — Query/GSI/conditional-write behavior
+reproduces production accurately, unlike a pure SDK mock (mocks don't catch key/GSI design mistakes).
 
-## Khi nào chọn DynamoDB vs ScyllaDB Alternator (so với RDBMS/MongoDB/Cassandra — xem SKILL.md chính)
+## When to choose DynamoDB vs ScyllaDB Alternator (vs RDBMS/MongoDB/Cassandra — see the main SKILL.md)
 
-- Access pattern đã rõ ràng, ổn định, và có thể liệt kê hết trước khi thiết kế — điều kiện tiên quyết
-  chung cho cả 2.
-- Cần scale ghi/đọc theo chiều ngang gần như không giới hạn, latency single-digit millisecond ổn định.
-- **DynamoDB thật**: đã ở AWS, muốn managed hoàn toàn, không muốn vận hành cluster.
-- **ScyllaDB qua Alternator**: muốn giữ nguyên data model/API quen thuộc của DynamoDB nhưng cần tự vận
-  hành hạ tầng (self-hosted/multi-cloud), hoặc đã có sẵn ScyllaDB cluster.
-- KHÔNG phù hợp (cả 2) khi: cần query ad-hoc linh hoạt (báo cáo, phân tích đa chiều), cần JOIN phức tạp,
-  hoặc access pattern còn thay đổi liên tục ở giai đoạn sản phẩm đầu — RDBMS/MongoDB linh hoạt hơn nhiều
-  cho các trường hợp này.
+- Access patterns are already clear, stable, and can be fully enumerated before design — a shared
+  prerequisite for both.
+- Need near-unlimited horizontal read/write scaling with stable single-digit millisecond latency.
+- **Real DynamoDB**: already on AWS, want fully managed, don't want to operate a cluster.
+- **ScyllaDB via Alternator**: want to keep DynamoDB's familiar data model/API but need to run your own
+  infrastructure (self-hosted/multi-cloud), or already have a ScyllaDB cluster.
+- NOT a good fit (both) when: you need flexible ad-hoc queries (reporting, multi-dimensional analytics),
+  complex JOINs, or access patterns that are still changing frequently in an early product stage —
+  RDBMS/MongoDB are far more flexible for these cases.
 
 ## Quick Reference
 
-| Khái niệm | Vai trò |
+| Concept | Role |
 |-----------|---------|
-| Partition Key (PK) | Phân phối dữ liệu vật lý, bắt buộc trong mọi Query |
-| Sort Key (SK) | Query range trong 1 partition, cho phép single-table design |
-| GSI | Access pattern phụ, key khác bảng gốc, thêm được sau |
-| LSI | Access pattern phụ, cùng PK, khai báo lúc tạo bảng, không đổi sau |
-| Query | Đọc hiệu quả theo PK — luôn ưu tiên |
-| Scan | Đọc toàn bảng — red flag, tránh dùng cho access pattern thường xuyên |
-| ConditionExpression | Atomic write có điều kiện — tương đương optimistic lock/atomic UPDATE |
-| TransactWriteItems | ACID xuyên nhiều item, tốn gấp đôi capacity |
-| On-Demand / Provisioned | Chế độ tính capacity — On-Demand mặc định khi chưa rõ traffic |
+| Partition Key (PK) | Physical data distribution, required in every Query |
+| Sort Key (SK) | Range queries within a partition, enables single-table design |
+| GSI | Secondary access pattern, different key from the base table, can be added later |
+| LSI | Secondary access pattern, same PK, declared at table creation, cannot change later |
+| Query | Efficient read by PK — always prefer |
+| Scan | Full-table read — red flag, avoid for frequent access patterns |
+| ConditionExpression | Conditional atomic write — equivalent to optimistic lock/atomic UPDATE |
+| TransactWriteItems | ACID across multiple items, double capacity cost |
+| On-Demand / Provisioned | Capacity billing mode — On-Demand is the default when traffic is unclear |

@@ -1,41 +1,45 @@
 # GraphQL
 
 ## Schema-first
-- Định nghĩa type, query, mutation TRƯỚC khi viết resolver — schema chính là contract.
-  Naming: PascalCase cho type (`User`, `OrderInput`), camelCase cho field/argument.
-- Phân tách rõ `Query` (đọc), `Mutation` (ghi), `Subscription` (real-time nếu cần) —
-  không nhét action ghi dữ liệu vào Query.
+- Define types, queries, and mutations BEFORE writing resolvers — the schema itself is
+  the contract. Naming: PascalCase for types (`User`, `OrderInput`), camelCase for
+  fields/arguments.
+- Clearly separate `Query` (read), `Mutation` (write), `Subscription` (real-time, if
+  needed) — don't put write actions inside a Query.
 
 ## Input & Validation
-- Dùng input type riêng cho mutation (`CreateUserInput`) thay vì liệt kê argument rời
-  rạc — dễ mở rộng sau này (thêm field vào input type không breaking).
-- Ràng buộc qua custom scalar (VD `Email`, `PositiveInt`) khi có thể, để schema tự
-  validate thay vì dồn hết logic vào resolver.
+- Use a dedicated input type for mutations (`CreateUserInput`) instead of listing
+  separate arguments — easier to extend later (adding a field to an input type is
+  non-breaking).
+- Constrain via custom scalars (e.g. `Email`, `PositiveInt`) where possible, so the
+  schema validates itself instead of pushing all the logic into the resolver.
 
-## N+1 (lưu ý, không phải phạm vi thiết kế contract)
-- Resolver lồng nhau (VD `User.orders` gọi lại DB cho từng user trong danh sách) dễ gây
-  N+1 query — đây là vấn đề TRIỂN KHAI (dùng Dataloader/batching để giải quyết), không
-  phải quyết định ở tầng thiết kế contract. Chỉ cần ghi chú trong bàn giao cho người
-  triển khai nếu schema có khả năng gây N+1 rõ ràng (field trả về list lồng nhau nhiều
-  cấp).
+## N+1 (a note, not part of contract design scope)
+- Nested resolvers (e.g. `User.orders` querying the DB again for each user in a list)
+  can easily cause N+1 queries — this is an IMPLEMENTATION concern (solved with
+  Dataloader/batching), not a contract design decision. Just note it in the handoff to
+  the implementer if the schema has a clear risk of causing N+1 (a field returning a
+  deeply nested list).
 
 ## Versioning
-- KHÔNG version hóa qua URL như REST (GraphQL thường chỉ có 1 endpoint `/graphql`).
-- Thêm field/type mới thay vì đổi field cũ. Đánh dấu field cũ `@deprecated(reason: "...")`
-  trước khi xóa hẳn, cho consumer thời gian migrate.
-- Breaking change thật sự (đổi type field, đổi ngữ nghĩa argument) cần thông báo trước và
-  có lộ trình — tương tự REST, không âm thầm đổi.
+- Do NOT version via URL like REST (GraphQL usually has only one `/graphql` endpoint).
+- Add new fields/types instead of changing existing ones. Mark old fields with
+  `@deprecated(reason: "...")` before removing them entirely, giving consumers time to
+  migrate.
+- A truly breaking change (changing a field's type, changing an argument's semantics)
+  needs advance notice and a migration plan — same as REST, don't change it silently.
 
 ## Error Handling
-- GraphQL luôn trả HTTP 200 kể cả khi có lỗi nghiệp vụ — lỗi nằm trong field `errors[]`
-  của response, không dựa vào HTTP status code như REST.
-- Dùng `extensions` trong error object để mang thông tin có cấu trúc (error code, field
-  liên quan) thay vì chỉ có `message` dạng text tự do — giúp client xử lý lỗi có điều
-  kiện thay vì so sánh chuỗi.
+- GraphQL always returns HTTP 200 even when there's a business-logic error — the error
+  lives in the response's `errors[]` field, not in the HTTP status code as with REST.
+- Use `extensions` in the error object to carry structured information (error code,
+  related field) instead of only a free-text `message` — this lets clients handle
+  errors conditionally instead of comparing strings.
 
-## Bảo mật đặc thù GraphQL
-- Giới hạn độ sâu query (`query depth limit`) và độ phức tạp (`query complexity`) — 1
-  query GraphQL có thể lồng sâu tùy ý, khác REST (mỗi request chỉ tốn 1 lần gọi cố
-  định), nên rate-limit theo request count KHÔNG đủ, cần giới hạn theo complexity.
-- Tắt `introspection` ở môi trường production nếu API không public, tránh lộ toàn bộ
-  schema nội bộ cho người ngoài dò.
+## GraphQL-specific security
+- Limit query depth (`query depth limit`) and complexity (`query complexity`) — a
+  GraphQL query can nest arbitrarily deep, unlike REST (each request costs a fixed
+  single call), so rate-limiting by request count is NOT sufficient; complexity-based
+  limits are needed.
+- Disable `introspection` in production if the API isn't public, to avoid exposing the
+  entire internal schema to outside probing.

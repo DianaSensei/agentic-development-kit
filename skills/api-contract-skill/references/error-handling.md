@@ -1,23 +1,24 @@
 # Error Handling — RFC 7807 (Problem Details)
 
-## Nguyên tắc chung
-Dùng chung 1 schema lỗi cho TOÀN BỘ API — không để mỗi endpoint tự bịa format riêng
-(1 endpoint trả `{error: "..."}`, endpoint khác trả `{message: "...", code: ...}` là dấu
-hiệu thiếu chuẩn hóa).
+## General Principle
+Use a single shared error schema for the ENTIRE API — don't let each endpoint invent
+its own format (one endpoint returning `{error: "..."}`, another returning `{message:
+"...", code: ...}` is a sign of missing standardization).
 
-## RFC 7807 — chuẩn khuyến nghị nếu project chưa có convention riêng
-Mọi response lỗi trả `Content-Type: application/problem+json` với các field:
+## RFC 7807 — the recommended standard if the project has no convention of its own
+Every error response returns `Content-Type: application/problem+json` with the
+following fields:
 
-| Field | Ý nghĩa | Bắt buộc |
+| Field | Meaning | Required |
 |-------|---------|----------|
-| `type` | URI ổn định định danh loại lỗi (KHÔNG phải chuỗi chung chung như `"error"`) | Có |
-| `title` | Tóm tắt ngắn gọn, cố định cho loại lỗi này | Có |
-| `status` | HTTP status code, trùng với status thật của response | Có |
-| `detail` | Mô tả CHI TIẾT, actionable, riêng cho lần lỗi này (không phải template tĩnh) | Nên có |
-| `instance` | URI của request cụ thể gây lỗi (dùng để trace) | Nên có |
-| `errors[]` | Mở rộng riêng cho validation lỗi theo từng field | Khi cần |
+| `type` | Stable URI identifying the error type (NOT a generic string like `"error"`) | Yes |
+| `title` | Short, fixed summary for this error type | Yes |
+| `status` | HTTP status code, matching the response's actual status | Yes |
+| `detail` | DETAILED, actionable description specific to this occurrence (not a static template) | Recommended |
+| `instance` | URI of the specific request that caused the error (used for tracing) | Recommended |
+| `errors[]` | Extension for per-field validation errors | When needed |
 
-### Ví dụ
+### Example
 ```json
 {
   "type": "https://api.example.com/errors/validation-error",
@@ -31,34 +32,39 @@ Mọi response lỗi trả `Content-Type: application/problem+json` với các f
 }
 ```
 
-## Quy tắc áp dụng
-- `type` phải là URI ổn định, đã tài liệu hóa — không đổi giá trị này giữa các lần trả về
-  cùng loại lỗi (client có thể so sánh `type` để xử lý theo điều kiện).
-- `detail` phải actionable — nói rõ CÁI GÌ sai và (nếu có thể) CÁCH sửa, không chỉ nói
-  "Invalid input".
-- KHÔNG lộ thông tin nhạy cảm trong `detail` (stack trace, câu SQL, đường dẫn file nội
-  bộ) — đây là lỗi bảo mật phổ biến.
-- Status code trong body PHẢI khớp status code HTTP thật — không trả `200 OK` kèm body
-  báo lỗi (gây khó khăn cho client dựa vào HTTP status để xử lý).
+## Application rules
+- `type` must be a stable, documented URI — don't change this value between different
+  responses for the same error type (clients may compare `type` for conditional
+  handling).
+- `detail` must be actionable — state clearly WHAT is wrong and (if possible) HOW to
+  fix it, not just "Invalid input".
+- Do NOT expose sensitive information in `detail` (stack traces, SQL statements,
+  internal file paths) — this is a common security mistake.
+- The status code in the body MUST match the actual HTTP status code — don't return
+  `200 OK` with an error body inside (this makes it hard for clients that rely on HTTP
+  status to handle responses).
 
-## Khi project đã có convention error riêng
-KHÔNG áp đặt RFC 7807 nếu project đã có 1 chuẩn error nhất quán khác đang dùng — giữ
-nguyên convention hiện có, chỉ đảm bảo endpoint MỚI tuân theo đúng convention đó thay vì
-tự bịa format khác.
+## When the project already has its own error convention
+Do NOT impose RFC 7807 if the project already has a consistent error standard in use —
+keep the existing convention, and just ensure NEW endpoints follow that same
+convention instead of inventing a different format.
 
-## Request ID — luôn kèm để debug được
-Mọi response lỗi (đặc biệt `5xx`) nên có 1 ID định danh riêng cho request đó (VD field
-`request_id`/`instance`, hoặc header `X-Request-ID`) — nếu không có, user/support không
-có cách nào tra lại đúng log của lần lỗi cụ thể đó trong hệ thống. Không thêm hạ tầng
-tracing mới chỉ vì việc này nếu project chưa có — tận dụng correlation ID sẵn có nếu đã
-có cơ chế logging/tracing.
+## Request ID — always include one for debuggability
+Every error response (especially `5xx`) should include an ID identifying that specific
+request (e.g. a `request_id`/`instance` field, or an `X-Request-ID` header) — without
+one, the user/support team has no way to look up the exact log entry for that specific
+error in the system. Don't add new tracing infrastructure just for this if the project
+doesn't already have one — reuse the existing correlation ID mechanism if a
+logging/tracing setup already exists.
 
-## Retryable vs Non-retryable — giúp client biết có nên tự retry không
-Khai báo rõ (qua status code chuẩn, không cần field riêng) lỗi nào client NÊN tự động
-retry và lỗi nào KHÔNG:
-- **Nên retry** (thường là lỗi tạm thời): `408` Request Timeout, `429` Too Many Requests
-  (kèm header `Retry-After`), `502`/`503`/`504` (lỗi hạ tầng tạm thời).
-- **KHÔNG nên retry** (lỗi do request sai, retry cũng fail y hệt): `400`, `401`, `403`,
-  `404`, `409`, `422`.
-- Với `429`/`503`, LUÔN trả kèm header `Retry-After` (giây hoặc HTTP-date) để client biết
-  chờ bao lâu trước khi thử lại — không để client tự đoán/retry ngay lập tức gây thêm tải.
+## Retryable vs Non-retryable — helps clients know whether to retry automatically
+Declare clearly (via standard status codes, no need for a separate field) which errors
+the client SHOULD automatically retry and which it should NOT:
+- **Should retry** (usually transient errors): `408` Request Timeout, `429` Too Many
+  Requests (with a `Retry-After` header), `502`/`503`/`504` (temporary infrastructure
+  errors).
+- **Should NOT retry** (errors caused by an invalid request, retrying will fail the
+  same way): `400`, `401`, `403`, `404`, `409`, `422`.
+- For `429`/`503`, ALWAYS return a `Retry-After` header (seconds or HTTP-date) so the
+  client knows how long to wait before retrying — don't let the client guess/retry
+  immediately, which would add extra load.

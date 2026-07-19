@@ -1,8 +1,8 @@
 # Testing — JUnit 5, Mockito, MockMvc/WebTestClient, Testcontainers
 
-Setup/lifecycle container (dependency, wait strategy, reuse, network) là phạm vi của `testcontainers-skill` — file này chỉ tập trung PATTERN viết test ở từng tầng (unit/slice/integration), không lặp lại nội dung cấu hình container.
+Container setup/lifecycle (dependencies, wait strategies, reuse, network) is the scope of `testcontainers-skill` — this file focuses only on PATTERNS for writing tests at each layer (unit/slice/integration), and doesn't repeat container configuration content.
 
-## Unit Test — mock toàn bộ dependency ngoài
+## Unit Test — mock all external dependencies
 
 ```java
 @ExtendWith(MockitoExtension.class)
@@ -48,7 +48,7 @@ class UserServiceTest {
 }
 ```
 
-## Web Layer Test — `@WebMvcTest` (mock service, không load full context)
+## Web Layer Test — `@WebMvcTest` (mocks the service, doesn't load the full context)
 
 ```java
 @WebMvcTest(UserController.class)
@@ -101,9 +101,9 @@ class UserControllerReactiveTest {
 }
 ```
 
-## Repository Test — `@DataJpaTest` + Testcontainers thật (không H2)
+## Repository Test — `@DataJpaTest` + real Testcontainers (not H2)
 
-Dùng Postgres thật qua Testcontainers thay vì H2 in-memory khi query có dùng feature đặc thù dialect (JSONB, native query, index hint) — H2 không tái hiện đúng hành vi. Setup container chi tiết xem `testcontainers-skill`; ví dụ dưới đây chỉ minh họa cách viết test dùng container đã setup.
+Use a real Postgres via Testcontainers instead of in-memory H2 when a query relies on dialect-specific features (JSONB, native queries, index hints) — H2 doesn't reproduce that behavior correctly. See `testcontainers-skill` for detailed container setup; the example below only illustrates how to write a test using an already-set-up container.
 
 ```java
 @DataJpaTest
@@ -159,7 +159,7 @@ class UserIntegrationTest {
 }
 ```
 
-## Test Data Builder (tránh lặp lại setup dài dòng ở mỗi test)
+## Test Data Builder (avoids repeating lengthy setup in every test)
 
 ```java
 public class UserTestBuilder {
@@ -177,7 +177,7 @@ public class UserTestBuilder {
 User user = aUser().withEmail("custom@example.com").inactive().build();
 ```
 
-## Shared Testcontainers Instance (dùng chung 1 container cho nhiều test class, tránh khởi động lại tốn thời gian)
+## Shared Testcontainers Instance (share one container across multiple test classes, avoiding time-consuming restarts)
 
 ```java
 public abstract class AbstractIntegrationTest {
@@ -192,26 +192,26 @@ public abstract class AbstractIntegrationTest {
         registry.add("spring.datasource.url", postgres::getJdbcUrl);
     }
 }
-// Các integration test class khác extends AbstractIntegrationTest thay vì tự khai báo @Container riêng
+// Other integration test classes extend AbstractIntegrationTest instead of declaring their own @Container
 ```
 
 ## Quick Reference
 
 | Annotation | Purpose |
 |------------|---------|
-| `@ExtendWith(MockitoExtension.class)` | Unit test thuần, mock dependency |
-| `@WebMvcTest` | Test tầng MVC controller, mock service |
-| `@WebFluxTest` + `WebTestClient` | Test controller reactive |
-| `@DataJpaTest` | Test repository (dùng Testcontainers thay H2 nếu cần dialect thật) |
-| `@SpringBootTest` | Full context — integration test end-to-end |
-| `@MockBean` | Mock 1 bean trong Spring context |
-| `@WithMockUser` | Giả lập user đã authenticate |
-| `AssertJ` (`assertThat`) | Assertion fluent, ưu tiên hơn assert thô |
+| `@ExtendWith(MockitoExtension.class)` | Pure unit test, mocked dependencies |
+| `@WebMvcTest` | Test the MVC controller layer, mocked service |
+| `@WebFluxTest` + `WebTestClient` | Test a reactive controller |
+| `@DataJpaTest` | Test a repository (use Testcontainers instead of H2 when real dialect behavior matters) |
+| `@SpringBootTest` | Full context — end-to-end integration test |
+| `@MockBean` | Mock a single bean in the Spring context |
+| `@WithMockUser` | Simulate an already-authenticated user |
+| `AssertJ` (`assertThat`) | Fluent assertions, preferred over plain assertions |
 
 ## Testing Best Practices
 
-- AAA pattern (Arrange/Given, Act/When, Assert/Then) rõ ràng trong từng test.
-- Unit test mock hết dependency ngoài; integration test dùng Testcontainers cho hạ tầng thật — không trộn 2 loại trong cùng 1 test class.
-- Test cả exception path, không chỉ happy path.
-- Tên test method mô tả rõ hành vi đang test (`should_X_when_Y` hoặc `@DisplayName` tiếng Việt/Anh rõ ràng).
-- Chạy test thật (`mvn test`/`gradle test`) trước khi báo hoàn thành — không chỉ viết xong là coi như xong.
+- Use a clear AAA pattern (Arrange/Given, Act/When, Assert/Then) in every test.
+- Unit tests mock all external dependencies; integration tests use Testcontainers for real infrastructure — don't mix the two in the same test class.
+- Test the exception path as well, not just the happy path.
+- Test method names should clearly describe the behavior under test (`should_X_when_Y`, or a clear `@DisplayName`).
+- Actually run the tests (`mvn test`/`gradle test`) before reporting completion — don't consider it done just because it's written.

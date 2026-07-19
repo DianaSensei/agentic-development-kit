@@ -1,6 +1,6 @@
 # Cloud Native — Spring Cloud, Resilience4j, Actuator
 
-Chỉ áp dụng khi project thật sự là microservices cần các thành phần này — không tự thêm Config Server/Eureka/Gateway cho 1 service đơn lẻ chỉ vì "best practice", đây là hạ tầng nặng, chỉ hợp lý khi có nhiều service cần chia sẻ config/tự discover nhau.
+Only apply this when the project is genuinely a microservices setup that needs these components — don't add Config Server/Eureka/Gateway to a single standalone service just because it's "best practice"; this is heavy infrastructure that only makes sense when there are multiple services that need to share config or discover each other.
 
 ## Spring Cloud Config (Server + Client)
 
@@ -22,7 +22,7 @@ spring:
 
 ```java
 @RestController
-@RefreshScope // cho phép reload giá trị khi POST /actuator/refresh, không cần restart service
+@RefreshScope // allows reloading the value on POST /actuator/refresh, without restarting the service
 public class ConfigController {
     @Value("${app.feature.enabled:false}")
     private boolean featureEnabled;
@@ -60,7 +60,7 @@ public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
 
 ## Resilience4j — Circuit Breaker / Retry / Rate Limiter
 
-Dùng cho lời gọi phụ thuộc service khác — bảo vệ service hiện tại khỏi cascading failure khi dependency chậm/down.
+Used for calls that depend on other services — protects the current service from cascading failure when a dependency is slow or down.
 
 ```java
 @Service
@@ -110,7 +110,7 @@ management:
     tracing: { endpoint: http://localhost:9411/api/v2/spans }
 ```
 
-`sampling.probability: 1.0` (trace 100%) chỉ hợp lý ở dev/staging hoặc service traffic thấp — production traffic cao nên giảm xuống (VD `0.1`) để tránh overhead, trừ khi đang debug sự cố cụ thể cần trace đầy đủ tạm thời.
+`sampling.probability: 1.0` (100% tracing) only makes sense in dev/staging or for low-traffic services — high-traffic production should lower this (e.g. `0.1`) to avoid overhead, unless you're temporarily debugging a specific incident that needs full tracing.
 
 ## Health Checks & Actuator
 
@@ -138,9 +138,9 @@ management:
     readinessState: { enabled: true }
 ```
 
-`livenessState`/`readinessState` riêng biệt quan trọng cho Kubernetes: liveness fail → pod bị restart; readiness fail → pod bị rút khỏi load balancer nhưng KHÔNG restart (dùng đúng probe cho đúng mục đích, nhầm lẫn 2 cái này gây restart loop không cần thiết khi service chỉ đang tạm thời không sẵn sàng nhận traffic, VD đang warm up cache).
+Keeping `livenessState`/`readinessState` separate matters for Kubernetes: a liveness failure restarts the pod; a readiness failure removes the pod from the load balancer but does NOT restart it (use the right probe for the right purpose — mixing these up causes unnecessary restart loops when a service is merely temporarily not ready to receive traffic, e.g. while warming up a cache).
 
-## Kubernetes Deployment (tham khảo tối thiểu)
+## Kubernetes Deployment (minimal reference)
 
 ```yaml
 spec:
@@ -158,9 +158,9 @@ spec:
 
 | Component | Purpose |
 |-----------|---------|
-| Config Server | Config tập trung cho nhiều service |
+| Config Server | Centralized config for multiple services |
 | Eureka | Service discovery |
-| Gateway | Routing/filter/load balancing tại 1 điểm vào |
-| Resilience4j | Circuit breaker/retry/rate-limiter cho call ra service khác |
-| Micrometer Tracing | Distributed tracing xuyên nhiều service |
-| Actuator | Health/metrics production-ready |
+| Gateway | Routing/filtering/load balancing at a single entry point |
+| Resilience4j | Circuit breaker/retry/rate-limiter for calls to other services |
+| Micrometer Tracing | Distributed tracing across multiple services |
+| Actuator | Production-ready health/metrics |

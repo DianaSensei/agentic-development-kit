@@ -1,15 +1,15 @@
 # MySQL (InnoDB) Tuning
 
-Chỉ chỉnh khi có bằng chứng đo được — các giá trị dưới đây là điểm khởi đầu tham khảo cho server 16GB RAM dedicated.
+Only tune when you have measured evidence — the values below are reference starting points for a dedicated 16GB RAM server.
 
-## InnoDB Buffer Pool — quan trọng nhất, tương đương `shared_buffers` của Postgres
+## InnoDB Buffer Pool — the most important setting, equivalent to Postgres's `shared_buffers`
 
 ```sql
--- Khuyến nghị: 70-80% RAM cho server dedicated MySQL
-SET GLOBAL innodb_buffer_pool_size = 12884901888;  -- 12GB cho server 16GB
-SET GLOBAL innodb_buffer_pool_instances = 8;        -- 1 instance/1GB, tối đa 64, giúp giảm contention trên multi-core
+-- Recommended: 70-80% of RAM for a dedicated MySQL server
+SET GLOBAL innodb_buffer_pool_size = 12884901888;  -- 12GB for a 16GB server
+SET GLOBAL innodb_buffer_pool_instances = 8;        -- 1 instance per 1GB, max 64, reduces contention on multi-core systems
 
--- Hit ratio mục tiêu >99%
+-- Target hit ratio >99%
 SELECT (1 - (r.v / q.v)) * 100 AS hit_ratio FROM
   (SELECT VARIABLE_VALUE AS v FROM performance_schema.global_status WHERE VARIABLE_NAME = 'Innodb_buffer_pool_reads') r,
   (SELECT VARIABLE_VALUE AS v FROM performance_schema.global_status WHERE VARIABLE_NAME = 'Innodb_buffer_pool_read_requests') q;
@@ -18,27 +18,27 @@ SELECT (1 - (r.v / q.v)) * 100 AS hit_ratio FROM
 ## Log & I/O
 
 ```ini
-innodb_log_file_size = 1G           # lớn hơn = write performance tốt hơn nhưng crash recovery lâu hơn — cân bằng theo write load
-innodb_flush_log_at_trx_commit = 1  # 1 = ACID đầy đủ (mặc định, an toàn nhất)
-                                      # 2 = ghi OS cache, flush mỗi giây (đánh đổi an toàn lấy tốc độ — chấp nhận được cho replica/analytics)
-innodb_flush_method = O_DIRECT      # tránh double buffering
-innodb_io_capacity = 10000          # IOPS storage chịu được — SSD thường 5000-20000
+innodb_log_file_size = 1G           # larger = better write performance but longer crash recovery — balance against write load
+innodb_flush_log_at_trx_commit = 1  # 1 = full ACID (default, safest)
+                                      # 2 = write to OS cache, flush every second (trades safety for speed — acceptable for replicas/analytics)
+innodb_flush_method = O_DIRECT      # avoids double buffering
+innodb_io_capacity = 10000          # IOPS the storage can handle — SSDs are typically 5000-20000
 ```
 
 ## Slow Query Log & Performance Schema
 
 ```sql
 SET GLOBAL slow_query_log = 'ON';
-SET GLOBAL long_query_time = 1.0;               -- log query > 1s
+SET GLOBAL long_query_time = 1.0;               -- log queries > 1s
 SET GLOBAL log_queries_not_using_indexes = 'ON';
 
--- Top query theo tổng thời gian thực thi
+-- Top queries by total execution time
 SELECT DIGEST_TEXT, COUNT_STAR AS exec_count,
        ROUND(SUM_TIMER_WAIT / 1e12, 3) AS total_time_sec
 FROM performance_schema.events_statements_summary_by_digest
 ORDER BY SUM_TIMER_WAIT DESC LIMIT 20;
 
--- Full table scan — dấu hiệu thiếu index
+-- Full table scans — a sign of missing indexes
 SELECT * FROM sys.statements_with_full_table_scans ORDER BY exec_count DESC LIMIT 10;
 ```
 
@@ -47,9 +47,9 @@ SELECT * FROM sys.statements_with_full_table_scans ORDER BY exec_count DESC LIMI
 ```sql
 CREATE INDEX idx_orders_user_covering ON orders(user_id, status, created_at, total);
 EXPLAIN SELECT status, created_at, total FROM orders WHERE user_id = 123;
--- Kỳ vọng: "Using index" trong cột Extra → covering index, không cần đọc bảng gốc
+-- Expected: "Using index" in the Extra column → covering index, no need to read the base table
 
--- Tìm index trùng lặp/thừa
+-- Find duplicate/redundant indexes
 SELECT a.table_name, a.index_name AS index1, b.index_name AS index2
 FROM information_schema.statistics a
 JOIN information_schema.statistics b
@@ -68,28 +68,28 @@ CREATE TABLE events (
     PARTITION p2025 VALUES LESS THAN (2026),
     PARTITION pmax VALUES LESS THAN MAXVALUE
 );
--- Drop partition cũ = xóa nhanh, không cần DELETE hàng loạt
+-- Dropping an old partition = fast delete, no need for a bulk DELETE
 ALTER TABLE events DROP PARTITION p2024;
 ```
 
 ## Replication
 
 ```sql
-SET GLOBAL binlog_format = 'ROW';   -- ROW an toàn nhất cho replication (so với STATEMENT/MIXED)
-SET GLOBAL sync_binlog = 1;         -- an toàn nhất; 0 nhanh hơn nhưng rủi ro mất data khi crash
+SET GLOBAL binlog_format = 'ROW';   -- ROW is safest for replication (vs STATEMENT/MIXED)
+SET GLOBAL sync_binlog = 1;         -- safest; 0 is faster but risks data loss on crash
 
--- Trên replica: check lag
+-- On the replica: check lag
 SELECT Seconds_Behind_Master FROM (SHOW SLAVE STATUS) s;
 ```
 
 ## Table Maintenance
 
 ```sql
-ANALYZE TABLE users;   -- refresh statistics — chạy sau bulk data change
-OPTIMIZE TABLE users;  -- rebuild, giảm fragmentation (tương đương VACUUM FULL của Postgres — cũng khóa bảng, cẩn thận trên production)
+ANALYZE TABLE users;   -- refresh statistics — run after a bulk data change
+OPTIMIZE TABLE users;  -- rebuild, reduces fragmentation (equivalent to Postgres's VACUUM FULL — also locks the table, be careful in production)
 ```
 
-## Config tham khảo (16GB RAM, production)
+## Reference config (16GB RAM, production)
 
 ```ini
 [mysqld]
@@ -110,8 +110,8 @@ performance_schema = ON
 character_set_server = utf8mb4
 ```
 
-## Khác biệt cần nhớ so với PostgreSQL
+## Key differences from PostgreSQL to remember
 
-- Isolation level mặc định là `REPEATABLE READ` (Postgres/Oracle là `READ COMMITTED`) — xem SKILL.md chính, mục Transaction Isolation.
-- Không có `EXPLAIN ANALYZE` đầy đủ như Postgres tới MySQL 8.0 — trước đó chỉ có `EXPLAIN` (ước tính, không phải actual runtime).
-- Query cache đã bị loại bỏ hoàn toàn từ MySQL 8.0 — không còn `query_cache_type`/`query_cache_size`.
+- Default isolation level is `REPEATABLE READ` (Postgres/Oracle default to `READ COMMITTED`) — see the main SKILL.md, Transaction Isolation section.
+- No full `EXPLAIN ANALYZE` like Postgres until MySQL 8.0 — before that only `EXPLAIN` was available (estimates, not actual runtime).
+- The query cache was completely removed as of MySQL 8.0 — `query_cache_type`/`query_cache_size` no longer exist.

@@ -1,9 +1,9 @@
 # EXPLAIN Analysis & Index Design
 
-## Đọc EXPLAIN — luôn bắt buộc TRƯỚC khi khẳng định 1 query chậm cần index
+## Reading EXPLAIN — always mandatory BEFORE claiming a slow query needs an index
 
 ```sql
--- PostgreSQL: luôn kèm BUFFERS để thấy tỷ lệ cache hit vs disk read
+-- PostgreSQL: always include BUFFERS to see the cache-hit vs disk-read ratio
 EXPLAIN (ANALYZE, BUFFERS, VERBOSE)
 SELECT u.id, u.name, COUNT(o.id) AS order_count
 FROM users u LEFT JOIN orders o ON u.id = o.user_id
@@ -14,108 +14,111 @@ HAVING COUNT(o.id) > 5;
 -- MySQL 8.0+
 EXPLAIN ANALYZE
 SELECT * FROM orders WHERE status = 'pending' AND created_at > NOW() - INTERVAL 7 DAY;
-EXPLAIN FORMAT=JSON SELECT ...;  -- chi tiết hơn khi cần
+EXPLAIN FORMAT=JSON SELECT ...;  -- more detail when needed
 ```
 
-**Đọc kết quả — pattern cần chú ý:**
+**Reading the results — patterns to watch for:**
 
-| Pattern | Ý nghĩa | Hướng xử lý |
+| Pattern | Meaning | Fix direction |
 |---------|---------|-------------|
-| `Seq Scan`/table scan trên bảng lớn | Không dùng index | Thêm B-tree index đúng cột filter |
-| `rows` ước tính lệch xa `actual rows` | Statistics cũ | `ANALYZE <table>` |
-| `Buffers: hit thấp, read cao` | Cache hit ratio thấp | Tăng `shared_buffers`, hoặc thêm covering index |
-| `Sort Method: external merge` | Sort tràn ra disk | Tăng `work_mem` cho session đó |
-| `Nested Loop` với outer set lớn | Tăng trưởng cấp số nhân | Index đúng cột join của bảng inner |
-| `Index Only Scan` | Tốt nhất — không cần đọc heap | Không cần xử lý gì thêm |
+| `Seq Scan`/table scan on a large table | Not using an index | Add a B-tree index on the filtered column |
+| Estimated `rows` far off from `actual rows` | Stale statistics | `ANALYZE <table>` |
+| `Buffers: hit low, read high` | Low cache hit ratio | Increase `shared_buffers`, or add a covering index |
+| `Sort Method: external merge` | Sort spilled to disk | Increase `work_mem` for that session |
+| `Nested Loop` with a large outer set | Exponential growth | Index the join column of the inner table |
+| `Index Only Scan` | Best case — no heap read needed | No further action needed |
 
-Node type từ nhanh → chậm: `Index Only Scan` > `Index Scan` > `Bitmap Index Scan` > `Seq Scan` (chấp nhận được với bảng nhỏ, là vấn đề với bảng lớn).
+Node type from fastest to slowest: `Index Only Scan` > `Index Scan` > `Bitmap Index Scan` > `Seq Scan`
+(acceptable for small tables, a problem for large ones).
 
-## B-Tree Index (mặc định)
+## B-Tree Index (default)
 
 ```sql
 CREATE INDEX idx_users_email ON users(email);               -- WHERE
 CREATE INDEX idx_orders_user_id ON orders(user_id);          -- JOIN
 
--- Composite: thứ tự cột quan trọng — equality trước, range sau; cột chọn lọc cao trước
+-- Composite: column order matters — equality columns first, range columns after; most selective column first
 CREATE INDEX idx_orders_status_created ON orders(status, created_at);
--- Tốt cho: WHERE status = 'pending'; WHERE status = 'pending' AND created_at > ...
--- KHÔNG dùng được cho: WHERE created_at > ... (thiếu status ở đầu)
+-- Good for: WHERE status = 'pending'; WHERE status = 'pending' AND created_at > ...
+-- NOT usable for: WHERE created_at > ... (missing status at the front)
 ```
 
-## Covering Index — tránh heap fetch, cho phép Index Only Scan
+## Covering Index — avoids heap fetches, enables Index Only Scan
 
 ```sql
--- PostgreSQL: INCLUDE cho cột không cần trong điều kiện filter/sort, chỉ cần trong SELECT
+-- PostgreSQL: INCLUDE for columns not needed in the filter/sort condition, only needed in the SELECT
 CREATE INDEX CONCURRENTLY idx_orders_status_created_covering
     ON orders (status, created_at) INCLUDE (customer_id, total_amount);
 
--- MySQL: nối thêm cột vào cuối composite index
+-- MySQL: append columns to the end of a composite index
 CREATE INDEX idx_orders_user_covering ON orders(user_id, status, created_at, total);
 ```
 
-Luôn tạo index bằng `CREATE INDEX CONCURRENTLY` (PostgreSQL) để tránh khóa bảng khi deploy lên production — index thường xây dựng mất thời gian trên bảng lớn, `CONCURRENTLY` cho phép ghi/đọc bình thường song song.
+Always create indexes with `CREATE INDEX CONCURRENTLY` (PostgreSQL) to avoid locking the table when
+deploying to production — index builds often take a while on large tables, and `CONCURRENTLY` allows
+normal reads/writes to continue in parallel.
 
-## Partial / Expression Index — nhỏ hơn, nhanh hơn khi chỉ cần 1 tập con dữ liệu
+## Partial / Expression Index — smaller, faster when you only need a subset of the data
 
 ```sql
--- Partial: chỉ index phần dữ liệu thực sự được query
+-- Partial: only index the portion of data that's actually queried
 CREATE INDEX idx_orders_active ON orders(status, user_id) WHERE status IN ('pending', 'processing');
 
--- Expression: khi query luôn áp dụng hàm lên cột (LOWER, DATE...)
+-- Expression: when the query always applies a function to a column (LOWER, DATE...)
 CREATE INDEX idx_users_email_lower ON users(LOWER(email));
--- Query PHẢI khớp đúng biểu thức mới dùng được index này:
+-- The query MUST match the expression exactly for this index to be used:
 SELECT * FROM users WHERE LOWER(email) = LOWER('User@Example.com');
 ```
 
-## Index chuyên biệt (PostgreSQL)
+## Specialized Indexes (PostgreSQL)
 
 ```sql
--- GIN: full-text search, array, JSONB containment
+-- GIN: full-text search, arrays, JSONB containment
 CREATE INDEX idx_posts_search ON posts USING GIN(to_tsvector('english', title || ' ' || content));
 CREATE INDEX idx_products_tags ON products USING GIN(tags);        -- WHERE tags @> ARRAY['x']
 CREATE INDEX idx_users_metadata ON users USING GIN(metadata);       -- WHERE metadata @> '{"k":"v"}'
 
--- GiST: geometric (PostGIS), range type
+-- GiST: geometric (PostGIS), range types
 CREATE INDEX idx_events_time_range ON events USING GIST(time_range);
 
--- BRIN: bảng rất lớn, dữ liệu tự nhiên có thứ tự (time-series insert-only) — index cực nhỏ
+-- BRIN: very large tables, naturally ordered data (time-series insert-only) — extremely small index
 CREATE INDEX idx_metrics_time_brin ON metrics USING BRIN(timestamp);
 ```
 
-## Anti-pattern thường gặp
+## Common Anti-patterns
 
-| Anti-pattern | Vấn đề | Cách sửa |
+| Anti-pattern | Problem | Fix |
 |-------------|--------|----------|
-| Index mọi cột | Overhead ghi, tốn storage | Chỉ index theo query pattern thật |
-| Index thừa `(a)` + `(a,b)` | Trùng lặp | Giữ `(a,b)`, xóa `(a)` |
-| Sai thứ tự cột composite | `(created_at, user_id)` cho `WHERE user_id = ?` | Đặt cột filter chính xác trước |
-| `OR` trong WHERE | Ngăn dùng index | Tách `UNION` hoặc 2 query riêng |
-| `LIKE '%term%'` | Full table scan | Full-text search hoặc `pg_trgm` |
-| Implicit type conversion | Ngăn dùng index | Match đúng kiểu dữ liệu cột |
+| Indexing every column | Write overhead, storage cost | Only index based on actual query patterns |
+| Redundant `(a)` + `(a,b)` | Duplication | Keep `(a,b)`, drop `(a)` |
+| Wrong composite column order | `(created_at, user_id)` for `WHERE user_id = ?` | Put the filtered column first |
+| `OR` in WHERE | Prevents index usage | Split into `UNION` or two separate queries |
+| `LIKE '%term%'` | Full table scan | Full-text search or `pg_trgm` |
+| Implicit type conversion | Prevents index usage | Match the column's data type exactly |
 
-## Bảo trì index
+## Index Maintenance
 
 ```sql
--- PostgreSQL: tìm index không dùng (xóa sau khi xác nhận ổn định ~30 ngày theo dõi)
+-- PostgreSQL: find unused indexes (drop after confirming stability over ~30 days of monitoring)
 SELECT schemaname, tablename, indexname, idx_scan,
        pg_size_pretty(pg_relation_size(indexrelid)) AS index_size
 FROM pg_stat_user_indexes WHERE idx_scan = 0 AND indexrelname NOT LIKE 'pg_toast%'
 ORDER BY pg_relation_size(indexrelid) DESC;
 
--- Rebuild index bloat mà không khóa bảng
+-- Rebuild a bloated index without locking the table
 REINDEX INDEX CONCURRENTLY idx_users_email;
 
--- MySQL: tìm index chưa từng dùng
+-- MySQL: find never-used indexes
 SELECT object_schema, object_name, index_name
 FROM performance_schema.table_io_waits_summary_by_index_usage
 WHERE index_name IS NOT NULL AND count_star = 0 AND object_schema = 'your_database';
 ```
 
-## Checklist thiết kế index
+## Index Design Checklist
 
-1. Xác định query pattern thật qua `pg_stat_statements`/slow query log — không đoán.
-2. Kiểm tra `EXPLAIN` — tìm `Seq Scan` trên bảng lớn.
-3. Thiết kế: equality → range → include.
-4. Tạo với `CONCURRENTLY` để không khóa bảng production.
-5. Xác nhận cải thiện bằng `EXPLAIN` trước/sau.
-6. Theo dõi usage, xóa index không dùng sau ~30 ngày.
+1. Identify real query patterns via `pg_stat_statements`/slow query log — don't guess.
+2. Check `EXPLAIN` — look for `Seq Scan` on large tables.
+3. Design order: equality → range → include.
+4. Create with `CONCURRENTLY` to avoid locking the production table.
+5. Confirm the improvement with `EXPLAIN` before/after.
+6. Monitor usage, drop unused indexes after ~30 days.

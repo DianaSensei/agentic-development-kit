@@ -1,4 +1,4 @@
-# Interview Questions (Bước 1 — Phân tích yêu cầu)
+# Interview Questions (Step 1 — Requirements Analysis)
 
 ## PM Hat Questions
 
@@ -107,13 +107,13 @@ Structured choices for technical trade-offs: error handling approach (Retry, Fai
 data limits (multi-select thresholds). Then open-ended: "What happens when [X] fails?"
 
 ### Phase 4: Validation
-Present the proposal summary (this is Bước 2's CHECKPOINT), then confirm: "Does this capture your
+Present the proposal summary (this is Step 2's CHECKPOINT), then confirm: "Does this capture your
 requirements?" (Yes / Needs changes / Major gaps), with per-requirement priority confirmation if needed.
 
 ## Multi-Agent Pre-Discovery
 
 For features spanning multiple domains (auth, database, UI, etc.), launch Task subagents with relevant
-skills **before** the interview (i.e. before Bước 1) to front-load technical context, so the interview
+skills **before** the interview (i.e. before Step 1) to front-load technical context, so the interview
 focuses on decisions rather than exploration.
 
 **When to use:**
@@ -131,11 +131,11 @@ focuses on decisions rather than exploration.
 
 ```
 1. Identify domains the feature touches
-2. Launch parallel Task subagents, each invoking the relevant skill from the Bước 0 skill map
+2. Launch parallel Task subagents, each invoking the relevant skill from the Step 0 skill map
    (e.g. architecture-designer for system-impact assessment, security-reviewer for auth/data
    concerns, Explore for existing codebase patterns)
 3. Collect findings from all subagents
-4. Begin the Bước 1 interview with technical context already loaded
+4. Begin the Step 1 interview with technical context already loaded
 5. Focus the interview on decisions and trade-offs, not exploration
 ```
 
@@ -163,4 +163,4 @@ about existing patterns rather than being asked blind.
 | Discovery | Problem, users, value | Open-ended → structured choices |
 | Details | Journey, scope, constraints | Structured choices → open-ended |
 | Edge Cases | Failures, limits, security | Structured choices → open-ended |
-| Validation | Summary, gaps | Structured choices (Bước 2 CHECKPOINT) |
+| Validation | Summary, gaps | Structured choices (Step 2 CHECKPOINT) |

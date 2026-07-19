@@ -1,6 +1,6 @@
 # Reactive — Spring WebFlux / Project Reactor / R2DBC
 
-Chỉ dùng khi project đã chọn WebFlux hoặc I/O-bound thật sự cao (xem lý do chọn MVC vs WebFlux ở SKILL.md chính) — nội dung dưới đây là pattern cụ thể khi đã ở trong ngữ cảnh reactive.
+Only use this when the project has already chosen WebFlux or has genuinely high I/O-bound load (see the reasoning for MVC vs WebFlux in the main SKILL.md) — the content below is a set of concrete patterns for when you're already in a reactive context.
 
 ## WebFlux Controller
 
@@ -23,7 +23,7 @@ public class UserController {
 }
 ```
 
-## Reactive Service — luôn propagate lỗi qua `Mono.error`, KHÔNG throw trực tiếp
+## Reactive Service — always propagate errors via `Mono.error`, do NOT throw directly
 
 ```java
 @Service
@@ -48,7 +48,7 @@ public class UserService {
 }
 ```
 
-`throw` trực tiếp trong 1 reactive chain không lan truyền lỗi đúng cách cho subscriber (lỗi xảy ra khi build chain, không phải khi execute) — luôn dùng `Mono.error()`/`Flux.error()` hoặc để lỗi tự nhiên nổi lên từ 1 operator (`.map()` ném exception vẫn được Reactor bắt đúng, nhưng `throw` ở ngoài chain thì không).
+Throwing directly inside a reactive chain does not propagate the error correctly to the subscriber (the error occurs while building the chain, not while executing it) — always use `Mono.error()`/`Flux.error()`, or let the error surface naturally from an operator (an exception thrown inside `.map()` is caught correctly by Reactor, but a `throw` outside the chain is not).
 
 ## R2DBC Repository & Entity
 
@@ -67,7 +67,7 @@ public record User(
 ) {}
 ```
 
-R2DBC record entity là immutable — update field nào cũng phải tạo instance mới (`new User(...)` hoặc method `withX()`), không có JPA-style dirty checking.
+An R2DBC record entity is immutable — updating any field requires creating a new instance (`new User(...)` or a `withX()` method); there's no JPA-style dirty checking.
 
 ```yaml
 spring:
@@ -76,7 +76,7 @@ spring:
     pool: { initial-size: 10, max-size: 20, max-idle-time: 30m }
 ```
 
-## WebClient gọi service ngoài (reactive)
+## WebClient calling an external service (reactive)
 
 ```java
 @Component
@@ -93,7 +93,7 @@ public class ExternalUserClient {
 }
 ```
 
-## Reactor Operators thường dùng
+## Commonly Used Reactor Operators
 
 ```java
 // Chain async operations
@@ -101,20 +101,20 @@ Mono<UserResponse> result = userRepository.findById(id)
     .flatMap(user -> orderRepository.findByUserId(user.id()).collectList()
         .map(orders -> new UserResponse(user, orders)));
 
-// Combine multiple sources song song
+// Combine multiple sources in parallel
 Mono<UserDetails> combined = Mono.zip(
     userService.getUser(id), addressService.getAddress(id),
     (user, address) -> new UserDetails(user, address));
 
-// Error handling — fallback nguồn khác khi lỗi
+// Error handling — fall back to another source on error
 Mono<User> safe = userRepository.findById(id)
     .onErrorResume(DatabaseException.class, e -> cacheRepository.findById(id))
     .doOnError(e -> log.error("Failed to fetch user", e));
 
-// Backpressure — xử lý theo batch, giới hạn concurrency
+// Backpressure — process in batches, limiting concurrency
 Flux<Data> stream = dataRepository.findAll()
     .buffer(100)
-    .flatMap(batch -> processBatch(batch), 5); // tối đa 5 batch chạy đồng thời
+    .flatMap(batch -> processBatch(batch), 5); // at most 5 batches running concurrently
 ```
 
 ## Testing Reactive Code — StepVerifier
@@ -149,11 +149,11 @@ class UserServiceTest {
 
 | Operator | Purpose |
 |----------|---------|
-| `.map()` | Transform đồng bộ |
-| `.flatMap()` | Transform ra Mono/Flux khác (async chaining) |
-| `.switchIfEmpty()` | Fallback khi rỗng |
-| `.zip()` | Kết hợp nhiều nguồn song song |
-| `.onErrorResume()` | Fallback nguồn khác khi lỗi |
-| `.retryWhen()` / `.retry()` | Retry khi lỗi |
-| `.timeout()` | Giới hạn thời gian chờ |
-| `StepVerifier` | Test Mono/Flux (thay cho assert thông thường) |
+| `.map()` | Synchronous transform |
+| `.flatMap()` | Transform into another Mono/Flux (async chaining) |
+| `.switchIfEmpty()` | Fallback when empty |
+| `.zip()` | Combine multiple sources in parallel |
+| `.onErrorResume()` | Fallback to another source on error |
+| `.retryWhen()` / `.retry()` | Retry on error |
+| `.timeout()` | Limit wait time |
+| `StepVerifier` | Test Mono/Flux (replaces ordinary assertions) |

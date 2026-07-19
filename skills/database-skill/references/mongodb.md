@@ -1,21 +1,22 @@
 # MongoDB — Document-Oriented NoSQL
 
-MongoDB linh hoạt hơn nhiều so với DynamoDB/Cassandra (vẫn hỗ trợ query ad-hoc, aggregation phức tạp,
-secondary index tùy ý) nhưng vẫn là NoSQL — không có JOIN thật (chỉ có `$lookup` mô phỏng, chi phí cao),
-và quyết định **embed vs reference** khi thiết kế document quan trọng ngang với quyết định normalize của
-RDBMS.
+MongoDB is much more flexible than DynamoDB/Cassandra (still supports ad-hoc queries, complex aggregation,
+arbitrary secondary indexes) but is still NoSQL — there's no real JOIN (only `$lookup`, which simulates one
+at a high cost), and the **embed vs reference** decision when designing a document is as important as the
+normalization decision in an RDBMS.
 
-## Nguyên tắc thiết kế: Embed vs Reference
+## Design principle: Embed vs Reference
 
-- **Embed** (nhúng dữ liệu con vào document cha): đọc 1 lần là đủ (không cần round-trip thứ 2), phù hợp
-  quan hệ 1-1 hoặc 1-nhiều với số lượng con GIỚI HẠN và luôn đọc cùng nhau (VD `address` trong `user`,
-  `line items` trong 1 `order`).
-- **Reference** (lưu `_id` tham chiếu, query riêng hoặc `$lookup`): dùng khi dữ liệu con có thể tăng
-  KHÔNG GIỚI HẠN (comment, log, event), khi dữ liệu con cần truy cập độc lập không qua cha, hoặc khi
-  nhiều document cha cùng tham chiếu 1 dữ liệu con (tránh trùng lặp/mismatch khi update).
+- **Embed** (nest child data inside the parent document): a single read is enough (no second round-trip),
+  suitable for 1-1 or 1-to-many relationships with a LIMITED number of children that are always read
+  together (e.g. `address` inside `user`, `line items` inside an `order`).
+- **Reference** (store an `_id` reference, query separately or `$lookup`): use when child data can grow
+  WITHOUT BOUND (comments, logs, events), when child data needs to be accessed independently of the
+  parent, or when multiple parent documents reference the same child data (avoiding duplication/mismatch
+  on update).
 
 ```javascript
-// Embed — order và line items luôn đọc/ghi cùng nhau, số lượng item có giới hạn hợp lý
+// Embed — order and line items are always read/written together, item count has a reasonable limit
 {
   _id: ObjectId("..."),
   customer_id: ObjectId("..."),
@@ -26,132 +27,136 @@ RDBMS.
   total: 109.97
 }
 
-// Reference — comment có thể tăng vô hạn theo thời gian, không nhúng vào post
+// Reference — comments can grow unbounded over time, don't embed them in the post
 { _id: ObjectId("..."), post_id: ObjectId("..."), author_id: ObjectId("..."), text: "..." }
 ```
 
-**Giới hạn 16MB/document** — nhúng mảng không giới hạn (comment, activity log) là lỗi thiết kế phổ biến
-nhất, document sẽ chạm giới hạn này khi dữ liệu tăng theo thời gian dù ban đầu nhỏ. Luôn tự hỏi "mảng
-này có giới hạn trên rõ ràng không?" trước khi embed.
+**16MB/document limit** — embedding an unbounded array (comments, activity logs) is the most common design
+mistake; the document will hit this limit as data grows over time even if it starts small. Always ask "does
+this array have a clear upper bound?" before embedding.
 
-## Schema Design Pattern
+## Schema Design Patterns
 
 ```javascript
-// Subset pattern — chỉ nhúng N item gần nhất/quan trọng nhất, còn lại query riêng khi cần
+// Subset pattern — only embed the N most recent/most important items, query the rest separately when needed
 {
   _id: ObjectId("..."),
   name: "Product X",
-  recent_reviews: [ /* 5 review gần nhất */ ],   // đủ cho trang chi tiết sản phẩm
-  review_count: 1204                              // để hiển thị tổng, không cần load hết
+  recent_reviews: [ /* 5 most recent reviews */ ],   // enough for the product detail page
+  review_count: 1204                              // to display the total without loading everything
 }
 
-// Extended reference pattern — nhúng vài field hay dùng của bản ghi tham chiếu để tránh $lookup ở query đọc thường xuyên
+// Extended reference pattern — embed a few commonly used fields from the referenced record to avoid $lookup on frequent reads
 {
   _id: ObjectId("..."),
-  customer: { _id: ObjectId("..."), name: "Alice", email: "alice@example.com" }, // đủ hiển thị, không cần join
+  customer: { _id: ObjectId("..."), name: "Alice", email: "alice@example.com" }, // enough to display, no join needed
   total: 109.97
 }
-// Đánh đổi: field nhúng (name/email) có thể lệch nếu customer đổi thông tin sau — chấp nhận được cho dữ
-// liệu ít đổi hoặc đây là snapshot tại thời điểm tạo order (giống unit_price snapshot ở RDBMS).
+// Trade-off: embedded fields (name/email) can go stale if the customer's info changes later — acceptable
+// for rarely changing data, or when this is meant as a snapshot at order-creation time (like the unit_price snapshot in RDBMS).
 ```
 
 ## Indexing
 
 ```javascript
-db.orders.createIndex({ customer_id: 1, created_at: -1 });  // compound — thứ tự field quan trọng như RDBMS
+db.orders.createIndex({ customer_id: 1, created_at: -1 });  // compound — field order matters just like RDBMS
 db.orders.createIndex({ status: 1 }, { partialFilterExpression: { status: "pending" } }); // partial index
-db.products.createIndex({ tags: 1 });                         // multikey — tự động khi index field là mảng
+db.products.createIndex({ tags: 1 });                         // multikey — automatic when the indexed field is an array
 db.posts.createIndex({ title: "text", content: "text" });     // text search
 db.locations.createIndex({ coordinates: "2dsphere" });        // geospatial
 
-// Kiểm tra plan trước khi khẳng định index cải thiện hiệu năng — giống EXPLAIN của RDBMS
+// Check the plan before claiming an index improved performance — like EXPLAIN in an RDBMS
 db.orders.find({ customer_id: ObjectId("...") }).explain("executionStats");
-// Tìm "COLLSCAN" (quét toàn collection, tương đương Seq Scan) vs "IXSCAN" (dùng index).
+// Look for "COLLSCAN" (full collection scan, equivalent to Seq Scan) vs "IXSCAN" (index used).
 ```
 
-Composite index: field dùng equality trước, field dùng sort/range sau — cùng nguyên tắc B-tree composite
-index của RDBMS (xem `references/explain-and-indexing.md`).
+Compound index: equality fields first, sort/range fields after — the same principle as B-tree composite
+indexes in RDBMS (see `references/explain-and-indexing.md`).
 
-## Aggregation Pipeline — tối ưu thứ tự stage
+## Aggregation Pipeline — optimize stage order
 
 ```javascript
 db.orders.aggregate([
-  { $match: { status: "completed", created_at: { $gte: ISODate("2024-01-01") } } }, // lọc SỚM nhất có thể — giảm dữ liệu cho stage sau
-  { $project: { customer_id: 1, total: 1 } },   // chỉ giữ field cần — giảm I/O giữa các stage
+  { $match: { status: "completed", created_at: { $gte: ISODate("2024-01-01") } } }, // filter as EARLY as possible — reduces data for later stages
+  { $project: { customer_id: 1, total: 1 } },   // keep only needed fields — reduces I/O between stages
   { $group: { _id: "$customer_id", total_spent: { $sum: "$total" } } },
   { $sort: { total_spent: -1 } },
   { $limit: 20 }
 ]);
 ```
 
-`$match`/`$project` đặt càng sớm trong pipeline càng tốt — MongoDB có thể tận dụng index cho `$match` ở
-đầu pipeline (giống `WHERE` trước `GROUP BY`), nhưng KHÔNG dùng được index nếu `$match` đặt sau các stage
-biến đổi dữ liệu (`$group`, `$unwind`...).
+Placing `$match`/`$project` as early as possible in the pipeline is best — MongoDB can use an index for a
+`$match` at the start of the pipeline (like `WHERE` before `GROUP BY`), but CANNOT use an index if `$match`
+comes after data-transforming stages (`$group`, `$unwind`, etc.).
 
-`$lookup` (JOIN mô phỏng) chi phí cao hơn embed đáng kể, đặc biệt khi không có index trên field join ở
-collection đích — chỉ dùng khi reference pattern thực sự cần thiết (xem Embed vs Reference ở trên), không
-lạm dụng như JOIN thông thường của RDBMS.
+`$lookup` (simulated JOIN) is significantly more expensive than embedding, especially without an index on
+the join field in the target collection — only use it when the reference pattern is genuinely needed (see
+Embed vs Reference above), don't overuse it like a regular RDBMS JOIN.
 
-## Transaction & Concurrency
+## Transactions & Concurrency
 
-- Multi-document ACID transaction có từ 4.0+ (replica set) / 4.2+ (sharded cluster) — nhưng ưu tiên thiết
-  kế document TỰ CHỨA (embed) để hầu hết thao tác chỉ cần atomic ở 1 document (MongoDB đảm bảo atomicity
-  tự nhiên ở cấp document, không cần transaction), transaction đa document chỉ dùng khi thực sự cần
-  atomicity xuyên nhiều document/collection.
-- Tăng/giảm field số nguyên tử: dùng `$inc` — tương đương tinh thần atomic conditional UPDATE của RDBMS,
-  không cần đọc-rồi-ghi qua 2 round-trip:
+- Multi-document ACID transactions are available from 4.0+ (replica set) / 4.2+ (sharded cluster) — but
+  prefer designing SELF-CONTAINED documents (embed) so most operations only need atomicity at the single
+  document level (MongoDB naturally guarantees document-level atomicity without needing a transaction);
+  reserve multi-document transactions for when you truly need atomicity across multiple
+  documents/collections.
+- Atomic increment/decrement of a numeric field: use `$inc` — carries the same atomic-conditional-UPDATE
+  spirit as RDBMS, without a read-then-write round trip:
 
 ```javascript
 db.inventory.updateOne(
-  { _id: productId, stock: { $gte: qty } },   // điều kiện trong filter — atomic, tương đương WHERE stock >= :qty
+  { _id: productId, stock: { $gte: qty } },   // condition in the filter — atomic, equivalent to WHERE stock >= :qty
   { $inc: { stock: -qty } }
 );
-// Kiểm tra matchedCount === 0 để biết thao tác có thành công không (giống updatedRows == 0 của SQL UPDATE)
+// Check matchedCount === 0 to know whether the operation succeeded (like checking updatedRows == 0 in a SQL UPDATE)
 ```
 
-- Optimistic locking: thêm field `version`, điều kiện trong filter (`{ _id, version: expectedVersion }`),
-  `$inc` version khi update thành công — cùng pattern `@Version` của JPA.
+- Optimistic locking: add a `version` field, condition it in the filter (`{ _id, version: expectedVersion
+  }`), `$inc` the version on a successful update — the same pattern as JPA's `@Version`.
 
-## Sharding — shard key quan trọng như partition key của DynamoDB/Cassandra
+## Sharding — the shard key matters as much as the partition key in DynamoDB/Cassandra
 
-Chọn shard key cardinality cao, phân phối đều traffic — shard key cardinality thấp tạo **hot shard**
-(cùng vấn đề hot partition của DynamoDB/Cassandra, xem `references/dynamodb.md`/`references/cassandra.md`).
-Đổi shard key sau khi cluster đã có dữ liệu lớn là thao tác nặng (cần resharding) — cân nhắc kỹ trước khi
-chọn, đặc biệt nếu dự kiến scale ngang trong tương lai.
+Choose a shard key with high cardinality that distributes traffic evenly — a low-cardinality shard key
+creates a **hot shard** (the same hot-partition problem as DynamoDB/Cassandra, see
+`references/dynamodb.md`/`references/cassandra.md`). Changing the shard key after the cluster already has
+significant data is a heavy operation (requires resharding) — choose carefully up front, especially if you
+expect to scale horizontally in the future.
 
-## Migration — schemaless nhưng vẫn cần quản lý version document
+## Migration — schemaless, but document versions still need to be managed
 
-MongoDB không có DDL `ALTER TABLE`, nhưng ứng dụng vẫn cần xử lý document cũ thiếu field mới (KHÔNG có
-constraint ép mọi document cùng shape). 2 cách phổ biến:
-1. **Migration script chạy 1 lần**: `updateMany` toàn collection để thêm field mới với default — giống
-   migration RDBMS, cần rollback plan và chạy qua duyệt nếu dữ liệu lớn.
-2. **Lazy migration ở tầng code**: đọc field mới với fallback default nếu thiếu, ghi lại giá trị mới khi
-   document được update tự nhiên — tránh 1 lần ghi hàng loạt tốn tài nguyên, đánh đổi document cũ tồn tại
-   ở nhiều "version" cùng lúc trong thời gian dài hơn.
+MongoDB has no `ALTER TABLE` DDL, but applications still need to handle older documents missing new fields
+(there's NO constraint forcing every document into the same shape). Two common approaches:
+1. **One-time migration script**: `updateMany` across the whole collection to add a new field with a
+   default — similar to an RDBMS migration, needs a rollback plan and staged rollout if the data is large.
+2. **Lazy migration at the code layer**: read the new field with a fallback default if missing, write the
+   new value back when the document is naturally updated — avoids a costly one-time bulk write, at the cost
+   of multiple document "versions" coexisting for a longer period.
 
 ## Testcontainers / Local Testing
 
-Dùng image `mongo` qua `testcontainers-skill` cho integration test — cần replica set (`--replSet`) nếu
-test transaction đa document, vì transaction MongoDB yêu cầu replica set ngay cả khi chỉ chạy 1 node.
+Use the `mongo` image via `testcontainers-skill` for integration tests — a replica set (`--replSet`) is
+required if testing multi-document transactions, since MongoDB transactions require a replica set even when
+running a single node.
 
-## Khi nào chọn MongoDB (so với RDBMS và NoSQL key-value/column-based khác)
+## When to choose MongoDB (vs RDBMS and other key-value/column-based NoSQL stores)
 
-- Dữ liệu semi-structured, schema thay đổi thường xuyên, nhưng vẫn cần query linh hoạt (filter theo nhiều
-  field khác nhau, aggregation, không chỉ theo 1 key cố định như DynamoDB/Cassandra).
-- Truy cập tự nhiên theo document (đọc/ghi 1 document là đủ cho phần lớn use case), cần scale ghi ngang
-  dễ hơn RDBMS nhưng access pattern CHƯA đủ ổn định/hẹp để chấp nhận đánh đổi của key-value/column-based
-  store (xem `references/dynamodb.md`/`references/cassandra.md`).
-- KHÔNG phù hợp khi: dữ liệu quan hệ chặt chẽ cần JOIN phức tạp thường xuyên xuyên nhiều bảng, cần
-  transaction ACID mạnh làm trung tâm thiết kế (RDBMS phù hợp hơn).
+- Semi-structured data with a frequently changing schema, but still needing flexible querying (filtering by
+  various fields, aggregation — not just by a single fixed key like DynamoDB/Cassandra).
+- Naturally document-oriented access (reading/writing a single document covers most use cases), needing
+  easier horizontal write scaling than RDBMS, but access patterns aren't YET stable/narrow enough to accept
+  the trade-offs of a key-value/column-based store (see
+  `references/dynamodb.md`/`references/cassandra.md`).
+- NOT a good fit when: data is tightly relational and needs frequent complex JOINs across many tables, or
+  strong ACID transactions are central to the design (RDBMS is a better fit).
 
 ## Quick Reference
 
-| Khái niệm | Vai trò |
+| Concept | Role |
 |-----------|---------|
-| Embed | Nhúng dữ liệu con — đọc 1 lần, dùng cho quan hệ có giới hạn, luôn đọc cùng nhau |
-| Reference + `$lookup` | Tách dữ liệu con — dùng khi không giới hạn số lượng hoặc cần truy cập độc lập |
-| Compound Index | Thứ tự field: equality trước, sort/range sau — giống B-tree RDBMS |
-| `$match`/`$project` sớm | Tối ưu aggregation pipeline, tận dụng index |
-| `$inc` + filter điều kiện | Atomic conditional update — tương đương `WHERE x >= :y` của SQL |
-| Shard Key | Phân phối dữ liệu vật lý — cardinality thấp gây hot shard |
-| 16MB/document | Giới hạn cứng — dấu hiệu cần chuyển embed sang reference |
+| Embed | Nests child data — single read, for bounded relationships always read together |
+| Reference + `$lookup` | Separates child data — used when unbounded or needs independent access |
+| Compound Index | Field order: equality first, sort/range after — same as RDBMS B-tree |
+| Early `$match`/`$project` | Optimizes the aggregation pipeline, leverages indexes |
+| `$inc` + conditional filter | Atomic conditional update — equivalent to SQL's `WHERE x >= :y` |
+| Shard Key | Physical data distribution — low cardinality causes a hot shard |
+| 16MB/document | Hard limit — a sign you need to move from embed to reference |

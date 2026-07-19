@@ -11,7 +11,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.ignoringRequestMatchers("/api/auth/**")) // API stateless JWT thường tắt CSRF cho endpoint auth; nếu có session-based endpoint khác, giữ CSRF bật cho endpoint đó
+            .csrf(csrf -> csrf.ignoringRequestMatchers("/api/auth/**")) // stateless JWT APIs usually disable CSRF for auth endpoints; if there are other session-based endpoints, keep CSRF enabled for those
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**", "/actuator/health").permitAll()
@@ -112,7 +112,7 @@ public class JwtService {
 }
 ```
 
-`jwt.secret` PHẢI đọc từ biến môi trường/secret manager (`${JWT_SECRET}`), không hardcode trong `application.yml` — rủi ro bảo mật nếu file config bị commit.
+`jwt.secret` MUST be read from an environment variable/secret manager (`${JWT_SECRET}`), not hardcoded in `application.yml` — a security risk if the config file is ever committed.
 
 ## UserDetailsService + Authentication Service
 
@@ -193,11 +193,11 @@ public class UserService {
 }
 ```
 
-`@PreAuthorize` check TRƯỚC khi method chạy (dùng khi biết điều kiện từ tham số đầu vào); `@PostAuthorize` check SAU khi có kết quả trả về (dùng khi điều kiện phụ thuộc chính object trả về, VD chỉ xem được record của chính mình).
+`@PreAuthorize` checks BEFORE the method runs (use when the condition is known from the input parameters); `@PostAuthorize` checks AFTER a result is returned (use when the condition depends on the returned object itself, e.g. a user can only view their own record).
 
-## OAuth2 Resource Server (JWT do IdP ngoài phát hành — VD Keycloak/Auth0/Cognito)
+## OAuth2 Resource Server (JWT issued by an external IdP — e.g. Keycloak/Auth0/Cognito)
 
-Dùng khi project KHÔNG tự phát hành JWT (khác với JwtService ở trên) mà validate token do 1 Identity Provider ngoài cấp.
+Use this when the project does NOT issue its own JWTs (unlike the JwtService above) but instead validates tokens issued by an external Identity Provider.
 
 ```java
 @Configuration
@@ -228,7 +228,7 @@ public class OAuth2ResourceServerConfig {
 }
 ```
 
-## Security Utility (đọc user hiện tại ngoài `@AuthenticationPrincipal`)
+## Security Utility (read the current user outside of `@AuthenticationPrincipal`)
 
 ```java
 @Component("userSecurityService")
@@ -244,17 +244,17 @@ public class UserSecurityService {
 
 | Annotation | Purpose |
 |-----------|---------|
-| `@EnableWebSecurity` / `@EnableMethodSecurity` | Bật security tầng HTTP / method |
-| `@PreAuthorize` / `@PostAuthorize` | Check quyền trước/sau khi method chạy |
-| `@Secured` / `@RolesAllowed` | Role-based (kiểu cũ hơn `@PreAuthorize`) |
-| `SecurityContextHolder` | Truy cập security context hiện tại |
-| `@AuthenticationPrincipal` | Inject user hiện tại vào controller method |
+| `@EnableWebSecurity` / `@EnableMethodSecurity` | Enable HTTP-level / method-level security |
+| `@PreAuthorize` / `@PostAuthorize` | Check permissions before/after a method runs |
+| `@Secured` / `@RolesAllowed` | Role-based (older style than `@PreAuthorize`) |
+| `SecurityContextHolder` | Access the current security context |
+| `@AuthenticationPrincipal` | Inject the current user into a controller method |
 
 ## Security Best Practices
 
-- HTTPS bắt buộc ở production, không chỉ ở local.
-- Secret (JWT signing key, DB password) LUÔN qua biến môi trường/secret manager, không hardcode.
-- `BCryptPasswordEncoder` strength tối thiểu 12.
-- Có cơ chế refresh token thay vì access token sống quá lâu.
-- Rate-limit riêng cho endpoint auth (login/register) — mục tiêu phổ biến của brute-force.
-- Không log giá trị JWT/password ra log thường.
+- HTTPS is mandatory in production, not just locally.
+- Secrets (JWT signing key, DB password) must ALWAYS come from environment variables/secret managers, never hardcoded.
+- `BCryptPasswordEncoder` strength should be at least 12.
+- Have a refresh token mechanism instead of a long-lived access token.
+- Rate-limit auth endpoints (login/register) specifically — a common brute-force target.
+- Never log raw JWT/password values to standard logs.

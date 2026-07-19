@@ -1,115 +1,111 @@
-# Atlassian MCP — Jira + Confluence tự host
+# Atlassian MCP — Self-hosted Jira + Confluence
 
-Cấu hình cho [mcp-atlassian](https://github.com/sooperset/mcp-atlassian),
-chạy local qua `uvx`. Sau khi kết nối, có thể yêu cầu Claude Code: "tìm
-ticket đang giao cho tôi", "tóm tắt trang Confluence X" mà không cần mở
-giao diện Jira/Confluence.
+Configuration for [mcp-atlassian](https://github.com/sooperset/mcp-atlassian),
+run locally via `uvx`. Once connected, you can ask Claude Code things like: "find
+tickets assigned to me", "summarize Confluence page X" without opening the
+Jira/Confluence UI.
 
-Cấu hình này chỉ áp dụng cho Jira/Confluence bản tự host (Server hoặc Data
-Center — địa chỉ không thuộc dạng `*.atlassian.net`).
+This configuration only applies to self-hosted Jira/Confluence (Server or Data
+Center — an address that isn't a `*.atlassian.net` domain).
 
-## Dùng Atlassian Cloud
+## Using Atlassian Cloud
 
-Không dùng cấu hình trong thư mục này. Atlassian cung cấp MCP server chính
-thức (Rovo) cho Cloud, không cần cài đặt hay quản lý token:
+Don't use the configuration in this directory. Atlassian provides an official MCP server
+(Rovo) for Cloud, requiring no installation or token management:
 
 ```bash
 claude mcp add atlassian-cloud --transport http https://mcp.atlassian.com/v1/mcp
 ```
 
-Nếu `claude mcp list` hiển thị `! Needs authentication`, chạy `/mcp` trong
-Claude Code, chọn server này và chọn Authenticate để đăng nhập qua trình
-duyệt.
+If `claude mcp list` shows `! Needs authentication`, run `/mcp` inside Claude
+Code, select this server, and choose Authenticate to log in via the browser.
 
 ---
 
-## Cài đặt
+## Installation
 
-Cách cài và chạy chính thức nằm ở
-[README của sooperset/mcp-atlassian](https://github.com/sooperset/mcp-atlassian#quick-start)
-— tham khảo trang đó nếu gợi ý dưới đây không còn đúng. Repo này mặc định
-dùng cách chạy qua `uv`/`uvx` vì đơn giản nhất, không yêu cầu Docker:
+The official install and run instructions are at the
+[sooperset/mcp-atlassian README](https://github.com/sooperset/mcp-atlassian#quick-start)
+— refer to that page if the suggestions below become outdated. This repo defaults to
+running via `uv`/`uvx` since it's the simplest option, requiring no Docker:
 
 ```bash
 brew install uv
 uvx --version
 ```
 
-Nếu không dùng macOS hoặc không có Homebrew, xem hướng dẫn cài đặt `uv` tại
+If you're not on macOS or don't have Homebrew, see the `uv` installation guide at
 [docs.astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/).
-`uvx mcp-atlassian` (dùng ở bước đăng ký bên dưới) luôn lấy bản phát hành
-mới nhất, không cần chỉ định version.
+`uvx mcp-atlassian` (used in the registration step below) always fetches the latest
+release, no need to specify a version.
 
-## Tạo Personal Access Token
+## Create a Personal Access Token
 
-Đường dẫn thao tác trên giao diện Jira/Confluence có thể thay đổi theo
-phiên bản — tham khảo
-[tài liệu xác thực chính thức của mcp-atlassian](https://mcp-atlassian.soomiles.com/docs/authentication)
-nếu các bước dưới đây không khớp.
+The exact UI navigation in Jira/Confluence can change between versions — refer to the
+[official mcp-atlassian authentication docs](https://mcp-atlassian.soomiles.com/docs/authentication)
+if the steps below don't match.
 
-Thực hiện riêng cho từng sản phẩm — Jira và Confluence dùng token khác
-nhau dù chung một hệ thống: đăng nhập → avatar góc trên bên phải →
-**Profile** → **Personal Access Tokens** → **Create token**. Sao chép token
-ngay sau khi tạo.
+Do this separately for each product — Jira and Confluence use different tokens even
+though they're part of the same suite: log in → avatar in the top-right corner →
+**Profile** → **Personal Access Tokens** → **Create token**. Copy the token
+immediately after creating it.
 
-Nếu chỉ dùng một trong hai sản phẩm, bỏ qua bước tạo token cho sản phẩm còn
-lại.
+If you only use one of the two products, skip the token-creation step for the other one.
 
-## Cấu hình `.env`
+## Configure `.env`
 
 ```bash
 cp .env.example .env
 ```
 
-| Biến | Bắt buộc | Ghi chú |
+| Variable | Required | Note |
 |---|---|---|
-| `JIRA_URL` | Nếu dùng Jira | ví dụ `https://jira.congty.com` |
-| `JIRA_PERSONAL_TOKEN` | Nếu dùng Jira | token vừa tạo |
-| `CONFLUENCE_URL` | Nếu dùng Confluence | địa chỉ Confluence |
-| `CONFLUENCE_PERSONAL_TOKEN` | Nếu dùng Confluence | token vừa tạo |
-| `READ_ONLY_MODE` | Không, mặc định `true` | `true` vô hiệu hoá mọi tool ghi/sửa/xoá — xem phần cuối tài liệu |
-| `JIRA_PROJECTS_FILTER` / `CONFLUENCE_SPACES_FILTER` | Không | giới hạn phạm vi project/space, phân tách bằng dấu phẩy |
+| `JIRA_URL` | If using Jira | e.g. `https://jira.yourcompany.com` |
+| `JIRA_PERSONAL_TOKEN` | If using Jira | the token you just created |
+| `CONFLUENCE_URL` | If using Confluence | Confluence address |
+| `CONFLUENCE_PERSONAL_TOKEN` | If using Confluence | the token you just created |
+| `READ_ONLY_MODE` | No, defaults to `true` | `true` disables every write/edit/delete tool — see the section at the end of this document |
+| `JIRA_PROJECTS_FILTER` / `CONFLUENCE_SPACES_FILTER` | No | limits the project/space scope, comma-separated |
 
-Sản phẩm nào không dùng có thể để trống, server sẽ tự bỏ qua.
+Any product you're not using can be left blank, the server will skip it automatically.
 
-## Đăng ký với Claude Code
+## Register with Claude Code
 
-Xác định đường dẫn tuyệt đối tới thư mục này (`pwd` trong thư mục này), sau
-đó:
+Determine the absolute path to this directory (`pwd` while inside it), then:
 
 ```bash
-claude mcp add selfhost-atlassian --scope user -- uvx mcp-atlassian --env-file /đường-dẫn/mcp/selfhost-atlassian/.env
+claude mcp add selfhost-atlassian --scope user -- uvx mcp-atlassian --env-file /path/mcp/selfhost-atlassian/.env
 ```
 
-Khác với Grafana/Toolbox, server này đọc trực tiếp file `.env` qua
-`--env-file` — không cần truyền token vào lệnh, chỉ cần đường dẫn chính
-xác tới file.
+Unlike Grafana/Toolbox, this server reads the `.env` file directly via
+`--env-file` — no need to pass the token into the command, just the exact
+path to the file.
 
-Xác nhận:
+Confirm:
 
 ```bash
 claude mcp list
 ```
 
-Trạng thái `✔ Connected` cạnh `selfhost-atlassian` là hoàn tất. Nếu lỗi,
-kiểm tra URL có truy cập được và token chưa hết hạn hoặc bị thu hồi.
+A `✔ Connected` status next to `selfhost-atlassian` means it's done. On error,
+check whether the URL is reachable and whether the token has expired or been revoked.
 
-## Kiểm tra sau khi kết nối
+## Verify after connecting
 
-- "Tìm ticket Jira đang giao cho tôi"
-- "Tóm tắt trang Confluence tên X"
-- "Có bug nào được tạo trong tuần này không?"
+- "Find Jira tickets assigned to me"
+- "Summarize the Confluence page named X"
+- "Any bugs created this week?"
 
-Với `READ_ONLY_MODE=true`, các yêu cầu tạo mới ticket hoặc trang sẽ bị từ
-chối — xem phần bên dưới.
+With `READ_ONLY_MODE=true`, requests to create a new ticket or page will be
+rejected — see below.
 
 ---
 
-## Cấu hình nâng cao
+## Advanced configuration
 
-**Đăng ký qua file config thay vì lệnh CLI** — vì `--env-file` chỉ cần một
-đường dẫn thay vì giá trị trực tiếp, cách này an toàn ở mọi phạm vi, kể cả
-khi chia sẻ qua git:
+**Registering via a config file instead of the CLI command** — since `--env-file`
+only needs a path rather than direct values, this approach is safe at any scope, even
+when shared via git:
 
 ```json
 {
@@ -126,23 +122,23 @@ khi chia sẻ qua git:
 }
 ```
 
-Phạm vi cá nhân: dán vào `~/.claude.json`, thay `${CLAUDE_PROJECT_DIR}`
-bằng đường dẫn tuyệt đối (biến này chỉ có giá trị trong phiên làm việc gắn
-với một project cụ thể). Chia sẻ với team: dán vào `.mcp.json` ở gốc
-project và commit vào git, giữ nguyên `${CLAUDE_PROJECT_DIR}` — mỗi thành
-viên vẫn cần tự tạo file `.env` trên máy họ.
+Personal scope: paste into `~/.claude.json`, replacing `${CLAUDE_PROJECT_DIR}`
+with the absolute path (this variable only has a value within a session tied
+to a specific project). Sharing with the team: paste into `.mcp.json` at the
+project root and commit it to git, keeping `${CLAUDE_PROJECT_DIR}` as-is — each
+team member still needs to create their own `.env` file on their machine.
 
-`.mcp.json` chỉ được đọc lại khi mở phiên làm việc mới.
+`.mcp.json` is only re-read when a new session is opened.
 
-## Vì sao mặc định read-only
+## Why read-only by default
 
-`READ_ONLY_MODE=true` vô hiệu hoá mọi tool tạo/sửa/xoá ở phía server, không
-chỉ là một dòng mô tả yêu cầu Claude tránh thao tác ghi. Ngay cả khi có yêu
-cầu tạo ticket, server sẽ từ chối trực tiếp, bất kể quyền hạn thực tế của
-token.
+`READ_ONLY_MODE=true` disables every create/edit/delete tool on the server side, not
+just a description line asking Claude to avoid write operations. Even if a request to
+create a ticket comes in, the server will reject it directly, regardless of the token's
+actual permissions.
 
-Chỉ tắt read-only khi thực sự cần Claude Code tạo hoặc chỉnh sửa nội dung.
-Có thể kết hợp thêm `JIRA_PROJECTS_FILTER` / `CONFLUENCE_SPACES_FILTER` để
-giới hạn phạm vi truy cập, vì Personal Access Token của Atlassian thường kế
-thừa toàn bộ quyền của tài khoản tạo ra nó, không tự giới hạn theo
+Only turn off read-only mode when you genuinely need Claude Code to create or edit
+content. You can combine this with `JIRA_PROJECTS_FILTER` / `CONFLUENCE_SPACES_FILTER`
+to limit the access scope, since an Atlassian Personal Access Token typically inherits
+all the permissions of the account that created it, without auto-limiting by
 project/space.

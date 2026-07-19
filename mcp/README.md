@@ -1,31 +1,30 @@
 # Common MCP Server
 
-Kho cấu hình MCP để kết nối Claude Code với các hệ thống bên ngoài: database,
-Grafana, Jira/Confluence. Mỗi thư mục trong `mcp/` là một MCP server độc
-lập, không phụ thuộc lẫn nhau.
+A collection of MCP configurations for connecting Claude Code to external systems: database,
+Grafana, Jira/Confluence. Each directory under `mcp/` is an independent MCP server, not
+dependent on the others.
 
-MCP (Model Context Protocol) là cơ chế cho phép Claude Code gọi ra ngoài
-phạm vi code trong máy — query database, đọc dashboard, thao tác ticket —
-thông qua các MCP server đóng vai trò cầu nối tới từng hệ thống cụ thể.
+MCP (Model Context Protocol) is a mechanism that lets Claude Code reach beyond the local
+codebase — query a database, read a dashboard, interact with tickets — through MCP servers
+that act as bridges to each specific system.
 
-## Danh sách MCP server
+## List of MCP servers
 
-| Thư mục | Chức năng |
+| Directory | Function |
 |---|---|
-| [`mcp/toolbox/`](./mcp/toolbox/README.md) | Query PostgreSQL, Redis, MongoDB (chỉ đọc) |
-| [`mcp/grafana/`](./mcp/grafana/README.md) | Xem dashboard, alert, metric trên Grafana |
-| [`mcp/selfhost-atlassian/`](./mcp/selfhost-atlassian/README.md) | Jira và Confluence bản tự host. Dùng Atlassian Cloud thì không cần cấu hình này — xem ghi chú trong README tương ứng |
+| [`mcp/toolbox/`](./mcp/toolbox/README.md) | Query PostgreSQL, Redis, MongoDB (read-only) |
+| [`mcp/grafana/`](./mcp/grafana/README.md) | View dashboards, alerts, metrics on Grafana |
+| [`mcp/selfhost-atlassian/`](./mcp/selfhost-atlassian/README.md) | Self-hosted Jira and Confluence. If you use Atlassian Cloud, this configuration isn't needed — see the note in the corresponding README |
 
-## Quy trình setup chung
+## General setup process
 
-1. Cài công cụ runtime cần thiết cho MCP server đó (mỗi README nêu cụ thể).
-2. `cp .env.example .env`, điền thông tin thật vào `.env`. File này không
-   được commit lên git, nên điền giá trị thật vào là an toàn.
-3. Đăng ký với Claude Code bằng lệnh `claude mcp add ...` — lệnh đầy đủ có
-   sẵn trong README của từng server.
-4. Chạy `claude mcp list`, xác nhận trạng thái `✔ Connected`.
+1. Install the runtime tools needed for that MCP server (each README specifies which).
+2. `cp .env.example .env`, fill in real values in `.env`. This file is not committed to
+   git, so it's safe to put real values in it.
+3. Register with Claude Code using the `claude mcp add ...` command — the full command is
+   provided in each server's README.
+4. Run `claude mcp list`, confirm the status shows `✔ Connected`.
 
-Chi tiết từng bước, cách xử lý lỗi thường gặp nằm trong README riêng của
-từng MCP server. Cũng có thể yêu cầu Claude Code tự thực hiện toàn bộ quy
-trình — ví dụ "setup giúp tôi MCP Grafana" — Claude Code sẽ đọc README tương
-ứng và làm theo.
+Details for each step and how to handle common errors are in each MCP server's own README.
+You can also ask Claude Code to carry out the whole process itself — for example, "set up
+Grafana MCP for me" — and Claude Code will read the corresponding README and follow it.

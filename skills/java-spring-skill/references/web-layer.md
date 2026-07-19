@@ -48,7 +48,7 @@ public class UserController {
 public record UserCreateRequest(
     @NotBlank @Email String email,
     @NotBlank @Size(min = 8, max = 100)
-    @Pattern(regexp = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d).*$", message = "Phải có chữ hoa, chữ thường và số")
+    @Pattern(regexp = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d).*$", message = "Must contain an uppercase letter, a lowercase letter, and a digit")
     String password,
     @NotBlank @Size(min = 3, max = 50) @Pattern(regexp = "^[a-zA-Z0-9_]+$")
     String username,
@@ -68,7 +68,7 @@ public record UserResponse(
 
 ## Global Exception Handling (ProblemDetail — RFC 7807)
 
-Dùng `ProblemDetail` (built-in Spring 6+) thay vì tự định nghĩa record error riêng — khớp thẳng với chuẩn RFC 7807 mà `api-contract-skill` đã chọn làm error format mặc định, tránh lệch format giữa spec và implementation thật.
+Use `ProblemDetail` (built-in to Spring 6+) instead of defining a custom error record — it directly matches the RFC 7807 standard that `api-contract-skill` has already chosen as the default error format, avoiding format drift between the spec and the real implementation.
 
 ```java
 @RestControllerAdvice
@@ -99,8 +99,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleUnexpected(Exception ex) {
         log.error("Unexpected error", ex);
-        // Không lộ ex.getMessage() gốc ra client cho lỗi 500 chưa xác định — chi tiết đã log lại,
-        // client chỉ cần biết đã có lỗi hạ tầng để retry/báo hỗ trợ.
+        // Don't expose the raw ex.getMessage() to the client for an unidentified 500 error — the details are
+        // already logged; the client only needs to know an infrastructure error occurred so it can retry/contact support.
         return ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred");
     }
 }
@@ -130,7 +130,7 @@ public class UniqueEmailValidator implements ConstraintValidator<UniqueEmail, St
 }
 ```
 
-## WebClient cho gọi service ngoài
+## WebClient for calling an external service
 
 ```java
 @Configuration
@@ -181,8 +181,8 @@ public class WebConfig implements WebMvcConfigurer {
 | Annotation | Purpose |
 |------------|---------|
 | `@RestController` | REST controller (`@Controller` + `@ResponseBody`) |
-| `@PathVariable` / `@RequestParam` | Lấy giá trị từ path / query |
-| `@RequestBody` + `@Valid` | Bind + validate request body |
+| `@PathVariable` / `@RequestParam` | Get a value from the path / query string |
+| `@RequestBody` + `@Valid` | Bind + validate the request body |
 | `@RestControllerAdvice` | Global exception handling |
-| `@ResponseStatus` | Set status code cho method |
+| `@ResponseStatus` | Set the status code for a method |
 | `ProblemDetail` | RFC 7807 error response |
