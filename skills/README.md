@@ -38,6 +38,7 @@ off to the right orchestrator, so in practice you rarely need to name a workflow
 | [`ui-ux-design-skill`](./ui-ux-design-skill/SKILL.md) | UI/UX design (usability, accessibility, responsive/cross-platform) before implementation |
 | [`spec-miner`](./spec-miner/SKILL.md) | Reverse-engineer a spec from an undocumented/legacy/inherited codebase |
 | [`legacy-modernizer`](./legacy-modernizer/SKILL.md) | Incremental migration strategy for a large-scale legacy change (strangler fig, branch by abstraction) |
+| [`technical-proposal-writer`](./technical-proposal-writer/SKILL.md) | Writing/reviewing a technical proposal, RFC, or "đề xuất kỹ thuật" that argues a decision to stakeholders — problem, alternatives, risks, plan, timeline |
 
 ## Language & Framework Implementation
 
