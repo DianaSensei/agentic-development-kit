@@ -12,7 +12,7 @@ that act as bridges to each specific system.
 
 | Directory | Function |
 |---|---|
-| [`mcp/toolbox/`](./mcp/toolbox/README.md) | Query PostgreSQL, Redis, MongoDB (read-only) |
+| [`mcp/toolbox/`](./mcp/toolbox/README.md) | Query PostgreSQL, MySQL, Redis, MongoDB (read-only) |
 | [`mcp/grafana/`](./mcp/grafana/README.md) | View dashboards, alerts, metrics on Grafana |
 | [`mcp/selfhost-atlassian/`](./mcp/selfhost-atlassian/README.md) | Self-hosted Jira and Confluence. If you use Atlassian Cloud, this configuration isn't needed — see the note in the corresponding README |
 
