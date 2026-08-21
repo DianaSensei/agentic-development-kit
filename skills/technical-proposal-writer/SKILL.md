@@ -42,10 +42,13 @@ a document a specific reader can evaluate and approve.
    `architecture-designer`'s job first; this skill argues for a decision, it doesn't make one.
 3. **Structure the document** using the Standard Structure below, adapted to what the reader needs —
    drop a section only when it's genuinely not applicable, not because it's inconvenient to fill in.
-4. **Draft** applying the Persuasive & Precise Writing principles below.
-5. **Self-review before handing it back.** Check specifically for the three failure modes that make
-   proposals fail even when the underlying idea is sound: an Alternatives section that's a strawman, a
-   Risks section that's empty or all upside, and an ask that's buried instead of stated up front.
+4. **Draft** applying the Mandatory Writing Style below first, then the supporting Persuasive & Precise
+   principles — style is not a polish pass done at the end, a padded or vague first draft still has to
+   be rewritten, so write tight and concrete from the first sentence.
+5. **Self-review before handing it back.** Run the Conciseness & Evidence Check *and* check for the
+   three structural failure modes that make proposals fail even when the underlying idea is sound: an
+   Alternatives section that's a strawman, a Risks section that's empty or all upside, and an ask that's
+   buried instead of stated up front.
 6. **Match the output language to the request.** Write in Vietnamese when the user asked in Vietnamese
    or the target reader is Vietnamese-speaking (see `references/vietnamese-writing.md` for terminology
    and tone); write in English otherwise. Don't default to English just because this skill file is in
@@ -65,7 +68,62 @@ a document a specific reader can evaluate and approve.
 | Success Metrics *(when measurable)* | Đo lường thành công | How the reader will later know whether this worked — skip only when the change is genuinely not measurable. |
 | Open Questions *(when any remain)* | Câu hỏi mở | Unresolved points named explicitly, rather than smoothed over — this invites the reviewer in instead of asking for blind trust. |
 
-## Persuasive & Precise Writing Principles
+## Mandatory Writing Style (User's House Style)
+
+This is not a style preference to weigh against other considerations — it is the standard every
+proposal produced by this skill is held to, on top of whatever structure is used. Four rules, in the
+user's own words, drive everything below:
+
+1. **Súc tích, ngắn gọn (concise).** Every sentence earns its place. If a sentence can be deleted
+   without the reader losing information they need to decide, delete it. This is the opposite of
+   "write more to look thorough" — length is not evidence of rigor, and a bloated section is a sign the
+   thinking isn't finished, not that it's complete.
+2. **Đi thẳng vào vấn đề (get to the point).** Open each section — and the document as a whole — on the
+   substance itself, not a lead-in ("Trong bối cảnh phát triển hiện nay...", "As part of our ongoing
+   effort to..."). The first sentence of the Context section states the problem; the first sentence of
+   the Solution section states the solution.
+3. **Chứng minh (prove it).** Every claim about the problem's severity, the solution's expected impact,
+   or a tradeoff's cost needs something backing it — a number, a benchmark, a log excerpt, a code
+   reference, an incident, a citation. A claim with no evidence attached reads as an opinion, and
+   opinions don't get approved.
+4. **Giải pháp cụ thể (concrete solutions).** State exactly what would be done — which component
+   changes, what the new config/API/schema looks like, what command or migration runs — not the
+   direction of travel ("cải thiện hiệu năng hệ thống") without the mechanism. A reader approving a
+   vague solution is approving a promise, not a plan.
+
+### Using code blocks, quote blocks, images, and diagrams
+
+Rich content is allowed and encouraged where it gets the point across faster or more accurately than
+prose — but each one has to earn its place; the user explicitly wants these used **without lạm dụng
+(overuse)**. Before adding one, ask: does this convey something a sentence or two couldn't, at least as
+fast? If not, cut it and say it in prose instead.
+
+| Element | Use it for | Don't use it for |
+|---|---|---|
+| Code block | An exact command, config, API contract, schema, or error message the reader needs to see verbatim to trust or reproduce it | Describing logic that a short bullet list already conveys just as fast |
+| Quote block | An exact citation — a stakeholder requirement, a log line, a spec excerpt — where the exact wording is the evidence | General emphasis on a sentence you wrote yourself; that's what headings/bold are for |
+| Diagram | A relationship that's genuinely hard to state in a sentence — data flow, sequence, before/after architecture | A structure a numbered list or table already shows equally clearly |
+| Image/screenshot | Visual evidence that *is* the proof — a monitoring graph, a UI state, a trace | Decoration, or restating a number already given in the text |
+
+A proposal with zero rich content is fine if prose and tables carry the argument; a proposal with one
+well-chosen diagram is better than one with five decorative ones. When in doubt, leave it out and see
+if the document still reads clearly — it usually does.
+
+### Conciseness & Evidence Check (part of self-review)
+
+Before handing the document back, re-read it specifically for:
+
+- Any sentence or section that could be cut with no loss of information the reader needs — cut it.
+- Any claim (problem severity, expected benefit, cost of a tradeoff) with no evidence attached —
+  attach evidence or mark it explicitly as an estimate/assumption.
+- Any solution described by its direction rather than its mechanism — replace with the concrete
+  change.
+- Any code block, quote block, image, or diagram that just repeats what an adjacent sentence already
+  said — remove it or remove the sentence.
+- Any opening sentence (of the document or a section) that's a lead-in rather than the point itself —
+  cut straight to the substance.
+
+## Supporting Persuasive & Precise Principles
 
 - **Lead with the reader's stake, not the mechanism.** Open with why this matters to the approver
   before explaining how it works — a reader who doesn't yet know why they should care will skim past
@@ -103,19 +161,30 @@ a document a specific reader can evaluate and approve.
 
 - Clarify the reader/approver and the actual decision at stake before drafting
 - Ground technical rationale in real design artifacts, not invented justification
+- Keep every section as short as it can be while still fully supporting the decision — run the
+  Conciseness & Evidence Check before delivering
+- Open the document, and each section, on the substance itself, not a lead-in
+- Back every claim about problem severity, expected impact, or tradeoff cost with concrete evidence —
+  a number, benchmark, log, code reference, or citation — or flag it explicitly as an estimate
+- Make the proposed solution concrete and actionable — the exact change, config, command, or code, not
+  a direction of travel
 - Include a genuine Alternatives section with real tradeoffs
 - Include a Risks & Mitigations section
-- Quantify claims where data exists; flag clearly where a number is an estimate
 - Match the output language to the user's request (Vietnamese when asked in Vietnamese)
 - State the ask (the decision being requested) explicitly and early
+- Use code blocks, quote blocks, images, and diagrams only where they convey something faster or more
+  accurately than a sentence would
 
 ### MUST NOT DO
 
 - Invent technical details or rationale not grounded in the actual design — flag as an open question
   instead of guessing
+- Pad a section to look complete — length is not evidence of thoroughness
 - Write an Alternatives section that's a strawman built just to make the proposed solution look best
 - Omit risks or downsides to make the proposal look more attractive
 - Bury the actual decision the reader needs to make inside dense prose
+- State a solution's direction without its concrete mechanism ("cải thiện hiệu năng" with no how)
+- Add a code block, quote block, image, or diagram that just repeats what an adjacent sentence says
 - Default to English when the user's request or target audience is Vietnamese
 
 ## Boundaries
