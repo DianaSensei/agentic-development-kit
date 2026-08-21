@@ -21,7 +21,10 @@ not less writing).
 người đọc bận rộn nên đọc xong phần này là hiểu được việc chính.]
 
 ## Bối cảnh & Vấn đề
-[Điều gì đang xảy ra khiến tài liệu này cần tồn tại ngay bây giờ — số liệu/sự cố/chi phí cụ thể nếu có.]
+[Điều gì đang xảy ra khiến tài liệu này cần tồn tại ngay bây giờ — số liệu/sự cố/chi phí cụ thể nếu có.
+Nếu có từ 2 vấn đề trở lên, liệt kê riêng từng vấn đề kèm mã ngắn để tham chiếu lại ở phần Giải pháp:]
+- **P1 —** [tên ngắn vấn đề 1]: [mô tả + bằng chứng]
+- **P2 —** [tên ngắn vấn đề 2]: [mô tả + bằng chứng]
 
 ## Mục tiêu
 - [Mục tiêu cụ thể, đo lường được nếu có thể]
@@ -31,7 +34,15 @@ người đọc bận rộn nên đọc xong phần này là hiểu được vi�
 
 ## Giải pháp đề xuất
 [Mô tả giải pháp ở mức độ chi tiết phù hợp với người đọc — đẩy chi tiết triển khai sâu ra phụ lục
-hoặc design doc liên kết nếu người đọc là lãnh đạo không chuyên sâu kỹ thuật.]
+hoặc design doc liên kết nếu người đọc là lãnh đạo không chuyên sâu kỹ thuật. Nếu Bối cảnh có nhiều
+vấn đề, mỗi thành phần giải pháp phải nêu rõ nó giải quyết vấn đề nào — chỉ cần mapping table dưới đây
+khi có từ 3 vấn đề/giải pháp trở lên, còn ít hơn thì ghi trực tiếp trong câu ("Giải pháp A giải quyết P1").]
+
+*(Chỉ thêm khi có nhiều vấn đề/giải pháp — xóa nếu không cần)*
+| Vấn đề | Giải pháp tương ứng |
+|---|---|
+| P1 — [tên ngắn] | [tên ngắn thành phần giải pháp] |
+| P2 — [tên ngắn] | [tên ngắn thành phần giải pháp] |
 
 ## Phương án thay thế đã xem xét
 | Phương án | Ưu điểm | Nhược điểm | Vì sao không chọn |
@@ -75,7 +86,11 @@ hoặc design doc liên kết nếu người đọc là lãnh đạo không chuy
 for — a busy reader should get the whole ask from this section alone.]
 
 ## Context & Problem
-[What's happening that makes this document necessary now — concrete numbers/incidents/cost if any.]
+[What's happening that makes this document necessary now — concrete numbers/incidents/cost if any.
+If there are 2+ distinct problems, list them separately with a short ID to reference back to in
+Proposed Solution:]
+- **P1 —** [short problem name]: [description + evidence]
+- **P2 —** [short problem name]: [description + evidence]
 
 ## Goals
 - [Specific, measurable where possible]
@@ -85,7 +100,15 @@ for — a busy reader should get the whole ask from this section alone.]
 
 ## Proposed Solution
 [Describe at the depth the reader needs — push deep implementation detail to an appendix or linked
-design doc if the reader is non-technical leadership.]
+design doc if the reader is non-technical leadership. If Context listed multiple problems, each
+solution component must state which problem it resolves — inline ("Component A resolves P1") is enough
+for 1–2 problems; use the mapping table below once there are 3+.]
+
+*(Only include when there are multiple problems/solution components — delete otherwise)*
+| Problem | Corresponding Solution |
+|---|---|
+| P1 — [short name] | [short solution component name] |
+| P2 — [short name] | [short solution component name] |
 
 ## Alternatives Considered
 | Option | Pros | Cons | Why not chosen |

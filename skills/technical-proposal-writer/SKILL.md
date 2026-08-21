@@ -58,9 +58,9 @@ a document a specific reader can evaluate and approve.
 
 | Section | Tiêu đề tiếng Việt | Purpose |
 |---|---|---|
-| Context & Problem | Bối cảnh & Vấn đề | Why this document exists now — what's broken, costly, blocking, or about to become one of those. |
+| Context & Problem | Bối cảnh & Vấn đề | Why this document exists now — what's broken, costly, blocking, or about to become one of those. When there's more than one distinct problem, list them separately with a short ID (P1, P2, ...) instead of blending them into one paragraph — the ID is what Proposed Solution below references back to. |
 | Goals & Non-Goals | Mục tiêu & Ngoài phạm vi | What success looks like, and explicitly what this proposal does *not* try to solve — this is what stops scope-creep arguments later. |
-| Proposed Solution | Giải pháp đề xuất | The actual approach, at the depth the target reader needs — not full implementation detail (push that to an appendix or linked design doc). |
+| Proposed Solution | Giải pháp đề xuất | The actual approach, at the depth the target reader needs — not full implementation detail (push that to an appendix or linked design doc). When Context listed multiple problems, state which problem ID(s) each solution component resolves (inline, or via the mapping table — see Mandatory Writing Style below); never leave the reader to guess which fix addresses which pain point. |
 | Alternatives Considered | Phương án thay thế đã xem xét | Real alternatives with real tradeoffs, including the strongest competing option, not a strawman. This section is what makes a proposal read as *considered* rather than merely *asserted*. |
 | Risks & Mitigations | Rủi ro & Biện pháp giảm thiểu | Honest costs and failure modes, each with what would be done about it. A proposal with no risks section reads as naive to any experienced reviewer — it's evidence of thinking it through, not a weakness to hide. |
 | Implementation Plan | Kế hoạch triển khai | Phases/milestones, in the order they'd actually happen, with what unblocks what. |
@@ -90,6 +90,22 @@ user's own words, drive everything below:
    changes, what the new config/API/schema looks like, what command or migration runs — not the
    direction of travel ("cải thiện hiệu năng hệ thống") without the mechanism. A reader approving a
    vague solution is approving a promise, not a plan.
+5. **Ánh xạ vấn đề – giải pháp rõ ràng khi có nhiều vấn đề (explicit problem-to-solution mapping).**
+   The moment Context lists more than one problem, the reader needs to know which part of the solution
+   resolves which problem — without this, a multi-part solution reads as a bundle of work with no
+   visible justification for each piece. Reference the problem ID inline in each solution component
+   ("Giải pháp A giải quyết P1, P3") or, once there are more than two or three problems, add a short
+   mapping table right after Proposed Solution:
+
+   | Vấn đề | Giải pháp tương ứng |
+   |---|---|
+   | P1 — [tên ngắn vấn đề] | [tên ngắn giải pháp/thành phần] |
+   | P2 — [tên ngắn vấn đề] | [tên ngắn giải pháp/thành phần] |
+
+   If a listed problem has no solution component pointing back at it, that's a gap — either the
+   solution is incomplete or the problem shouldn't be in this proposal; don't leave it unaddressed
+   silently. Likewise if a solution component maps to no problem, question whether it belongs in this
+   proposal at all (see Non-Goals) rather than leaving it unexplained.
 
 ### Using code blocks, quote blocks, images, and diagrams
 
@@ -122,6 +138,8 @@ Before handing the document back, re-read it specifically for:
   said — remove it or remove the sentence.
 - Any opening sentence (of the document or a section) that's a lead-in rather than the point itself —
   cut straight to the substance.
+- If Context lists more than one problem: every problem has a solution component pointing back at it,
+  and every solution component's target problem is stated, not implied.
 
 ## Supporting Persuasive & Precise Principles
 
@@ -168,6 +186,8 @@ Before handing the document back, re-read it specifically for:
   a number, benchmark, log, code reference, or citation — or flag it explicitly as an estimate
 - Make the proposed solution concrete and actionable — the exact change, config, command, or code, not
   a direction of travel
+- When more than one problem is listed, state explicitly which solution component resolves which
+  problem ID — inline reference or a mapping table, never left for the reader to infer
 - Include a genuine Alternatives section with real tradeoffs
 - Include a Risks & Mitigations section
 - Match the output language to the user's request (Vietnamese when asked in Vietnamese)
@@ -184,6 +204,7 @@ Before handing the document back, re-read it specifically for:
 - Omit risks or downsides to make the proposal look more attractive
 - Bury the actual decision the reader needs to make inside dense prose
 - State a solution's direction without its concrete mechanism ("cải thiện hiệu năng" with no how)
+- List multiple problems without mapping each one to the solution component that resolves it
 - Add a code block, quote block, image, or diagram that just repeats what an adjacent sentence says
 - Default to English when the user's request or target audience is Vietnamese
 
