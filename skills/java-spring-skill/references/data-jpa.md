@@ -47,6 +47,8 @@ public class User {
 }
 ```
 
+`@DynamicUpdate` on the entity makes the `UPDATE` statement include only the columns that actually changed, instead of every column — worth adding on entities with a large number of columns where most updates only touch a few fields. `@Version` (or implementing `Persistable<ID>` for entities with an application-assigned/sequence ID) also avoids an extra `SELECT` Hibernate would otherwise issue before `INSERT` to decide whether the entity is new.
+
 ## Repository — N+1 prevention, projection, bulk update
 
 ```java
@@ -60,6 +62,10 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     // N+1 prevention: JOIN FETCH
     @Query("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.orders WHERE u.department.id = :deptId")
     List<User> findByDepartmentWithOrders(@Param("deptId") Long deptId);
+
+    // Reference only (no SELECT) — use when you just need the FK/proxy to set an association,
+    // not the entity's actual data (e.g. order.setUser(userRepository.getReferenceById(userId)))
+    // Throws EntityNotFoundException lazily on first field access if the row doesn't exist.
 
     // Projection — fetch only the fields needed, without loading the whole entity
     @Query("""
@@ -105,6 +111,13 @@ Specification<User> spec = Specification
 Page<User> result = userRepository.findAll(spec, pageable);
 ```
 
+## Connection Management
+
+Establishing a DB connection is expensive relative to running most queries (often tens of ms vs. low single-digit ms) — a leaked or needlessly-held-open connection hurts far more than an unoptimized query. Two settings matter regardless of query-level tuning:
+
+- Set `spring.jpa.open-in-view=false` (Spring Boot defaults this to `true`, which keeps a connection checked out for the entire HTTP request just in case a lazy association is touched in the view layer). Leaving it on is a common source of connection-pool exhaustion under load; turning it off surfaces `LazyInitializationException` at dev time instead — that's the point, it forces explicit fetching (`@EntityGraph`/`JOIN FETCH`/projection) instead of accidental N+1 in the view.
+- Size HikariCP (`spring.datasource.hikari.maximum-pool-size`, `connection-timeout`) from measured concurrency/throughput, not a guess — see `references/project-setup.md`.
+
 ## Transaction Management
 
 ```java
@@ -117,14 +130,20 @@ public class OrderService {
     public Order createOrder(OrderCreateRequest request) {
         // everything happens within a single transaction — a throw anywhere in this method rolls back all of it
         Order order = buildOrder(request);
-        order = orderRepository.save(order);
-        paymentService.processPayment(order); // throw → rolls back the order that was just saved too
-        return order;
+        return orderRepository.save(order);
+        // do NOT call paymentService (or any other network call) here while the transaction is still open —
+        // it holds the DB connection checked out for the full duration of that external call. Call it after
+        // this method returns (from the caller, or split into a non-transactional method), or use
+        // TransactionTemplate to commit the DB write first and then perform the external call afterward.
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logOrderEvent(Long orderId, String event) {
         // Separate transaction — still commits even if the parent transaction rolls back (used for audit logs that must not be lost)
+        // Caution: this suspends the caller's transaction and checks out a SECOND connection from the pool for
+        // the duration of this call — nesting REQUIRES_NEW calls (or calling one from a hot path under load)
+        // can exhaust the pool faster than expected. Use it only where the "commits independently" semantics
+        // are actually needed, not as a default.
         orderEventRepository.save(new OrderEvent(orderId, event));
     }
 
@@ -135,6 +154,21 @@ public class OrderService {
         order.setStatus(OrderStatus.COMPLETED);
         orderRepository.save(order);
         notificationService.sendCompletionEmail(order); // this exception type doesn't trigger a rollback
+    }
+}
+```
+
+Prefer declarative `@Transactional` by default. Reach for `TransactionTemplate` only when the transaction boundary can't be expressed declaratively — e.g. committing a DB write first and then conditionally starting a second transaction based on the result of an external call in between:
+
+```java
+@RequiredArgsConstructor
+public class OrderService {
+    private final TransactionTemplate transactionTemplate;
+
+    public Order createOrderThenCharge(OrderCreateRequest request) {
+        Order order = transactionTemplate.execute(status -> orderRepository.save(buildOrder(request)));
+        paymentService.processPayment(order); // runs after the DB transaction has already committed, connection released
+        return order;
     }
 }
 ```
@@ -190,16 +224,42 @@ CREATE INDEX idx_users_email ON users(email);
 
 The initial schema/table/relationship design is the scope of `database-skill` — the migration file here only implements a schema decision that's already been made; don't redesign tables on the fly while writing a migration.
 
+## Query Logging (development only)
+
+Turn this on while developing/debugging a data-access change so N+1s and unexpectedly-issued queries are visible immediately instead of discovered under load. Never leave it on in production (log volume, minor overhead).
+
+```yaml
+# application-local.yml / application-dev.yml — not the production profile
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE # bound parameter values
+spring:
+  jpa:
+    properties:
+      hibernate:
+        format_sql: true
+```
+
+For a fuller picture than log lines (query counts per request, N+1 assertions in tests), consider `datasource-proxy` or `p6spy` for dev-time query logging, and QuickPerf (`@ExpectSelect(n)`, `@DisableJPAWarnings` etc.) for asserting query counts in tests.
+
 ## Quick Reference
 
 | Pattern | Use Case |
 |---------|----------|
+| `spring.jpa.open-in-view=false` | Stop holding a DB connection for the whole HTTP request; forces explicit fetching |
 | `@EntityGraph` / `JOIN FETCH` | Prevent N+1 |
 | DTO Projection (constructor expression) | Read-only queries, fetching only needed fields |
+| `Repository#getReferenceById` | Get a proxy/FK reference without issuing a SELECT |
 | `@BatchSize` | Batch fetch child collections |
+| `@DynamicUpdate` | UPDATE only changed columns — worth it on wide tables |
+| `@Version` / `Persistable<ID>` | Avoid an extra SELECT before INSERT on new entities |
 | `Specification` | Dynamic filtering with many optional conditions |
 | `@Modifying` | Bulk update/delete |
-| `Propagation.REQUIRES_NEW` | Independent child transaction, not rolled back with the parent |
+| Never call external services inside `@Transactional` | Don't hold a DB connection open for the duration of a network call |
+| `TransactionTemplate` | Fine-grained transaction boundaries declarative `@Transactional` can't express |
+| `Propagation.REQUIRES_NEW` | Independent child transaction, not rolled back with the parent — costs a second pooled connection, use sparingly |
 | `noRollbackFor` | Exclude specific exceptions from rollback |
 | `entityManager.clear()` per batch | Avoid OOM when inserting/updating large datasets |
 | `@EnableJpaAuditing` | Automatic `createdAt`/`createdBy`/`updatedAt`/`updatedBy` |
+| `org.hibernate.SQL=DEBUG` (dev only) | Surface N+1/unexpected queries during development |
