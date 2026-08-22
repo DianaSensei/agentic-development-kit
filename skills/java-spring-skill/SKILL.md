@@ -3,7 +3,7 @@ name: java-spring-skill
 description: In-depth Java + Spring ecosystem knowledge (Spring Boot 3.x, Java 21) — Spring MVC/WebFlux, Spring Data JPA, Spring Security 6 (JWT/OAuth2), Spring Cloud (Config/Eureka/Gateway)/Resilience4j, plus unit + integration testing (JUnit5, Mockito, Testcontainers). Does NOT cover Kafka/RabbitMQ (see `kafka-skill`/`rabbitmq-skill`), API contract design (see `api-contract-skill`), or DB schema design (see `database-skill`). Use when implementing Java/Spring business logic.
 metadata:
   domain: java-backend
-  triggers: Java, Spring Boot, Spring MVC, Spring WebFlux, Spring Data JPA, Spring Security, Spring Cloud, Resilience4j, JUnit, Mockito, Java microservices, reactive Java
+  triggers: Java, Spring Boot, Spring MVC, Spring WebFlux, Spring Data JPA, Spring Security, Spring Cloud, Resilience4j, JUnit, Mockito, Java microservices, reactive Java, concurrency, race condition, overselling, pessimistic lock, optimistic lock, idempotency
   role: engineer
   scope: implementation
   output-format: code
@@ -40,6 +40,7 @@ Load detail based on the context currently being coded:
 | Project setup | `references/project-setup.md` | Setting up a new project, structure, `pom.xml`, `application.yml` |
 | Web layer | `references/web-layer.md` | Controller, DTO, validation, exception handling (ProblemDetail) |
 | Data JPA | `references/data-jpa.md` | Entity, repository, N+1, transactions, Specification, migration |
+| Concurrency safety | `references/concurrency-safety.md` | Shared counter/balance/inventory mutated concurrently, overselling risk, pessimistic vs. optimistic lock, idempotency |
 | Reactive WebFlux | `references/reactive-webflux.md` | Reactive Controller/Service, R2DBC, Reactor operators |
 | Security | `references/security.md` | JWT, method security, OAuth2 resource server |
 | Cloud & Resilience | `references/cloud-resilience.md` | Spring Cloud Config/Eureka/Gateway, Resilience4j, Actuator |
@@ -53,6 +54,7 @@ Load detail based on the context currently being coded:
 - Validate input on every mutating endpoint (`@Valid @RequestBody`).
 - Clear, correctly-scoped transaction boundaries (`@Transactional(readOnly = true)` for reads, a write transaction only for writes).
 - Externalize config/secrets via environment variables — never hardcoded in `application.properties`/`application.yml`.
+- Express a shared counter/balance/inventory check as a single atomic conditional `UPDATE`, not a read-then-write across two statements (see `references/concurrency-safety.md`).
 - Run the tests for real before reporting done.
 
 ### MUST NOT DO
@@ -61,6 +63,7 @@ Load detail based on the context currently being coded:
 - Switching MVC ↔ WebFlux, or adding a new runtime framework, mid-task without an explicit request.
 - Using deprecated Spring Boot 2.x APIs (e.g. `WebSecurityConfigurerAdapter`).
 - Skipping the exception path when writing tests — testing only the happy path.
+- Mutating a shared counter/balance via `load entity → change field → save()` in application code — this is a check-then-act race condition under concurrency, even if it "works" in manual testing.
 
 ## Common Real-World Issues
 
