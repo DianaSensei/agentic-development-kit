@@ -165,6 +165,10 @@ Before handing the document back, re-read it specifically for:
   in Vietnamese business writing ("có thể xem xét việc..." → say what you actually recommend); a
   technical proposal earns trust by being decisive, not by hedging every sentence. See
   `references/vietnamese-writing.md` for terminology and common pitfalls translating English tech terms.
+- **(Vietnamese specific, user rule)** Keep everyday engineering jargon in English rather than
+  translating it — issue, bug, flow, and similar terms the target reader already thinks in English
+  stay as-is; forcing a Vietnamese equivalent reads as unfamiliar, not more proper. Full list and
+  reasoning in `references/vietnamese-writing.md`.
 
 ## Reference Guide
 
@@ -191,6 +195,8 @@ Before handing the document back, re-read it specifically for:
 - Include a genuine Alternatives section with real tradeoffs
 - Include a Risks & Mitigations section
 - Match the output language to the user's request (Vietnamese when asked in Vietnamese)
+- In Vietnamese output, keep everyday engineering jargon (issue, bug, flow, and similar terms the
+  reader already uses in English) untranslated — see `references/vietnamese-writing.md`
 - State the ask (the decision being requested) explicitly and early
 - Use code blocks, quote blocks, images, and diagrams only where they convey something faster or more
   accurately than a sentence would
@@ -205,6 +211,8 @@ Before handing the document back, re-read it specifically for:
 - Bury the actual decision the reader needs to make inside dense prose
 - State a solution's direction without its concrete mechanism ("cải thiện hiệu năng" with no how)
 - List multiple problems without mapping each one to the solution component that resolves it
+- Translate everyday engineering jargon (issue → "vấn đề", bug → "lỗi", flow → "luồng", etc.) when the
+  reader already thinks in the English term
 - Add a code block, quote block, image, or diagram that just repeats what an adjacent sentence says
 - Default to English when the user's request or target audience is Vietnamese
 

@@ -40,28 +40,45 @@ belongs (as named uncertainty), not in the main recommendation.
 | Success Metrics | Tiêu chí đo lường thành công | |
 | Open Questions | Câu hỏi mở / Vấn đề chưa chốt | |
 
-## Terminology: when to keep English terms
+## Terminology: keep everyday engineering jargon in English (user rule)
 
-Vietnamese technical writing commonly keeps certain English terms untranslated rather than forcing an
-awkward Vietnamese equivalent — translating them can make a document read as less credible to a
-technical audience, not more.
+This is an explicit rule, not a stylistic option: terms that Vietnamese-speaking engineering teams
+already use in English day-to-day stay in English. Forcing a Vietnamese translation of a term the
+reader already thinks in English doesn't read as more "chuẩn" (proper) — it reads as unfamiliar and
+slows the reader down, which cuts directly against the súc tích/đi thẳng vào vấn đề house style.
 
-**Keep in English:** API, database, cache, latency, throughput, deployment, rollback, pipeline,
-microservices, load balancer, endpoint, framework, production, staging — and most proper nouns
-(product/service names, protocol names).
+**Always keep in English — do not translate:** issue, bug, flow (as in user flow / data flow /
+workflow), API, database, cache, latency, throughput, deployment, rollback, pipeline, microservices,
+load balancer, endpoint, framework, production, staging, queue, worker, thread, request, response,
+commit, merge, release, patch, hotfix — and most proper nouns (product/service names, protocol names).
+This list is illustrative, not exhaustive: the test is "would the target reader (the engineering team,
+a technical lead) already say this word in English in a meeting?" — if yes, keep it in English even if
+it's not on this list. When genuinely unsure whether a term counts as this kind of everyday jargon,
+keep it in English rather than guess a Vietnamese equivalent that might read as unfamiliar.
 
-**Translate:** the connective and argumentative language — "vì vậy" (therefore), "do đó" (as a
-result), "tuy nhiên" (however), "ngược lại" (in contrast), "rủi ro chính là" (the main risk is),
-"đánh đổi" (tradeoff), "chi phí" (cost) — this is where Vietnamese should carry the reasoning, with
-English terms as the technical nouns embedded in it.
+**Translate:** the connective and argumentative language around those terms — "vì vậy" (therefore),
+"do đó" (as a result), "tuy nhiên" (however), "ngược lại" (in contrast), "rủi ro chính là" (the main
+risk is), "đánh đổi" (tradeoff), "chi phí" (cost) — this is where Vietnamese should carry the
+reasoning, with the kept-English terms as the technical nouns embedded in it. For example: "Bug này
+gây ra latency tăng đột biến trong flow thanh toán" — not "Lỗi này gây ra độ trễ tăng đột biến trong
+luồng thanh toán."
+
+**Section headings are a separate case.** The Standard Structure's Vietnamese headings ("Bối cảnh &
+Vấn đề" for Context & Problem, etc.) are structural labels, not inline jargon — keep using the
+Vietnamese headings from the Standard Structure table even though "issue" itself stays in English
+inline. "Vấn đề" as a section name refers to the problem the whole document addresses; "issue" inline
+refers to a specific tracked issue/ticket/observed instance (e.g. "issue này đã được ghi nhận trong
+JIRA-1234") — they aren't interchangeable, and conflating them is one more reason not to translate
+"issue" away.
 
 **Common mistranslation traps:**
 - "Solution" → don't render as "Giải pháp" when you mean a software product/tool; "giải pháp" specifically
   means the *approach/plan*, which matches this skill's usage.
 - "Scalable" has no single clean Vietnamese word — prefer describing the concrete property
   ("có thể mở rộng để xử lý X yêu cầu/giây") over forcing a one-word translation.
-- "Risk" (rủi ro) vs. "issue" (vấn đề) — proposals often blur these; a risk is something that *might*
-  happen with a probability, an issue is something already true. Keep them in the sections they belong to.
+- "Risk" (rủi ro) vs. "issue" (kept as "issue", not "vấn đề") — a risk is something that *might* happen
+  with a probability; an issue is something already observed/true. Keep them in the sections they
+  belong to, and keep "issue" in English per the rule above.
 
 ## Numbers and dates
 
