@@ -22,6 +22,67 @@ cheaper than the wrong abstraction" (Sandi Metz). Prefer to wait for a third occ
 abstracting (rule of three), unless the duplicated logic is a single well-understood invariant (e.g. a
 formula, a regex) that is *obviously* one piece of knowledge from the start.
 
+### The Reuse Trap — When a Shared Function Accretes Into a Liability
+
+This is the wrong-abstraction failure mode above, made concrete: a function starts serving one caller
+cleanly, then each new caller with a *similar-but-not-identical* need gets accommodated by bolting on a
+parameter or a branch, rather than by asking whether it's really the same knowledge. Repeated enough
+times, the function ends up serving many masters, is depended on everywhere, and is simultaneously
+too risky to change and too tangled to fully understand.
+
+**Symptom checklist** — treat two or more of these together on the same function as a strong signal, not
+just one in isolation:
+- **Boolean/enum flag parameters that branch internal behavior** — `process(order, true, false)` is
+  unreadable at the call site without opening the function's body to learn what `true` means.
+- **A parameter list that has grown over time** (2 params at creation, 6-8 now) — each addition is
+  usually one more caller's need bolted on rather than designed in.
+- **Comments inside the shared function calling out a specific caller** (`// only used by
+  ExpressCheckout, be careful here`) — direct evidence the function is carrying concerns that belong to
+  one caller, not all of them.
+- **High fan-in (many call sites) *combined with* high internal branching** — either alone is fine (a
+  simple, heavily-reused utility; or a complex-but-isolated core algorithm with one caller). Both
+  together means many callers depend on behavior that's hard to fully verify, so every change risks
+  every caller, and every caller must be re-tested for every change to any branch — including branches
+  that caller never actually exercises.
+- **Different callers exercise disjoint subsets of the function's branches** — a sign it is, in
+  substance, several unrelated functions sharing one name.
+
+**Concrete costs this produces** — the three the symptom checklist above exists to prevent:
+- *Hard to control*: changing the function means reasoning about every existing caller, not just the one
+  motivating the change.
+- *Performance*: a function generalized to satisfy its most demanding caller often does extra work
+  (eager-loads data, runs validation) that simpler callers pay for without needing.
+- *Hard to trace*: debugging a specific caller's flow means landing inside a function whose branches you
+  must mentally filter by "which of these apply to my caller" — reading it out of context of who called
+  it, which is itself a SLAP violation, since the function is no longer at one coherent level of
+  abstraction.
+
+**Fix — "un-DRY" with intent**:
+1. Inline the shared function back into each caller (temporarily; duplication is fine as an intermediate
+   state).
+2. Look at what's *actually* identical across callers now that they're side by side — usually a small,
+   branch-free core.
+3. Extract only that true common core as a small function; leave each caller's distinct orchestration in
+   the caller itself, not folded back into the shared function via a new flag.
+4. If structure (not behavior) genuinely needs to be shared across callers with differing behavior, pass
+   a Strategy/Parameter Object instead of a boolean flag — the branch then lives visibly at the call
+   site, not hidden inside the shared function.
+
+```java
+// Before — one function accreting every caller's special case
+Order process(Order order, boolean isExpress, boolean skipInventoryCheck, String discountCode) { ... }
+
+// After — small shared core, orchestration stays at each caller
+Order processStandard(Order order) { return applyCore(order); }
+Order processExpress(Order order) { return applyCore(order).withExpediting(); }
+Order processPromo(Order order, String discountCode) { return applyCore(order).withDiscount(discountCode); }
+private Order applyCore(Order order) { ... } // the genuinely shared, branch-free logic
+```
+
+**When NOT to over-apply**: A function with several parameters that are plain *data* (not control-flow
+flags) serving one coherent purpose is not this smell — the flag here is specifically one that changes
+*which code path runs*, not one that changes *what data is processed*.
+
 ## KISS — Keep It Simple
 
 **Definition**: Prefer the simplest design that correctly solves the actual problem; complexity must be
