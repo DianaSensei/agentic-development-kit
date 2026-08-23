@@ -7,7 +7,7 @@ metadata:
   role: expert
   scope: design
   output-format: document
-  related-skills: architecture-designer, code-review-skill, refactor, secure-code-guardian, monitoring-expert
+  related-skills: architecture-designer, java-spring-skill, code-review-skill, refactor, secure-code-guardian, monitoring-expert
 ---
 
 # Solution Design Principles

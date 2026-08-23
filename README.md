@@ -9,7 +9,7 @@ process) has no dependency on any specific technology; tech-specific details liv
 
 | Directory | What it is | See also |
 |---|---|---|
-| [`skills/`](./skills/README.md) | A library of 29 Claude Code Skills — workflow (feature/bug-fix/refactor), technical knowledge by language/infrastructure, quality/security, MCP integration. Claude Code automatically recognizes the right skill via its `description`, no manual invocation needed (except a few skills marked manual-only). | [`skills/README.md`](./skills/README.md) |
+| [`skills/`](./skills/README.md) | A library of 30 Claude Code Skills — workflow (feature/bug-fix/refactor), technical knowledge by language/infrastructure, quality/security, MCP integration. Claude Code automatically recognizes the right skill via its `description`, no manual invocation needed (except a few skills marked manual-only). | [`skills/README.md`](./skills/README.md) |
 | [`agents/`](./agents/README.md) | A tiered Task subagent pipeline (Tier 1 clarifies requirements + proposes solutions, Tier 2 implements specialized work), communicating via a fixed JSON contract. | [`agents/README.md`](./agents/README.md) |
 | [`mcp/`](./mcp/README.md) | MCP server configuration so Claude Code can connect to external systems: database (PostgreSQL/MySQL/TiDB/Redis/MongoDB, read-only), Grafana, self-hosted Jira/Confluence. | [`mcp/README.md`](./mcp/README.md) |
 

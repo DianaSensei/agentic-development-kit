@@ -33,8 +33,8 @@ off to the right orchestrator, so in practice you rarely need to name a workflow
 
 | Skill | Use For |
 |-------|---------|
-| [`architecture-designer`](./architecture-designer/SKILL.md) | System design, from a single service to distributed microservices decomposition, ADRs |
-| [`solution-design-principles`](./solution-design-principles/SKILL.md) | SOLID, DRY/KISS/YAGNI, coupling/cohesion, Well-Architected pillars, 12-Factor, VM/cloud environment portability — judging whether a design/codebase follows sound engineering principles |
+| [`architecture-designer`](./architecture-designer/SKILL.md) | System design, from a single service to distributed microservices decomposition, deployment topology (VM/cloud/hybrid), ADRs |
+| [`solution-design-principles`](./solution-design-principles/SKILL.md) | SOLID, DRY/KISS/YAGNI, method decomposition (SLAP), Command-Query Separation/TOCTOU, Well-Architected pillars, 12-Factor, VM/cloud portability — judging whether a design/codebase follows sound engineering principles |
 | [`api-contract-skill`](./api-contract-skill/SKILL.md) | REST/GraphQL/RPC/async message contract design, before implementation |
 | [`ui-ux-design-skill`](./ui-ux-design-skill/SKILL.md) | UI/UX design (usability, accessibility, responsive/cross-platform) before implementation |
 | [`spec-miner`](./spec-miner/SKILL.md) | Reverse-engineer a spec from an undocumented/legacy/inherited codebase |

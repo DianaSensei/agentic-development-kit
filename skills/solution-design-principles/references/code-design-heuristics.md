@@ -4,6 +4,20 @@ Principles below the class/interface level — how to shape logic, module bounda
 to day. Unlike SOLID, several of these are explicitly heuristics, not laws: they trade off against each
 other, and knowing when *not* to apply one is as important as applying it.
 
+Jump to the heuristic matching the concern under review:
+
+| Heuristic | Use when reviewing |
+| --- | --- |
+| [DRY](#dry--dont-repeat-yourself) · [The Reuse Trap](#the-reuse-trap--when-a-shared-function-accretes-into-a-liability) | Duplicated knowledge; or a shared function that has accreted flags/branches per caller |
+| [KISS](#kiss--keep-it-simple) · [YAGNI](#yagni--you-arent-gonna-need-it) | Unjustified complexity; speculative generality |
+| [Coupling and Cohesion](#coupling-and-cohesion) | Modules that break each other, or do unrelated things |
+| [Law of Demeter](#law-of-demeter-principle-of-least-knowledge) | Chains reaching through object internals |
+| [Composed Method / SLAP](#composed-method--single-level-of-abstraction-principle-slap) | Method decomposition, call depth, cross-calling/cycles |
+| [Command-Query Separation & TOCTOU](#command-query-separation--re-validation-toctou) | A check that runs more than once — duplication vs. race-condition safeguard |
+| [Composition Over Inheritance](#composition-over-inheritance) | Deep or forced class hierarchies |
+| [Separation of Concerns](#separation-of-concerns) | One unit mixing business logic, I/O, and presentation |
+| [Encapsulate Invariants, Not Cost](#encapsulate-invariants-not-cost) | A cheap-looking method that hides expensive work |
+
 ## DRY — Don't Repeat Yourself
 
 **Definition**: Every piece of knowledge should have a single, unambiguous, authoritative representation

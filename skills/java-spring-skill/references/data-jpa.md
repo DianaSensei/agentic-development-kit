@@ -1,5 +1,20 @@
 # Data Access — Spring Data JPA
 
+Jump to the section matching the task — the file is long, and most tasks need only one or two sections.
+
+| Section | Covers |
+| --- | --- |
+| [Entity](#entity-index-cache-batch-fetch-optimistic-lock) | Mapping, indexes, `@BatchSize`, `@Version` |
+| [Repository](#repository--n1-prevention-projection-bulk-update) | `@EntityGraph`/`JOIN FETCH`, DTO projection, pagination, `@Modifying` |
+| [Dynamic Query — Specifications](#dynamic-query--specifications) | Many optional filter conditions |
+| [Filtering a Lazy Collection](#filtering-a-lazy-collection-without-loading-everything-aggregate-root-readwrite-split) | Filtering `@OneToMany`/`@ManyToMany` without loading it all; the `JOIN FETCH` + `WHERE` trap |
+| [Bulk Update as Atomic Invariant](#bulk-update-as-atomic-invariant-enforcement) | `UPDATE ... WHERE` for race-safe check-and-mutate, and its four silent risks |
+| [Editing One Child](#editing-one-child-without-loading-the-whole-aggregate) | Mutating one nested entity; delta updates; deeply nested relationships |
+| [Concurrency Across Instances](#concurrency-across-multiple-instances) | Optimistic/pessimistic locking, DB constraints, distributed locks |
+| [Transaction Management](#transaction-management) | Propagation, `REQUIRES_NEW`, `noRollbackFor` |
+| [Batch Insert/Update](#batch-insertupdate-bulk-without-accumulating-in-the-hibernate-first-level-cache) | Large-volume writes without OOM |
+| [Auditing](#auditing-automatic-createdbyupdatedby) · [Migration](#database-migration-flyway) · [Quick Reference](#quick-reference) | Audit fields, Flyway, pattern cheat-sheet |
+
 ## Entity (index, cache, batch fetch, optimistic lock)
 
 ```java
@@ -112,11 +127,16 @@ SELECT for the *entire* collection by FK — there is no ORM-level "lazy but fil
 after calling the getter always means loading everything into memory first, then filtering in Java —
 wasteful for a large collection, and a real N+1/memory risk when it happens per-parent across a list.
 
-**The rule this resolves it**: mutation goes through the aggregate root's own methods (needs the whole
-object, needs invariant/cascade enforcement); reads/filters go through a dedicated repository query
-returning a **DTO projection**, never through the entity's own mapped collection field. This also
-follows `solution-design-principles`'s "Encapsulate Invariants, Not Cost" — a filtered read is exactly
-the case where hiding cost behind `order.getItems()` does the most damage.
+**The rule that resolves it**: mutation whose invariant spans the aggregate goes through the aggregate
+root's own methods (needs the whole object, needs invariant/cascade enforcement); reads/filters go
+through a dedicated repository query returning a **DTO projection**, never through the entity's own
+mapped collection field. This also follows `solution-design-principles`'s "Encapsulate Invariants, Not
+Cost" — a filtered read is exactly the case where hiding cost behind `order.getItems()` does the most
+damage.
+
+Note the qualifier on the mutation half: editing a *single child* whose change touches no parent-level
+invariant does not need the aggregate root loaded at all — see "Editing One Child Without Loading the
+Whole Aggregate" below for how to tell the two cases apart and handle each.
 
 ```java
 // Mutation — through the aggregate root, needs the whole object + invariant enforcement
