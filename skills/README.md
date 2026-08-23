@@ -45,7 +45,7 @@ off to the right orchestrator, so in practice you rarely need to name a workflow
 
 | Skill | Use For |
 |-------|---------|
-| [`java-spring-skill`](./java-spring-skill/SKILL.md) | Java + Spring Boot business logic, data access, security, cloud/resilience |
+| [`java-spring-skill`](./java-spring-skill/SKILL.md) | Java + Spring Boot business logic, data access, security, cloud/resilience, package structure, code style |
 | [`rust-engineer`](./rust-engineer/SKILL.md) | Idiomatic Rust — ownership, lifetimes, traits, async/tokio |
 | [`tauri-react-skill`](./tauri-react-skill/SKILL.md) | Tauri (Rust backend) + React (frontend) desktop app implementation |
 
