@@ -105,6 +105,136 @@ Specification<User> spec = Specification
 Page<User> result = userRepository.findAll(spec, pageable);
 ```
 
+## Filtering a Lazy Collection Without Loading Everything (Aggregate Root Read/Write Split)
+
+`@OneToMany(fetch = LAZY)` has exactly one mode: all-or-nothing. Calling `order.getItems()` issues one
+SELECT for the *entire* collection by FK — there is no ORM-level "lazy but filtered" access. Filtering
+after calling the getter always means loading everything into memory first, then filtering in Java —
+wasteful for a large collection, and a real N+1/memory risk when it happens per-parent across a list.
+
+**The rule this resolves it**: mutation goes through the aggregate root's own methods (needs the whole
+object, needs invariant/cascade enforcement); reads/filters go through a dedicated repository query
+returning a **DTO projection**, never through the entity's own mapped collection field. This also
+follows `solution-design-principles`'s "Encapsulate Invariants, Not Cost" — a filtered read is exactly
+the case where hiding cost behind `order.getItems()` does the most damage.
+
+```java
+// Mutation — through the aggregate root, needs the whole object + invariant enforcement
+public void addOrder(Order order) { orders.add(order); order.setUser(this); }
+
+// Read/filter — dedicated query, DTO projection, DB does the filtering
+@Query("""
+    SELECT new com.example.dto.OrderItemSummary(i.id, i.status, i.quantity)
+    FROM OrderItem i WHERE i.order.id = :orderId AND i.status = :status
+    """)
+List<OrderItemSummary> findByOrderIdAndStatus(@Param("orderId") Long orderId, @Param("status") ItemStatus status);
+```
+
+**A specific trap to avoid — `JOIN FETCH` combined with a `WHERE` on the child**:
+
+```java
+// DANGEROUS — looks like it prevents N+1, actually creates a silent bug
+@Query("SELECT o FROM Order o JOIN FETCH o.items i WHERE o.id = :id AND i.status = :status")
+Optional<Order> findWithFilteredItems(@Param("id") Long id, @Param("status") ItemStatus status);
+```
+
+This assigns the *filtered* result onto `order.items` and Hibernate marks that collection
+**initialized**. If anything else in the same persistence context later calls `order.getItems()`
+expecting the full list, Hibernate does **not** re-query — it silently returns the incomplete collection
+already sitting on the entity. This is a genuine silent-inconsistency bug, and it comes specifically from
+assigning a filtered result onto the entity's own mapped field — never do that; return the filtered
+result as an independent DTO/list instead, as above.
+
+## Bulk Update as Atomic Invariant Enforcement
+
+A bulk `@Modifying` `UPDATE ... WHERE` does not bypass the aggregate root rule — it's a valid way to
+*enforce the same invariant*, when that invariant reduces to a single-row precondition plus a mechanical
+field change and needs true DB-level atomicity under concurrency (see `solution-design-principles`'s
+Command-Query Separation & TOCTOU section — this is the JPA implementation of the atomic
+check-and-reserve pattern described there). Keep the method inside the repository/service that owns the
+invariant — the enforcement mechanism changed from Java to SQL, ownership did not.
+
+```java
+@Modifying(clearAutomatically = true, flushAutomatically = true)
+@Query("""
+    UPDATE Quota q SET q.used = q.used + :qty, q.version = q.version + 1
+    WHERE q.id = :id AND q.used + :qty <= q.limit
+    """)
+int reserve(@Param("id") Long id, @Param("qty") int qty); // 0 rows affected = reservation failed
+```
+
+**Four risks specific to bulk update — all silent if missed**:
+
+1. **Stale entities already in the persistence context**: if the same row is already loaded/managed in
+   this transaction, a bulk update does **not** refresh it — the in-memory entity is now stale relative
+   to the DB. `@Modifying(clearAutomatically = true)` clears the persistence context afterward so
+   subsequent reads go back to the DB; `flushAutomatically = true` flushes pending changes first so
+   nothing is silently overwritten out of order. Treat both as required, not optional, on any bulk
+   update sharing a transaction with entity reads/writes.
+2. **Lifecycle callbacks, auditing, and domain events are skipped**: `@PreUpdate`/`@LastModifiedDate`
+   and any `@ApplicationModuleListener`-based domain event normally triggered by an entity mutation do
+   **not** fire for a bulk JPQL/SQL update, since no entity is actually touched by Java code. If a
+   listener elsewhere depends on this change, publish the event explicitly right after the bulk update
+   succeeds, in the same service method/transaction.
+3. **`@Version` does not auto-increment**: if the entity uses optimistic locking elsewhere, bump the
+   version explicitly in the JPQL (as in the example above) — otherwise a bulk update silently breaks
+   optimistic-lock protection for any other code path relying on it.
+4. **No cascade**: a bulk update only touches the table named in the query. If the true invariant spans
+   multiple related entities that must change together, that's a sign the invariant belongs to the
+   "needs object-level reasoning" category — go through the aggregate root instead, don't try to chain
+   multiple bulk updates to fake a cascade.
+
+**Decision rule**: invariant reduces to one row + one WHERE condition + needs atomicity under
+concurrency → bulk update, with the four safeguards above. Invariant needs multi-field/cross-entity logic
+or cascade → aggregate root. Unsure → default to the aggregate root; only move to bulk update once the
+invariant is confirmed to fit the narrow case.
+
+## Concurrency Across Multiple Instances
+
+Running N application instances does not create a new class of problem — from the database's
+perspective, two transactions from two different JVMs and two transactions from the same JVM are
+identical; the DB serializes them the same way either way. The only thing that changes is which
+concurrency-control mechanisms actually work: **anything enforced in DB stays correct across instances;
+anything enforced in JVM memory does not.**
+
+**The trap**: "fixing" a race condition with `synchronized`/`ReentrantLock`/an in-memory lock (see this
+skill's "Common Real-World Issues" on singleton bean state) only protects within one JVM. It gives every
+appearance of being fixed — passes locally, passes in a single-instance test environment — and silently
+stops protecting anything the moment a second instance is deployed. Concurrency control for
+shared/persisted data must live in the database (or a real distributed lock), never in JVM memory.
+
+| Mechanism | When | How |
+| --- | --- | --- |
+| **Atomic `UPDATE ... WHERE`** | High contention (many instances hitting the same counter/quota) | See "Bulk Update as Atomic Invariant Enforcement" above — best throughput, one round trip, no lock held |
+| **Optimistic locking (`@Version`)** | Low contention (rare conflicts) — user edits, admin forms | `@Version` field; Hibernate adds `WHERE version = ?` to every UPDATE; catch `ObjectOptimisticLockingFailureException` and retry the read-modify-write cycle, or surface "someone else updated this" to the user |
+| **Pessimistic locking (`SELECT ... FOR UPDATE`)** | Must fully serialize access; short transaction; invariant too complex for one SQL statement | `@Lock(LockModeType.PESSIMISTIC_WRITE)` — other instances block on the row until the lock-holding transaction commits/rolls back; holds a DB connection for the duration, watch for deadlock if lock order isn't consistent across code paths |
+| **DB constraint (`UNIQUE`/`CHECK`)** | Always, as a backstop for any invariant that must never be violated | Enforced unconditionally regardless of whether application logic has a bug — add this in addition to, never instead of, the mechanisms above for critical invariants |
+| **Distributed lock (Redis/Redisson, ZooKeeper)** | The protected resource is outside any single DB transaction (an external API call, cross-service coordination) | See `redis-skill` — harder to get right than a DB transaction (lock-expiry-vs-still-running-critical-section, split-brain on failover); prefer a DB-level mechanism whenever the resource lives in the DB |
+
+```java
+// Optimistic — retry loop for low-contention edits
+@Retryable(retryFor = ObjectOptimisticLockingFailureException.class, maxAttempts = 3)
+@Transactional
+public void updateProfile(Long userId, ProfileUpdate update) {
+    var user = userRepository.findById(userId).orElseThrow();
+    user.applyProfileUpdate(update); // aggregate root method, enforces invariants
+    userRepository.save(user);       // throws on version mismatch — @Retryable re-runs the whole method
+}
+
+// Pessimistic — full serialization for a short, complex critical section
+@Transactional
+public void transferSeat(Long seatId, Long fromBookingId, Long toBookingId) {
+    var seat = seatRepository.findByIdForUpdate(seatId); // blocks other instances until commit
+    seat.reassign(fromBookingId, toBookingId);
+}
+```
+
+**Note — this is a different problem from idempotency**: concurrency control protects against two
+*different* operations racing on the same data; idempotency (an idempotency key on a mutating endpoint)
+protects against the *same* logical request being executed twice (client retry, message redelivery).
+Real systems usually need both together — e.g. an idempotency key guarding the endpoint, plus an atomic
+`UPDATE ... WHERE` guarding the row itself.
+
 ## Transaction Management
 
 ```java
@@ -199,6 +329,10 @@ The initial schema/table/relationship design is the scope of `database-skill` �
 | `@BatchSize` | Batch fetch child collections |
 | `Specification` | Dynamic filtering with many optional conditions |
 | `@Modifying` | Bulk update/delete |
+| `@Modifying(clearAutomatically = true, flushAutomatically = true)` | Bulk update sharing a transaction with entity reads — avoids stale persistence-context reads after the bulk write |
+| `@Version` + retry on `ObjectOptimisticLockingFailureException` | Optimistic locking — low-contention concurrent edits, safe across multiple app instances |
+| `@Lock(LockModeType.PESSIMISTIC_WRITE)` | Pessimistic locking — must fully serialize access to a row |
+| DTO projection instead of entity's mapped collection field | Filtering a `@OneToMany`/`@ManyToMany` without loading the full lazy collection |
 | `Propagation.REQUIRES_NEW` | Independent child transaction, not rolled back with the parent |
 | `noRollbackFor` | Exclude specific exceptions from rollback |
 | `entityManager.clear()` per batch | Avoid OOM when inserting/updating large datasets |

@@ -312,6 +312,52 @@ to middleware/decorators/aspects rather than repeating the concern inline in eve
 **Relationship to SRP**: Separation of Concerns is SRP applied at the architectural-layer level rather
 than the single-class level — same underlying idea, larger unit of analysis.
 
+## Encapsulate Invariants, Not Cost
+
+**Definition**: Encapsulation should hide *business rules/invariants* behind a well-named method — it
+should never hide the *cost* of an operation. A method's name and signature must never imply a
+performance profile cheaper than what it actually does. This is the resolution to a common false choice
+between "pure OOP encapsulation" and "technical transparency": they conflict only when a codebase
+encapsulates the wrong thing.
+
+**Two different things people encapsulate, with opposite outcomes**:
+- **Encapsulating a rule** (`order.addItem(item)` refusing to add an item to a completed order) —
+  genuinely valuable: prevents a whole class of bug (state pushed into an invalid configuration by
+  someone unaware the rule existed), and safe to hide because enforcing it is normally cheap
+  (in-memory), so there's no cost being hidden, only complexity.
+- **Encapsulating cost** (`order.getItems()` silently issuing a full-table fetch behind what reads like
+  a cheap getter) — actively harmful: the abstraction now lies about complexity. The people who pay for
+  that lie are developers debugging a performance issue or reasoning about a hot path — not the business
+  stakeholders the "business-oriented" naming was meant to serve. Business intent already has a home
+  (specs, flow docs, ADRs) that doesn't carry this cost — code hiding technical reality behind business
+  language buys little the docs don't already give, while charging every future reader the price of not
+  knowing.
+
+**Symptom of violation**: A method shaped like a cheap accessor (a bare noun, no verb suggesting work —
+`getX()`, `items()`) that actually performs I/O, a network call, or O(n)-or-worse computation with no
+signal at the call site that it's expensive.
+
+**Fix**: Match visibility to cost, not to "does this sound like business language."
+- Cheap, invariant-protecting logic: fine to hide behind a business-named method — this is where
+  encapsulation earns its keep.
+- Expensive/technical operations: keep them visible — through naming that doesn't pretend to be a cheap
+  getter (a verb like `fetch`/`load`/`query` rather than `get`), or by placing them only in a
+  distinctly-named layer (a repository) whose whole purpose signals "this does I/O," rather than
+  smuggling the cost behind an innocuous-looking domain method on an entity.
+
+**Where this bites hardest in practice — read paths on an aggregate's collections**: an ORM-managed
+collection getter (`order.getItems()`) is the canonical example — it looks like O(1) field access and
+can be an expensive full fetch. This is why read/filter access should go through an explicit
+repository query returning a projection, not through the aggregate's own collection field — see
+`java-spring-skill`'s `references/data-jpa.md` for the concrete JPA pattern. Reads are exactly where
+hiding cost does the most damage: they're the most performance-sensitive path and the one reviewers
+trust the abstraction on most readily.
+
+**When NOT to over-apply**: This is not an argument against encapsulation in general, or for exposing
+implementation detail everywhere "to be safe." A cheap invariant deserves to be hidden — the heuristic
+is specifically about matching the *visibility* of an operation to its *actual cost*, not eliminating
+encapsulation.
+
 ## Applying These Heuristics Together
 
 These are heuristics, not laws — they exist in tension (DRY vs. KISS, YAGNI vs. OCP) by design. When two

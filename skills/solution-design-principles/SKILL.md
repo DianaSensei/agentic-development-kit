@@ -3,7 +3,7 @@ name: solution-design-principles
 description: Provides the foundational engineering principles for designing sound solutions — SOLID and code-design heuristics (DRY/KISS/YAGNI, coupling/cohesion, Law of Demeter, Composed Method/Single Level of Abstraction, Command-Query Separation and TOCTOU-safe re-validation), the Well-Architected operational pillars (reliability, security, cost, performance, operational excellence), 12-Factor/cloud-native application practices, and environment-portability principles for systems that must run across VM and cloud (ports & adapters, config/secrets abstraction, consistent identity and observability). Use to evaluate whether a design or existing code follows sound engineering principles, to establish team design standards, or to audit a solution proposal for principle violations before implementation. Not for choosing an architecture pattern or deployment topology (that's architecture-designer), and not for writing language-specific implementation code.
 metadata:
   domain: software-design
-  triggers: SOLID, DRY, KISS, YAGNI, design principles, best practices, coupling, cohesion, separation of concerns, 12-factor, twelve factor, cloud-native, well-architected, technical debt, code smell, single responsibility, open closed, liskov substitution, interface segregation, dependency inversion, design review, portability, vendor lock-in, hybrid, ports and adapters, hexagonal architecture, VM and cloud, method decomposition, nested calls, call depth, composed method, single level of abstraction, SLAP, command-query separation, CQS, TOCTOU, race condition, re-validation, circular dependency, feature envy, message chain, wrong abstraction, reuse trap, shared function, flag parameter, fan-in, God function
+  triggers: SOLID, DRY, KISS, YAGNI, design principles, best practices, coupling, cohesion, separation of concerns, 12-factor, twelve factor, cloud-native, well-architected, technical debt, code smell, single responsibility, open closed, liskov substitution, interface segregation, dependency inversion, design review, portability, vendor lock-in, hybrid, ports and adapters, hexagonal architecture, VM and cloud, method decomposition, nested calls, call depth, composed method, single level of abstraction, SLAP, command-query separation, CQS, TOCTOU, race condition, re-validation, circular dependency, feature envy, message chain, wrong abstraction, reuse trap, shared function, flag parameter, fan-in, God function, encapsulate invariants not cost, leaky abstraction, hidden cost, getter performance
   role: expert
   scope: design
   output-format: document
@@ -73,7 +73,7 @@ Load detailed guidance based on context:
 | Topic                     | Reference                             | Load When                                                                              |
 | -------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------- |
 | SOLID Principles            | `references/solid-principles.md`       | Evaluating class/module-level design, object-oriented code review                        |
-| Code Design Heuristics      | `references/code-design-heuristics.md` | DRY/KISS/YAGNI, the reuse trap (accreted shared functions), coupling & cohesion, composition over inheritance, Law of Demeter, method decomposition/call depth (SLAP), re-validation vs. TOCTOU (Command-Query Separation) |
+| Code Design Heuristics      | `references/code-design-heuristics.md` | DRY/KISS/YAGNI, the reuse trap (accreted shared functions), coupling & cohesion, composition over inheritance, Law of Demeter, method decomposition/call depth (SLAP), re-validation vs. TOCTOU (Command-Query Separation), encapsulating invariants vs. hiding cost |
 | Well-Architected Pillars    | `references/well-architected-pillars.md` | Assessing reliability, security, cost, performance, and operational excellence of a system |
 | 12-Factor App               | `references/twelve-factor-app.md`      | Cloud-native/deployable service best practices — config, statelessness, disposability    |
 | Environment Portability      | `references/environment-portability.md` | A system runs on, or may need to move between, VM and cloud — ports & adapters, config abstraction, consistent identity/observability across the boundary |
@@ -153,4 +153,5 @@ design, technical debt, code smells, hexagonal architecture / ports & adapters, 
 hybrid VM-cloud design, vendor lock-in, Composed Method, Single Level of Abstraction Principle (SLAP),
 Command-Query Separation, TOCTOU (time-of-check to time-of-use), feature envy, message chain, circular
 dependency, the wrong abstraction (Sandi Metz), reuse trap / accreted shared function, flag parameters,
-fan-in vs. complexity.
+fan-in vs. complexity, encapsulate invariants not cost, leaky abstraction, aggregate root read/write
+split.
