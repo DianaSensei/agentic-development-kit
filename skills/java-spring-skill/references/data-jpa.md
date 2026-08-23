@@ -190,6 +190,35 @@ CREATE INDEX idx_users_email ON users(email);
 
 The initial schema/table/relationship design is the scope of `database-skill` — the migration file here only implements a schema decision that's already been made; don't redesign tables on the fly while writing a migration.
 
+## Performance Tips
+
+Distilled from Vlad Mihalcea's [14 High-Performance Java Persistence Tips](https://vladmihalcea.com/14-high-performance-java-persistence-tips/) — apply the ones relevant to the current task, don't retrofit all of them into unrelated code.
+
+- **Log and validate generated SQL** — enable statement logging (`org.hibernate.SQL=DEBUG` or a testing-time assertion library) so N+1s and unexpected queries are caught before commit, not in production.
+- **Connection pooling** — always go through HikariCP (Spring Boot default), size the pool from measured load (see `references/project-setup.md`), and keep transactions short so connections are released quickly.
+- **JDBC batching** — for bulk writes, enable Hibernate batching so multiple `INSERT`/`UPDATE` statements go in one roundtrip:
+  ```yaml
+  spring.jpa.properties.hibernate.jdbc.batch_size: 50
+  spring.jpa.properties.hibernate.order_inserts: true
+  spring.jpa.properties.hibernate.order_updates: true
+  ```
+- **Identifier generation** — `GenerationType.IDENTITY` disables JDBC batching for inserts (Hibernate must flush each row immediately to read back the generated id). Prefer `GenerationType.SEQUENCE` with a pooled/pooled-lo optimizer when the target database supports sequences and insert batching matters:
+  ```java
+  @Id
+  @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_seq")
+  @SequenceGenerator(name = "user_seq", sequenceName = "user_seq", allocationSize = 50)
+  private Long id;
+  ```
+- **Column types** — map to the narrowest/most specific column type the database offers (e.g. `inet` for IP addresses in PostgreSQL instead of `varchar`) — smaller rows mean more of the working set fits in the buffer cache and denser indexes.
+- **Relationships** — avoid unidirectional `@OneToMany`/list-based `@ManyToMany` (they generate inefficient extra `UPDATE`/junction-table SQL); prefer bidirectional `@OneToMany(mappedBy = ...)` or map the join table as its own entity. Question whether a collection mapping is needed at all versus just querying the child side directly.
+- **Inheritance strategy** — `SINGLE_TABLE` is fastest (no joins) but weakens `NOT NULL`/FK constraints on subclass columns; `JOINED` keeps integrity at the cost of join overhead; avoid `TABLE_PER_CLASS` (poor polymorphic query SQL, no shared sequence).
+- **Persistence context size** — don't let one transaction load/manage thousands of entities; a bloated first-level cache slows dirty checking and risks OOM. Page results, use projections, or `entityManager.clear()` periodically (see Batch Insert/Update above).
+- **Fetch only what's needed** — prefer DTO projections for read views over loading full entities; avoid `FetchType.EAGER` and the Open-Session-in-View anti-pattern (`spring.jpa.open-in-view: false`).
+- **Caching** — tune the database buffer pool/working-set size first; add Hibernate's second-level cache (`@Cache(usage = ...)`) only for read-heavy, rarely-changing entities, picking the concurrency strategy (`READ_ONLY`, `NONSTRICT_READ_WRITE`, `READ_WRITE`, `TRANSACTIONAL`) that matches actual write frequency.
+- **Concurrency control** — use `@Version` (optimistic locking, already in the Entity template above) for multi-request/detached-entity flows to prevent lost updates; reserve pessimistic locking/stricter isolation levels for cases optimistic locking can't cover.
+- **Unleash native query capabilities** — when JPQL forces post-fetch processing in Java, drop to a native query using window functions, CTEs, or `PIVOT` so the database does the aggregation and only the final result crosses the wire.
+- **Scale up/out** — read replicas and sharding are infrastructure decisions (see `database-skill`), not something to design ad hoc inside a service method.
+
 ## Quick Reference
 
 | Pattern | Use Case |
@@ -203,3 +232,8 @@ The initial schema/table/relationship design is the scope of `database-skill` �
 | `noRollbackFor` | Exclude specific exceptions from rollback |
 | `entityManager.clear()` per batch | Avoid OOM when inserting/updating large datasets |
 | `@EnableJpaAuditing` | Automatic `createdAt`/`createdBy`/`updatedAt`/`updatedBy` |
+| `GenerationType.SEQUENCE` + pooled optimizer | Keep JDBC insert batching working (`IDENTITY` disables it) |
+| `hibernate.jdbc.batch_size` + `order_inserts`/`order_updates` | Enable JDBC batching for bulk writes |
+| `@Version` | Optimistic locking to prevent lost updates |
+| `@Cache(usage = ...)` | Second-level cache for read-heavy, rarely-changing entities |
+| `spring.jpa.open-in-view: false` | Disable Open-Session-in-View anti-pattern |
