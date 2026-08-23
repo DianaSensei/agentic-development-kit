@@ -3,7 +3,7 @@ name: java-spring-skill
 description: In-depth Java + Spring ecosystem knowledge (Spring Boot 3.x, Java 21) — Spring MVC/WebFlux, Spring Data JPA, Spring Security 6 (JWT/OAuth2), Spring Cloud (Config/Eureka/Gateway)/Resilience4j, package structure (package-by-layer vs. package-by-feature, Spring Modulith, cross-module transactions), Java code style/formatting (Google Java Style, Spotless/Checkstyle), plus unit + integration testing (JUnit5, Mockito, Testcontainers). Does NOT cover Kafka/RabbitMQ (see `kafka-skill`/`rabbitmq-skill`), API contract design (see `api-contract-skill`), or DB schema design (see `database-skill`). Use when implementing Java/Spring business logic.
 metadata:
   domain: java-backend
-  triggers: Java, Spring Boot, Spring MVC, Spring WebFlux, Spring Data JPA, Spring Security, Spring Cloud, Resilience4j, JUnit, Mockito, Java microservices, reactive Java, package structure, package by feature, package by layer, Spring Modulith, modular monolith, Google Java Style, code format, Checkstyle, Spotless, lazy collection, optimistic locking, pessimistic locking, distributed lock, multiple instances, horizontal scaling, race condition, bulk update, JOIN FETCH, aggregate root
+  triggers: Java, Spring Boot, Spring MVC, Spring WebFlux, Spring Data JPA, Spring Security, Spring Cloud, Resilience4j, JUnit, Mockito, Java microservices, reactive Java, package structure, package by feature, package by layer, Spring Modulith, modular monolith, Google Java Style, code format, Checkstyle, Spotless, lazy collection, optimistic locking, pessimistic locking, distributed lock, multiple instances, horizontal scaling, race condition, bulk update, JOIN FETCH, aggregate root, nested relationship, delta update, IDOR, scoped repository query
   role: engineer
   scope: implementation
   output-format: code
@@ -51,7 +51,7 @@ Load detail based on the context currently being coded:
 | Project structure | `references/project-structure.md` | Choosing/evaluating package-by-layer vs. package-by-feature, module boundaries, Spring Modulith, cross-module transactions |
 | Code style | `references/code-style.md` | Java formatting/naming conventions, Google Java Style, Spotless/Checkstyle setup |
 | Web layer | `references/web-layer.md` | Controller, DTO, validation, exception handling (ProblemDetail) |
-| Data JPA | `references/data-jpa.md` | Entity, repository, N+1, transactions, Specification, migration, filtering a lazy collection, bulk update as atomic invariant, optimistic/pessimistic locking, concurrency across instances |
+| Data JPA | `references/data-jpa.md` | Entity, repository, N+1, transactions, Specification, migration, filtering a lazy collection, bulk update as atomic invariant, editing one child in a nested relationship, optimistic/pessimistic locking, concurrency across instances |
 | Reactive WebFlux | `references/reactive-webflux.md` | Reactive Controller/Service, R2DBC, Reactor operators |
 | Security | `references/security.md` | JWT, method security, OAuth2 resource server |
 | Cloud & Resilience | `references/cloud-resilience.md` | Spring Cloud Config/Eureka/Gateway, Resilience4j, Actuator |

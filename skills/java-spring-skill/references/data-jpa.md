@@ -189,6 +189,66 @@ concurrency → bulk update, with the four safeguards above. Invariant needs mul
 or cascade → aggregate root. Unsure → default to the aggregate root; only move to bulk update once the
 invariant is confirmed to fit the narrow case.
 
+## Editing One Child Without Loading the Whole Aggregate
+
+Nesting depth (`Order → OrderItem → OrderItemAddon → ...`) matters less than identifying which
+invariant a given edit actually implicates, then fetching only what that specific invariant needs — not
+"the aggregate root pattern means loading the whole object graph."
+
+**The cost asymmetry this relies on**: parent → collection navigation (`order.getItems()`) is expensive,
+all-or-nothing (see above). Child → parent scalar navigation (`item.getOrder().getStatus()`) is cheap —
+a single row fetched by primary key, which does **not** trigger the parent's own collections. Editing one
+child efficiently means using the cheap direction and avoiding the expensive one.
+
+**Default pattern — a scoped repository method on the child itself**:
+
+```java
+public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
+    Optional<OrderItem> findByIdAndOrderId(Long itemId, Long orderId); // efficient single row + ownership check in one query
+}
+```
+
+`findByIdAndOrderId` does two jobs in one query: an efficient single-row fetch, and confirming the item
+actually belongs to the claimed order (guards against an IDOR-style bug — editing another order's item
+via a guessable ID).
+
+**Then branch on whether the edited field crosses an aggregate-level invariant**:
+
+- **No cross-entity effect** (e.g. editing an item's `note`, with nothing at the `Order` level depending
+  on it) — stop here. `item.setNote(...)`, dirty checking handles the UPDATE. This is not bypassing the
+  aggregate root — the invariant genuinely belongs to `OrderItem` alone.
+- **Crosses into a parent-level invariant** (e.g. `quantity` changing means `order.totalAmount` must
+  change too) — enforce it, but with a **delta update**, never by reloading the full collection to
+  recompute from scratch:
+
+```java
+@Transactional
+public void updateItemQuantity(Long orderId, Long itemId, int newQty) {
+    OrderItem item = orderItemRepository.findByIdAndOrderId(itemId, orderId).orElseThrow();
+    if (item.getOrder().getStatus() != OrderStatus.DRAFT) { // cheap: single-row fetch by PK, not a collection load
+        throw new IllegalStateException("Cannot edit item on non-draft order");
+    }
+    var delta = item.getUnitPrice().multiply(BigDecimal.valueOf(newQty - item.getQuantity()));
+    item.setQuantity(newQty);
+    orderRepository.adjustTotal(orderId, delta); // atomic UPDATE orders SET total = total + :delta WHERE id = :orderId
+}
+```
+
+For an even cheaper precondition check, fold it into the fetch itself instead of a separate parent read —
+`findByIdAndOrderIdAndOrderStatus(itemId, orderId, DRAFT)` returning empty when ineligible, the same
+technique used for the quota reservation above.
+
+**For 3+ levels of nesting, ask first whether it's genuinely one aggregate.** Per Vernon's "aggregates
+should be small": if editing `OrderItemAddon` has no effect at the `Order` level, it isn't really part of
+the same aggregate for that purpose — fetch and edit it directly
+(`addonRepository.findByIdAndOrderItemId(...)`), without touching `OrderItem`'s or `Order`'s collections
+at all. Only when an invariant genuinely spans every level (e.g. order total depends on both item
+quantities and addon surcharges) does it need coordinating — and even then, propagate as a **delta at
+each level** rather than reloading and recomputing the whole tree: an addon change adjusts its item's
+subtotal atomically, which (directly, or via a published domain event — see
+`references/project-structure.md`'s transaction patterns) adjusts the order's total atomically. Each
+level owns and updates only its own invariant.
+
 ## Concurrency Across Multiple Instances
 
 Running N application instances does not create a new class of problem — from the database's
