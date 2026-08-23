@@ -1,0 +1,3 @@
+# Transient skill-evaluation run artifacts (logs, HTML reports, per-iteration outputs).
+# The reusable eval sets themselves are committed under skills/<skill>/evals/.
+*-workspace/
