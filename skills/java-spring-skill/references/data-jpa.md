@@ -1,5 +1,50 @@
 # Data Access — Spring Data JPA
 
+## Design Criteria — Reuse vs. Performance
+
+Apply before writing repository/service methods on any entity with multiple callers. Rule of thumb: **reuse small, single-purpose building blocks (Specification, projection, one fetch method per use case) — never reuse one method by adding flags/eager-loading "to be safe."**
+
+### 1. Method boundary — one method, one intent
+
+| Layer | Reuse via | Never do |
+|---|---|---|
+| Repository | Fine-grained query methods, `Specification` composition | One method with `boolean loadEverything`/similar flags |
+| Service | Compose small repo calls per use case (`getSummary`, `getDetail`, `loadForCancel`) | One "God" method serving list + detail + edit with different needs |
+| Controller/API | DTO per response shape, mapped explicitly | Returning `@Entity` straight out as API response |
+
+Only merge two fetch methods into one when **≥80% of callers need the exact same shape**; otherwise keep them separate — a `JOIN FETCH`/`@EntityGraph` is cheap to duplicate, over-fetching in the other callers is not.
+
+### 2. Fetch shape for writes — managed vs. read-only
+
+| Need | Fetch as |
+|---|---|
+| Will be mutated (set field) in this transaction | Managed entity via `@EntityGraph`/`JOIN FETCH` scoped to **this specific write use case only** |
+| Read only to decide/validate (credit limit, policy check, another aggregate's state) | Lightweight projection/native query — do NOT join into the entity graph you're about to save |
+| Cross-aggregate data needed inside a write transaction | Fetch each aggregate independently in the service method; do not widen one entity's `@EntityGraph` to cover another aggregate's needs |
+
+If one write use case is repeatedly forced to pull in unrelated aggregates just to decide something → aggregate boundary is likely wrong (see §4), not a fetch-method problem.
+
+### 3. Entity lifecycle & conflict handling
+
+| State | How it got there | Save needed? |
+|---|---|---|
+| Transient | `new Entity()`, no id yet | `save()`/`persist()` — required |
+| Managed | Loaded via `findById`/query inside an open `@Transactional` | None — dirty checking flushes on commit |
+| Detached | Persistence context closed (previous transaction/request ended), or entity mapped from an incoming DTO that carries an id | `save()`/`merge()` required — **and the entity MUST carry `@Version`**, or conflicting concurrent writes fail silently (lost update) |
+| Removed | `remove()`/`deleteById()` called | Flushed as `DELETE` on commit |
+
+- Never let a managed entity leak across a transaction boundary (return it from a `@Transactional` method, then mutate it later expecting persistence — it's a silent no-op once detached).
+- Any entity mutable from more than one request/thread needs `@Version` from day one, not added reactively after a lost-update bug.
+- Default every read-only method to `@Transactional(readOnly = true)` — it also suppresses accidental flush-writes from a stray mutation inside a "read" call.
+
+### 4. Cascade & aggregate boundary
+
+- Cascade only **within** a true aggregate (parent fully owns the child's lifecycle, e.g. `Order` → `OrderItem`): `PERSIST, MERGE, REMOVE` (+ `orphanRemoval = true` if the child cannot exist without the parent).
+- Never cascade **across** independent aggregates (e.g. `Order` → `Customer`, `Order` → `Payment`) — no `cascade` attribute at all; mutate the other aggregate through its own repository/service call.
+- Don't default new relationships to `CascadeType.ALL` — pick cascade types deliberately per relationship, based on "does this child have a lifecycle independent of the parent?"
+- Remember dirty checking follows the whole managed graph, not just the entity you called `save()` on — touching a field on `order.getCustomer()` inside the same transaction writes `Customer` too, with no `save()` call anywhere in sight. Keep fetched graphs narrow (§2) so there's nothing unrelated to accidentally mutate.
+- Verification: assert the exact SQL/query count in tests (see Performance Tips below) — an unexpected `UPDATE`/`INSERT` on an associated entity in a "read" test is the fastest way to catch a cascade/dirty-checking leak.
+
 ## Entity (index, cache, batch fetch, optimistic lock)
 
 ```java
