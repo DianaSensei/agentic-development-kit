@@ -4,6 +4,7 @@ Jump to the section matching the task — the file is long, and most tasks need 
 
 | Section | Covers |
 | --- | --- |
+| [Design Criteria](#design-criteria--reuse-vs-performance) | Reuse vs. performance: method boundaries, fetch shape for writes, entity lifecycle, cascade/aggregate boundary |
 | [Entity](#entity-index-cache-batch-fetch-optimistic-lock) | Mapping, indexes, `@BatchSize`, `@Version` |
 | [Repository](#repository--n1-prevention-projection-bulk-update) | `@EntityGraph`/`JOIN FETCH`, DTO projection, pagination, `@Modifying` |
 | [Dynamic Query — Specifications](#dynamic-query--specifications) | Many optional filter conditions |
@@ -13,7 +14,57 @@ Jump to the section matching the task — the file is long, and most tasks need 
 | [Concurrency Across Instances](#concurrency-across-multiple-instances) | Optimistic/pessimistic locking, DB constraints, distributed locks |
 | [Transaction Management](#transaction-management) | Propagation, `REQUIRES_NEW`, `noRollbackFor` |
 | [Batch Insert/Update](#batch-insertupdate-bulk-without-accumulating-in-the-hibernate-first-level-cache) | Large-volume writes without OOM |
+| [Performance Tips](#performance-tips) | Query-count assertions, batching, projections |
 | [Auditing](#auditing-automatic-createdbyupdatedby) · [Migration](#database-migration-flyway) · [Quick Reference](#quick-reference) | Audit fields, Flyway, pattern cheat-sheet |
+
+## Design Criteria — Reuse vs. Performance
+
+Apply before writing repository/service methods on any entity with multiple callers. Rule of thumb: **reuse small, single-purpose building blocks (Specification, projection, one fetch method per use case) — never reuse one method by adding flags/eager-loading "to be safe."**
+
+### 1. Method boundary — one method, one intent
+
+| Layer | Reuse via | Never do |
+|---|---|---|
+| Repository | Fine-grained query methods, `Specification` composition | One method with `boolean loadEverything`/similar flags |
+| Service | Compose small repo calls per use case (`getSummary`, `getDetail`, `loadForCancel`) | One "God" method serving list + detail + edit with different needs |
+| Controller/API | DTO per response shape, mapped explicitly | Returning `@Entity` straight out as API response |
+
+Only merge two fetch methods into one when **≥80% of callers need the exact same shape**; otherwise keep them separate — a `JOIN FETCH`/`@EntityGraph` is cheap to duplicate, over-fetching in the other callers is not.
+
+The "never do" column is the JPA-specific form of a general anti-pattern — see `solution-design-principles`'s "The Reuse Trap" for the symptom checklist that catches it before it accretes, and the way back out once it has.
+
+### 2. Fetch shape for writes — managed vs. read-only
+
+| Need | Fetch as |
+|---|---|
+| Will be mutated (set field) in this transaction | Managed entity via `@EntityGraph`/`JOIN FETCH` scoped to **this specific write use case only** |
+| Read only to decide/validate (credit limit, policy check, another aggregate's state) | Lightweight projection/native query — do NOT join into the entity graph you're about to save |
+| Cross-aggregate data needed inside a write transaction | Fetch each aggregate independently in the service method; do not widen one entity's `@EntityGraph` to cover another aggregate's needs |
+
+If one write use case is repeatedly forced to pull in unrelated aggregates just to decide something → aggregate boundary is likely wrong (see §4), not a fetch-method problem.
+
+### 3. Entity lifecycle & conflict handling
+
+| State | How it got there | Save needed? |
+|---|---|---|
+| Transient | `new Entity()`, no id yet | `save()`/`persist()` — required |
+| Managed | Loaded via `findById`/query inside an open `@Transactional` | None — dirty checking flushes on commit |
+| Detached | Persistence context closed (previous transaction/request ended), or entity mapped from an incoming DTO that carries an id | `save()`/`merge()` required — **and the entity MUST carry `@Version`**, or conflicting concurrent writes fail silently (lost update) |
+| Removed | `remove()`/`deleteById()` called | Flushed as `DELETE` on commit |
+
+- Never let a managed entity leak across a transaction boundary (return it from a `@Transactional` method, then mutate it later expecting persistence — it's a silent no-op once detached).
+- Any entity mutable from more than one request/thread needs `@Version` from day one, not added reactively after a lost-update bug.
+- Default every read-only method to `@Transactional(readOnly = true)` — it also suppresses accidental flush-writes from a stray mutation inside a "read" call.
+
+### 4. Cascade & aggregate boundary
+
+- Cascade only **within** a true aggregate (parent fully owns the child's lifecycle, e.g. `Order` → `OrderItem`): `PERSIST, MERGE, REMOVE` (+ `orphanRemoval = true` if the child cannot exist without the parent).
+- Never cascade **across** independent aggregates (e.g. `Order` → `Customer`, `Order` → `Payment`) — no `cascade` attribute at all; mutate the other aggregate through its own repository/service call.
+- Don't default new relationships to `CascadeType.ALL` — pick cascade types deliberately per relationship, based on "does this child have a lifecycle independent of the parent?"
+- Remember dirty checking follows the whole managed graph, not just the entity you called `save()` on — touching a field on `order.getCustomer()` inside the same transaction writes `Customer` too, with no `save()` call anywhere in sight. Keep fetched graphs narrow (§2) so there's nothing unrelated to accidentally mutate.
+- Verification: assert the exact SQL/query count in tests (see Performance Tips below) — an unexpected `UPDATE`/`INSERT` on an associated entity in a "read" test is the fastest way to catch a cascade/dirty-checking leak.
+
+For mutating a child once the boundary is settled — without loading the parent's whole collection to do it — see "Editing One Child Without Loading the Whole Aggregate" below.
 
 ## Entity (index, cache, batch fetch, optimistic lock)
 
@@ -400,6 +451,35 @@ CREATE INDEX idx_users_email ON users(email);
 
 The initial schema/table/relationship design is the scope of `database-skill` — the migration file here only implements a schema decision that's already been made; don't redesign tables on the fly while writing a migration.
 
+## Performance Tips
+
+Distilled from Vlad Mihalcea's [14 High-Performance Java Persistence Tips](https://vladmihalcea.com/14-high-performance-java-persistence-tips/) — apply the ones relevant to the current task, don't retrofit all of them into unrelated code.
+
+- **Log and validate generated SQL** — enable statement logging (`org.hibernate.SQL=DEBUG` or a testing-time assertion library) so N+1s and unexpected queries are caught before commit, not in production.
+- **Connection pooling** — always go through HikariCP (Spring Boot default), size the pool from measured load (see `references/project-setup.md`), and keep transactions short so connections are released quickly.
+- **JDBC batching** — for bulk writes, enable Hibernate batching so multiple `INSERT`/`UPDATE` statements go in one roundtrip:
+  ```yaml
+  spring.jpa.properties.hibernate.jdbc.batch_size: 50
+  spring.jpa.properties.hibernate.order_inserts: true
+  spring.jpa.properties.hibernate.order_updates: true
+  ```
+- **Identifier generation** — `GenerationType.IDENTITY` disables JDBC batching for inserts (Hibernate must flush each row immediately to read back the generated id). Prefer `GenerationType.SEQUENCE` with a pooled/pooled-lo optimizer when the target database supports sequences and insert batching matters:
+  ```java
+  @Id
+  @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_seq")
+  @SequenceGenerator(name = "user_seq", sequenceName = "user_seq", allocationSize = 50)
+  private Long id;
+  ```
+- **Column types** — map to the narrowest/most specific column type the database offers (e.g. `inet` for IP addresses in PostgreSQL instead of `varchar`) — smaller rows mean more of the working set fits in the buffer cache and denser indexes.
+- **Relationships** — avoid unidirectional `@OneToMany`/list-based `@ManyToMany` (they generate inefficient extra `UPDATE`/junction-table SQL); prefer bidirectional `@OneToMany(mappedBy = ...)` or map the join table as its own entity. Question whether a collection mapping is needed at all versus just querying the child side directly.
+- **Inheritance strategy** — `SINGLE_TABLE` is fastest (no joins) but weakens `NOT NULL`/FK constraints on subclass columns; `JOINED` keeps integrity at the cost of join overhead; avoid `TABLE_PER_CLASS` (poor polymorphic query SQL, no shared sequence).
+- **Persistence context size** — don't let one transaction load/manage thousands of entities; a bloated first-level cache slows dirty checking and risks OOM. Page results, use projections, or `entityManager.clear()` periodically (see Batch Insert/Update above).
+- **Fetch only what's needed** — prefer DTO projections for read views over loading full entities; avoid `FetchType.EAGER` and the Open-Session-in-View anti-pattern (`spring.jpa.open-in-view: false`).
+- **Caching** — tune the database buffer pool/working-set size first; add Hibernate's second-level cache (`@Cache(usage = ...)`) only for read-heavy, rarely-changing entities, picking the concurrency strategy (`READ_ONLY`, `NONSTRICT_READ_WRITE`, `READ_WRITE`, `TRANSACTIONAL`) that matches actual write frequency.
+- **Concurrency control** — use `@Version` (optimistic locking, already in the Entity template above) for multi-request/detached-entity flows to prevent lost updates; reserve pessimistic locking/stricter isolation levels for cases optimistic locking can't cover.
+- **Unleash native query capabilities** — when JPQL forces post-fetch processing in Java, drop to a native query using window functions, CTEs, or `PIVOT` so the database does the aggregation and only the final result crosses the wire.
+- **Scale up/out** — read replicas and sharding are infrastructure decisions (see `database-skill`), not something to design ad hoc inside a service method.
+
 ## Quick Reference
 
 | Pattern | Use Case |
@@ -417,3 +497,8 @@ The initial schema/table/relationship design is the scope of `database-skill` �
 | `noRollbackFor` | Exclude specific exceptions from rollback |
 | `entityManager.clear()` per batch | Avoid OOM when inserting/updating large datasets |
 | `@EnableJpaAuditing` | Automatic `createdAt`/`createdBy`/`updatedAt`/`updatedBy` |
+| `GenerationType.SEQUENCE` + pooled optimizer | Keep JDBC insert batching working (`IDENTITY` disables it) |
+| `hibernate.jdbc.batch_size` + `order_inserts`/`order_updates` | Enable JDBC batching for bulk writes |
+| `@Version` | Optimistic locking to prevent lost updates |
+| `@Cache(usage = ...)` | Second-level cache for read-heavy, rarely-changing entities |
+| `spring.jpa.open-in-view: false` | Disable Open-Session-in-View anti-pattern |
