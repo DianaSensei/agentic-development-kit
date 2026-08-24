@@ -58,6 +58,12 @@ Also missing: \`docs/knowledge/experience-log.md\` (workflow Step 5 — cumulati
 fi
 
 if [ "$MODE" != "block" ] || [ "$COUNT" -ge "$MAX" ] 2>/dev/null; then
+  # Warn once per distinct state of the change, not once per turn: the gate stays
+  # unsatisfied across every following turn, and repeating the same notice each
+  # time trains the reader to skip it.
+  WARNED="$STATE_DIR/warned"
+  [ "$(cat "$WARNED" 2>/dev/null)" = "$HASH" ] && exit 0
+  printf '%s' "$HASH" > "$WARNED" 2>/dev/null || true
   warn "$REASON$EXTRA"
 fi
 

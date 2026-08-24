@@ -5,7 +5,7 @@
     "session_context": "warn",
     "skill_gate": "warn",
     "write_lint": "warn",
-    "quality_gate": "block"
+    "quality_gate": "warn"
   },
 
   "$comment_skill_map": "Ordered list. The FIRST entry whose ERE `match` hits the changed file's repo-relative path decides which SKILL.md must have been read before that file may be edited. Add project-specific rows here; remove rows for stacks the project does not use.",

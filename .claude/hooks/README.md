@@ -7,9 +7,9 @@ decides it already knows breaks them silently.
 
 These hooks close that gap. They are deterministic: they run whether or not the model remembers.
 
-## What is enforced, and what is not
+## What these hooks check, and what they leave alone
 
-| | Example | Handled by |
+| | Example | Owned by |
 |---|---|---|
 | Mechanically observable | Was `java-spring-skill/SKILL.md` read in this request? Are there unreviewed code changes? Is there an API key in what was just written? | these hooks |
 | Needs judgement | Is the transaction boundary right? Is there an N+1? Does the lock have a TTL? | `code-review-skill`, read and applied by Claude |
@@ -24,18 +24,33 @@ owns that judgement actually runs.
 | `session-context.sh` | `SessionStart` | on | Injects the routing + self-check rules once per session. Non-blocking. |
 | `skill-gate.sh` | `PreToolUse` on edits | `warn` | Maps the edited file to its owning skill via `skill_map`, then checks the transcript for a read of that `SKILL.md` **since the last user message**. A read from an earlier request does not count — the file may have changed since. |
 | `write-lint.sh` | `PostToolUse` on edits | `warn` | Scans only the newly written text for hardcoded secrets and leftover placeholders. Advisory by protocol: `PostToolUse` cannot block. |
-| `quality-gate.sh` | `Stop` | `block` | Refuses to end the turn while uncommitted **code** changes exist that no review has vouched for. |
-| `mark-reviewed.sh` | — | — | Run by Claude after the review to release the gate. |
+| `quality-gate.sh` | `Stop` | `warn` | Flags — or, set to `block`, refuses to end — a turn that leaves uncommitted **code** changes no review has vouched for. |
+| `mark-reviewed.sh` | — | — | Run after the review to record it and satisfy the gate. |
 
 `quality-gate.sh` fingerprints the changed code rather than setting a boolean, so editing code after a
 review invalidates it — the next review covers the new state. Documentation-only turns never trip it.
 
-### Why the defaults differ
+### About the defaults
 
-`quality_gate` blocks because the block is self-healing: it names the skill to read, the diff to read
-it against, and the command that releases it. `skill_gate` only warns by default because it infers
-from transcript structure, which is the most likely thing here to produce a false positive; switch it
-to `block` once you have watched it behave on your own project.
+Every gate ships as `warn`, so installing this kit changes what you are *told*, not what you are
+*allowed to do*. That is the safe starting point: watch each gate on your own project before letting
+it interrupt anything.
+
+`quality_gate` is the one built to block, and switching it is a one-word config edit. The difference
+is not cosmetic:
+
+- `warn` — the turn ends normally and the notice lands in the transcript, for **you** to read.
+  `additionalContext` is only delivered to Claude on blocking events, so in `warn` the gate reports
+  that the review did not happen; it does not cause it to happen.
+- `block` — the turn is held and the reason goes to Claude, which names the skill to read, the diff to
+  read it against, and the command that releases the gate. This is the mode in which
+  "review before reporting done" is actually enforced.
+
+`skill_gate` is the one to be most careful about promoting to `block`: it infers from transcript
+structure, which is the likeliest source of a false positive here.
+
+In `warn`, each gate speaks once per distinct state — per session per skill for `skill-gate`, per
+fingerprint of the change for `quality-gate` — rather than repeating on every turn.
 
 ## Where each gate is configured
 

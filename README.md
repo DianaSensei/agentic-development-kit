@@ -2,8 +2,8 @@
 
 A Claude Code configuration kit for AI-assisted software development: 1 skill library used within a
 single agent, 1 tiered multi-agent pipeline, MCP configuration so Claude Code can connect beyond
-the codebase (database, dashboard, ticket tracker), and hooks that enforce the workflow rules a model
-cannot be trusted to self-police. Usable for any project/stack — the core (workflow,
+the codebase (database, dashboard, ticket tracker), and hooks that check the workflow rules a model
+cannot be trusted to self-police (advisory by default, enforcing when configured to). Usable for any project/stack — the core (workflow,
 process) has no dependency on any specific technology; tech-specific details live in their own modules.
 
 ## Directory structure
@@ -13,7 +13,7 @@ process) has no dependency on any specific technology; tech-specific details liv
 | [`skills/`](./skills/README.md) | A library of 30 Claude Code Skills — workflow (feature/bug-fix/refactor), technical knowledge by language/infrastructure, quality/security, MCP integration. Claude Code automatically recognizes the right skill via its `description`, no manual invocation needed (except a few skills marked manual-only). | [`skills/README.md`](./skills/README.md) |
 | [`agents/`](./agents/README.md) | A tiered Task subagent pipeline (Tier 1 clarifies requirements + proposes solutions, Tier 2 implements specialized work), communicating via a fixed JSON contract. | [`agents/README.md`](./agents/README.md) |
 | [`mcp/`](./mcp/README.md) | MCP server configuration so Claude Code can connect to external systems: database (PostgreSQL/MySQL/TiDB/Redis/MongoDB, read-only), Grafana, self-hosted Jira/Confluence. | [`mcp/README.md`](./mcp/README.md) |
-| [`.claude/hooks/`](./.claude/hooks/README.md) | Quality-check hooks that enforce the parts of the skill workflow a model cannot be trusted to self-police: the owning `SKILL.md` gets read before code is edited, and `code-review-skill` runs on the diff before any change is reported done. | [`.claude/hooks/README.md`](./.claude/hooks/README.md) |
+| [`.claude/hooks/`](./.claude/hooks/README.md) | Quality-check hooks covering the parts of the skill workflow a model cannot be trusted to self-police: that the owning `SKILL.md` was read before code was edited, and that `code-review-skill` ran on the diff before the change was reported done. They warn by default and can be switched to block per gate. | [`.claude/hooks/README.md`](./.claude/hooks/README.md) |
 
 ## How do `skills/` and `agents/` differ?
 
@@ -53,9 +53,10 @@ role and the ability to run multiple independent pieces of work in parallel.
   specific language/framework — all tech-specific detail lives in specialized modules (technical skills
   or Tier-2 agents), auto-detected from real evidence (dependencies, configuration, existing code), never
   assumed in advance.
-- The rules the workflows state as mandatory are backed by hooks where they are mechanically
+- The rules the workflows state as mandatory are backed by hooks wherever they are mechanically
   checkable (skill read before edit, review before done); judgement-based checks stay with
-  `code-review-skill`, and every hook fails open so it can never block work it cannot verify.
+  `code-review-skill`. Hooks warn by default and are switched to blocking per gate, and every one of
+  them fails open, so none can become the reason work cannot proceed.
 - Changes affecting external behavior (new features, bug fixes) always have a checkpoint waiting for user
   confirmation before execution; purely structural refactors must preserve 100% of observable behavior.
 - Secret/credential files are never committed to the repo — see each `README.md` under `mcp/*/` for how
