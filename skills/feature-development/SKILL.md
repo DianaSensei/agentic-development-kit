@@ -186,4 +186,6 @@ first avoids retrying an approach already known not to work.
   implementation to follow, say so explicitly after Step 2's CHECKPOINT instead of silently continuing
   into Step 3.
 - This skill does not perform a dedicated security or architecture review beyond what's needed to reach
-  the DoD — for a deeper pass, coordinate with `secure-code-guardian` or `architecture-designer`.
+  the DoD — for a deeper pass, coordinate with `secure-code-guardian` or `architecture-designer`, or
+  `solution-design-principles` to check a design against foundational engineering principles (SOLID,
+  coupling/cohesion, Well-Architected, 12-Factor) before it is built.

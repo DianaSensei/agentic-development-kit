@@ -32,6 +32,11 @@ accepted. Clarify which one of these pain points applies:
 If the user's description is vague ("clean up this code"), ask which specific pain point is being
 targeted before continuing — a refactor with no clear target tends to sprawl into unnecessary changes.
 
+To name a pain point precisely rather than by feel — and to state the concrete symptom it produces, which
+is what makes Step 6's "how the pain point was resolved" verifiable — read `solution-design-principles`
+for the relevant heuristic (DRY vs. the wrong abstraction, coupling/cohesion, SRP/SLAP method
+decomposition, the reuse trap of an accreted shared function).
+
 ## Step 2 — Check the "Safety Net" BEFORE Refactoring (required, never skipped)
 
 A safe refactor requires test coverage of the CURRENT behavior before touching any code.

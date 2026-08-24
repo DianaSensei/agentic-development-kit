@@ -13,6 +13,9 @@ Read `CLAUDE.md`/existing conventions. Determine which technologies are ACTUALLY
 
 - Clear naming, consistent with convention.
 - No significant duplication (DRY), no function/class carrying too many responsibilities.
+  When one of these does fire and the fix isn't obvious, read `solution-design-principles` to name the
+  principle and the concrete symptom — a finding stated as "changing X breaks unrelated Y" is actionable
+  where "violates SRP" is not.
 - No hardcoded secret/credential/API key.
 - Exceptions handled explicitly, no silently swallowed errors.
 - Comments where genuinely needed for complex logic, no redundant comments.
