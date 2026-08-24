@@ -2,6 +2,20 @@
 name: feature-development
 description: End-to-end workflow for building a new feature — requirements analysis, solution proposal, implement/test/fix loop until quality bar is met, then reporting and knowledge capture. Fully technology-agnostic — invokes whichever technical skills the task needs. Works for any project or stack.
 argument-hint: "[feature request description]"
+hooks:
+  PreToolUse:
+    - matcher: "Edit|Write|MultiEdit|NotebookEdit"
+      hooks:
+        - type: command
+          command: "${CLAUDE_PROJECT_DIR}/.claude/hooks/skill-gate.sh"
+          timeout: 15
+          statusMessage: "Checking the owning skill was read..."
+  Stop:
+    - hooks:
+        - type: command
+          command: "${CLAUDE_PROJECT_DIR}/.claude/hooks/quality-gate.sh"
+          timeout: 30
+          statusMessage: "Quality gate..."
 ---
 
 # Feature Development Workflow

@@ -17,6 +17,11 @@ Two different kinds of skill live side by side here, and it matters which kind y
   depth, and is read in full by an orchestrator (or invoked directly) when that specific expertise is
   needed.
 
+The three workflow orchestrators carry hooks in their frontmatter: while one of them is running, a
+`PreToolUse` gate checks that the technical skill owning a file was read in the current request before
+that file may be edited, and a `Stop` gate holds the turn until `code-review-skill` has been run on the
+diff. See [`.claude/hooks/README.md`](../.claude/hooks/README.md).
+
 `workflow-router` is the entry point for any code-writing request — it classifies the request and hands
 off to the right orchestrator, so in practice you rarely need to name a workflow skill yourself.
 
@@ -66,7 +71,7 @@ off to the right orchestrator, so in practice you rarely need to name a workflow
 | Skill | Use For |
 |-------|---------|
 | [`test-master`](./test-master/SKILL.md) | Test plans, mocking strategy, coverage analysis, performance/security test design |
-| [`code-review-skill`](./code-review-skill/SKILL.md) | The proactive self-check Claude runs before reporting any code change done |
+| [`code-review-skill`](./code-review-skill/SKILL.md) | The proactive self-check Claude runs before reporting any code change done — enforced by the `Stop` gate in [`.claude/hooks/`](../.claude/hooks/README.md), not left to memory |
 | [`secure-code-guardian`](./secure-code-guardian/SKILL.md) | Implementing secure code — auth, input validation, hashing, OWASP prevention |
 | [`security-reviewer`](./security-reviewer/SKILL.md) | Auditing existing code/infrastructure for vulnerabilities, producing a report |
 | [`monitoring-expert`](./monitoring-expert/SKILL.md) | Production observability — logging, metrics, tracing, alerting, capacity forecasting |

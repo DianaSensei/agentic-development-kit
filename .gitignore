@@ -1,3 +1,10 @@
 # Transient skill-evaluation run artifacts (logs, HTML reports, per-iteration outputs).
 # The reusable eval sets themselves are committed under skills/<skill>/evals/.
 *-workspace/
+
+# Per-session state written by the quality-check hooks (.claude/hooks/).
+# Review markers and block counters are local facts about a working tree, never shared.
+.claude/state/
+
+# Local hook overrides (e.g. turning a gate off on one machine) stay out of the repo.
+.claude/settings.local.json

@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+# Shared helpers for the quality-check hooks.
+#
+# Design rule for every hook in this directory: FAIL OPEN. A hook that cannot do
+# its job (no jq, unreadable transcript, not a git repo, bad config) must exit 0
+# silently and let the user's work continue. A quality gate is never allowed to
+# become the reason someone cannot get work done.
+
+set -u
+
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$PWD}"
+HOOK_DIR="$PROJECT_DIR/.claude/hooks"
+STATE_DIR="$PROJECT_DIR/.claude/state"
+CONFIG_FILE="$HOOK_DIR/quality-check.config.json"
+
+# No jq -> we cannot parse hook input at all. Fail open.
+command -v jq >/dev/null 2>&1 || exit 0
+
+# Hooks are fed their JSON on stdin. Helper scripts run by hand set
+# HOOK_NO_STDIN=1 so sourcing this file never blocks on a terminal.
+if [ "${HOOK_NO_STDIN:-0}" = "1" ]; then HOOK_INPUT="{}"; else HOOK_INPUT="$(cat)"; fi
+
+# jq_in <filter> [default] — read a field out of the hook's stdin JSON.
+jq_in() {
+  local out
+  out="$(printf '%s' "$HOOK_INPUT" | jq -r "$1 // empty" 2>/dev/null)" || out=""
+  [ -n "$out" ] && printf '%s' "$out" || printf '%s' "${2-}"
+}
+
+# jq_cfg <filter> [default] — read a field out of quality-check.config.json.
+jq_cfg() {
+  local out
+  [ -f "$CONFIG_FILE" ] || { printf '%s' "${2-}"; return; }
+  out="$(jq -r "$1 // empty" "$CONFIG_FILE" 2>/dev/null)" || out=""
+  [ -n "$out" ] && printf '%s' "$out" || printf '%s' "${2-}"
+}
+
+# mode_of <gate-name> <default> — "off" | "warn" | "block".
+# QUALITY_CHECK_MODE in the environment overrides every gate, for a quick escape
+# hatch without editing committed config.
+mode_of() {
+  if [ -n "${QUALITY_CHECK_MODE:-}" ]; then printf '%s' "$QUALITY_CHECK_MODE"; return; fi
+  jq_cfg ".mode.$1" "$2"
+}
+
+# json_str <text> — JSON-encode a string (quotes included).
+json_str() { printf '%s' "$1" | jq -Rs .; }
+
+# warn <text> — non-blocking advisory. systemMessage surfaces it in the
+# transcript; additionalContext is the field Claude reads where the event
+# supports it. Emitting both is deliberate: which one lands depends on the event.
+warn() {
+  jq -nc --arg m "$1" '{systemMessage: $m, additionalContext: $m}'
+  exit 0
+}
+
+# git_repo_root — echoes the repo root, or nothing if this is not a git repo.
+git_repo_root() { git -C "$PROJECT_DIR" rev-parse --show-toplevel 2>/dev/null || true; }
+
+# resolve_skill <skill-name> — path to that skill's SKILL.md, or nothing.
+# Checks both layouts: this kit's own `skills/`, and a consumer project that
+# installed the library under `.claude/skills/`.
+resolve_skill() {
+  local name="$1" root
+  for root in "$PROJECT_DIR/.claude/skills" "$PROJECT_DIR/skills"; do
+    [ -f "$root/$name/SKILL.md" ] && { printf '%s' "$root/$name/SKILL.md"; return; }
+  done
+}
+
+mkdir -p "$STATE_DIR" 2>/dev/null || true
+
+# code_change_hash — a stable fingerprint of the working tree's uncommitted CODE
+# changes (tracked edits and untracked new files alike), or nothing when there
+# are none. Documentation-only work therefore never trips the quality gate.
+#
+# The fingerprint, not a boolean, is what gets recorded as "reviewed": once the
+# code changes again, the old review no longer vouches for it.
+code_change_hash() {
+  local root ext files sum
+  root="$(git_repo_root)"; [ -n "$root" ] || return 0
+  ext="$(jq_cfg '.code_extensions' '\.(java|kt|rs|ts|tsx|js|jsx|py|go|rb|php|cs|sql|sh)$')"
+
+  files="$(git -C "$root" status --porcelain --untracked-files=all 2>/dev/null \
+           | sed 's/^...//' | sed 's/.* -> //' | grep -E "$ext" || true)"
+  [ -n "$files" ] || return 0
+
+  if command -v sha256sum >/dev/null 2>&1; then sum=sha256sum
+  elif command -v shasum >/dev/null 2>&1; then sum="shasum -a 256"
+  else return 0; fi
+
+  { printf '%s\n' "$files"
+    printf '%s\n' "$files" | while IFS= read -r f; do
+      [ -f "$root/$f" ] && cat "$root/$f"
+    done
+  } | $sum | cut -d' ' -f1
+}

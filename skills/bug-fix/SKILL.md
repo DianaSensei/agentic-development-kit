@@ -2,6 +2,20 @@
 name: bug-fix
 description: Complete bug-fix workflow — gather symptoms, attempt to reproduce, wait for user confirmation before fixing, implement/fix in a loop until quality is met, then report, capture knowledge, and produce a postmortem. Fully technology-agnostic — invokes whichever technical skills the task needs. Works for any project or stack.
 argument-hint: "[bug/symptom description]"
+hooks:
+  PreToolUse:
+    - matcher: "Edit|Write|MultiEdit|NotebookEdit"
+      hooks:
+        - type: command
+          command: "${CLAUDE_PROJECT_DIR}/.claude/hooks/skill-gate.sh"
+          timeout: 15
+          statusMessage: "Checking the owning skill was read..."
+  Stop:
+    - hooks:
+        - type: command
+          command: "${CLAUDE_PROJECT_DIR}/.claude/hooks/quality-gate.sh"
+          timeout: 30
+          statusMessage: "Quality gate..."
 ---
 
 # Bug Fix Workflow

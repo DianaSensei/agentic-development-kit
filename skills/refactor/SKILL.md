@@ -2,6 +2,20 @@
 name: refactor
 description: Code-refactoring workflow — improve structure/performance/maintainability WITHOUT changing external behavior (API responses, side effects, output must stay 100% identical). Use when the request is to clean up/restructure/improve code quality, not to add a new feature or fix wrong behavior. Fully technology-agnostic — invokes whichever technical skills the task needs.
 argument-hint: "[code to refactor + reason]"
+hooks:
+  PreToolUse:
+    - matcher: "Edit|Write|MultiEdit|NotebookEdit"
+      hooks:
+        - type: command
+          command: "${CLAUDE_PROJECT_DIR}/.claude/hooks/skill-gate.sh"
+          timeout: 15
+          statusMessage: "Checking the owning skill was read..."
+  Stop:
+    - hooks:
+        - type: command
+          command: "${CLAUDE_PROJECT_DIR}/.claude/hooks/quality-gate.sh"
+          timeout: 30
+          statusMessage: "Quality gate..."
 ---
 
 # Refactor Workflow
