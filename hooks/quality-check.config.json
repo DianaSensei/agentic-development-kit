@@ -1,0 +1,58 @@
+{
+  "$comment": "Configuration for the quality-check hooks in this directory. Every entry is optional and falls back to the default shown in the script that reads it; if this file is missing or malformed, skill_map is empty (skill-gate no-ops) and the other gates run on their built-in defaults. See hooks/README.md.",
+
+  "mode": {
+    "session_context": "warn",
+    "skill_gate": "warn",
+    "checkpoint_gate": "warn",
+    "write_lint": "warn",
+    "quality_gate": "warn"
+  },
+
+  "$comment_session_context": "general_guidelines is a fixed block of engineering/style conventions injected every SessionStart, independent of whether this kit's own skills are installed. Set to false in a project's own .claude/quality-check.config.json to keep the kit's routing/checkpoint reminders but drop these.",
+  "session_context": {
+    "general_guidelines": true
+  },
+
+  "$comment_skill_map": "Ordered list. The FIRST entry whose ERE `match` hits the changed file's repo-relative path decides which SKILL.md must have been read before that file may be edited. Add project-specific rows here; remove rows for stacks the project does not use.",
+  "skill_map": [
+    { "match": "(^|/)src-tauri/", "skill": "tauri-react-skill" },
+    { "match": "\\.(java|kt)$", "skill": "java-spring-skill" },
+    { "match": "\\.rs$", "skill": "rust-engineer" },
+    { "match": "(^|/)(migrations?|db/migration)/", "skill": "database-skill" },
+    { "match": "\\.sql$", "skill": "database-skill" },
+    { "match": "\\.(tsx|jsx)$", "skill": "tauri-react-skill" }
+  ],
+
+  "$comment_code_extensions": "What the Stop gate counts as a code change worth reviewing. Documentation-only turns never trigger it.",
+  "code_extensions": "\\.(java|kt|kts|rs|ts|tsx|js|jsx|py|go|rb|php|cs|sql|sh|bash|yaml|yml|tf|gradle|xml|toml)$",
+
+  "$comment_checkpoint_gate": "workflows are the skills whose CHECKPOINT this gate enforces — each is instructed to confirm via AskUserQuestion using this exact header before Step 3/4 may write code. Add a workflow name here only if its SKILL.md documents a CHECKPOINT the same way.",
+  "checkpoint_gate": {
+    "header": "Checkpoint",
+    "workflows": ["feature-development", "bug-fix", "refactor"]
+  },
+
+  "$comment_quality_gate": "review_skill is the skill Claude is told to run on the diff before it may report done. max_blocks caps how many times one session may be held at the Stop gate, so a stuck loop can never trap a session.",
+  "quality_gate": {
+    "review_skill": "code-review-skill",
+    "max_blocks": 2,
+    "require_changelog": false,
+    "require_experience_log": false
+  },
+
+  "$comment_write_lint": "Cheap textual checks on freshly written content. Advisory only — real review is the review_skill's job, not a regex's.",
+  "write_lint": {
+    "$comment_patterns": "POSIX ERE, matched case-insensitively (grep -Ei). Keep them cheap — this hook runs after every single write.",
+    "secret_patterns": [
+      "(api[_-]?key|secret|passwd|password|token)[[:space:]]*[:=][[:space:]]*[\"'][^\"'{$][^\"']{7,}[\"']",
+      "-----BEGIN [A-Z ]*PRIVATE KEY-----",
+      "aws_secret_access_key[[:space:]]*[:=]",
+      "gh[pousr]_[A-Za-z0-9]{20,}"
+    ],
+    "placeholder_patterns": [
+      "(^|[^A-Za-z])(TODO|FIXME|XXX)([^A-Za-z]|$)",
+      "^[[:space:]]*(//|#)[[:space:]]*\\.\\.\\.[[:space:]]*(rest of|remaining|existing)"
+    ]
+  }
+}
