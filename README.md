@@ -63,6 +63,23 @@ same block rather than reaching for `dependencies` — unless you have specifica
 described above, that its marketplace will already be present for every user before they ever install
 this plugin.
 
+### Companion tools that aren't Claude Code plugins at all
+
+[`lavish-axi`](https://github.com/kunchenguid/lavish-axi) (`lavish` — a CLI/editor for reviewing and
+iterating on HTML artifacts with an agent) pairs well with this kit but, unlike `taste-skill` above,
+isn't a Claude Code plugin to begin with: its `plugin.json` follows the generic
+[agent-plugins.org](https://agent-plugins.org) schema, not `.claude-plugin/plugin.json`, and it has no
+marketplace — `claude plugin marketplace add`/`install` cannot see it at all. It installs and registers
+itself through its own CLI instead. There is no automatic step here: an install hook running a global
+`npm install` on every session would reach outside this plugin's own scope and onto the user's machine
+without asking, which this kit's hooks deliberately never do (see [`hooks/README.md`](./hooks/README.md)
+→ Operating rules). Install it yourself when you want it:
+
+```
+npm install -g lavish-axi
+lavish-axi setup plugin
+```
+
 ## Directory structure
 
 Every directory below sits at the plugin root — this is where Claude Code's plugin loader expects
