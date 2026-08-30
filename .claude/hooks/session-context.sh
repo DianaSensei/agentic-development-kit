@@ -22,5 +22,5 @@ cat <<TXT
 - Before editing a file that a technical skill owns, Read that skill's SKILL.md in full, within the
   scope of the CURRENT request (a read from an earlier request does not count).
 - Before reporting any code change done, run the \`$REVIEW_SKILL\` self-check on the diff and fix
-  severe findings. A Stop hook checks this and will hold the turn until it is done.
+  severe findings, then record it with \`.claude/hooks/mark-reviewed.sh\`. A Stop hook checks this.
 TXT
