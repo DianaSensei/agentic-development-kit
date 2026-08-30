@@ -75,22 +75,29 @@ Every directory below sits at the plugin root — this is where Claude Code's pl
 | [`hooks/`](./hooks/README.md) | Quality-check hooks covering the parts of the skill workflow a model cannot be trusted to self-police: that the owning `SKILL.md` was read before code was edited, and that `code-review-skill` ran on the diff before the change was reported done. They warn by default and can be switched to block per gate. | [`hooks/README.md`](./hooks/README.md) |
 | [`mcp/`](./mcp/README.md) | MCP server configuration so Claude Code can connect to external systems: database (PostgreSQL/MySQL/TiDB/Redis/MongoDB, read-only), Grafana, self-hosted Jira/Confluence. This one is documentation to follow manually, not something the plugin wires up automatically. | [`mcp/README.md`](./mcp/README.md) |
 
-## How do `skills/` and `agents/` differ?
+## How do `skills/` and `agents/` relate?
 
-These two systems are **independent and currently don't reference each other** — both aim at structured
-feature development, but follow 2 different models:
+Mostly two different models for structured feature development, but `feature-development` now bridges
+them for its two highest-stakes steps:
 
 - **`skills/`** — 1 agent (the current Claude Code session) reads the appropriate skill itself and does
-  all the work in the same session, sequentially. It starts from `workflow-router` (a skill), classifies
-  the request, then hands off to `feature-development`/`bug-fix`/`refactor`, and these skills read further
+  the work in the same session, sequentially. It starts from `workflow-router` (a skill), classifies the
+  request, then hands off to `feature-development`/`bug-fix`/`refactor`, and these skills read further
   technical skills (`java-spring-skill`, `database-skill`...) as needed.
-- **`agents/`** — multiple separate Task subagents, each agent with a fixed role (`business-analyst` →
-  `solution-architect` → Tier-2 specialist), input/output as JSON with a clear schema, allowing multiple
-  independent Tier-2 agents to run in parallel.
+- **`agents/`** — separate Task subagents, each with a fixed role and a JSON contract so the next step
+  can use its output directly. `feature-development` launches `business-analyst` (Step 1) and
+  `solution-architect` (Step 2) as subagents specifically *because* they carry no `Edit`/`Write` tool —
+  requirements analysis and solution design happen where code is architecturally impossible to touch,
+  which a hook checking transcripts after the fact can't guarantee the way a missing tool can. Its
+  Step 3 may optionally dispatch a Tier-2 specialist (`java-ecosystem-engineer`, etc.) for a task
+  `solution-architect` assigned to one that actually exists; everything else stays a direct
+  technical-skill implementation, unchanged. `bug-fix` and `refactor` don't use this pipeline (their
+  checkpoints are simpler, single-direction decisions) — see [`agents-guide.md`](./agents-guide.md).
 
-Which to use depends on the situation — `skills/` is suited when you want a single continuous flow, easy
-to follow within one session; `agents/` is suited when you want clear separation of responsibility per
-role and the ability to run multiple independent pieces of work in parallel.
+Which to reach for depends on the situation — a skill invoked directly (not through
+`feature-development`) is suited to a single continuous flow, easy to follow within one session;
+`agents/` is suited when a step needs a hard guarantee the main thread's tool access can't provide, or
+when independent Tier-2 work can run in parallel.
 
 ## Using it once installed
 

@@ -7,10 +7,14 @@ a fixed JSON contract, so the next agent can use it directly without having to r
 this plugin is enabled, each agent also appears under `/context` → Custom Agents and can be @-mentioned
 by its scoped name.
 
-> **How this differs from `skills/`**: this directory is a separate multi-agent system (multiple
-> distinct Task subagents talking to each other via JSON), independent from `skills/` (a skill library
-> used within a single agent via the Skill tool). The two directories currently do NOT reference each
-> other.
+> **How this relates to `skills/`**: `feature-development` (in `skills/`) launches `business-analyst`
+> and `solution-architect` as Task subagents for Steps 1-2, specifically because they carry no
+> `Edit`/`Write` tool — requirements analysis and solution design happen where code genuinely cannot be
+> touched, not just where the prose says not to. `bug-fix` and `refactor` don't use this pipeline yet;
+> their checkpoints are enforced by `checkpoint-gate.sh` instead (see
+> [`hooks/README.md`](./hooks/README.md)). Tier-2 specialists remain optional from `feature-development`
+> Step 3 — dispatched only for a task whose `task_breakdown` entry names one that actually exists;
+> everything else is still implemented directly against the matching technical skill.
 
 ## Pipeline
 

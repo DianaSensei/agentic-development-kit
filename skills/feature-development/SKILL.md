@@ -48,52 +48,55 @@ gather that context *before* Step 1's interview, so the interview focuses on dec
 exploration. Skip this for a well-scoped, single-domain feature or a codebase already well understood.
 See `references/interview-questions.md` → "Multi-Agent Pre-Discovery" for the full pattern.
 
-## Step 1 — Requirements Analysis (dual role: PM + Dev, technology-agnostic)
+## Step 1 — Requirements Analysis (delegated to `business-analyst`, confirmed with the user here)
 
-Restate the request in your own words (re-verify understanding), and list assumptions plus ambiguous
-points. Stop and ask the user if anything doesn't add up — never guess at intent.
+Launch the `business-analyst` subagent (Task tool) with the raw request plus anything Step 0 already
+found (avoids redundant re-discovery). `business-analyst` is restricted to `Read, Grep, Glob, Bash` —
+no `Edit`/`Write` — so this step is architecturally unable to touch code, not merely instructed not to.
+It returns `requirement_clarified`, `feasibility_verdict`, `draft_acceptance_criteria`,
+`draft_edge_cases`, `draft_definition_of_done`, `impact_assessment_preliminary`, `assumptions`, and
+`open_questions` (see `agents/business-analyst.md` for its full contract).
 
-Interview using two perspectives in parallel (see `references/interview-questions.md` for the full
-question sets per category):
-- **PM lens**: user value, the problem being solved, scope (in/out, MVP vs. full), success criteria,
-  priority.
-- **Dev lens**: technical feasibility, systems/APIs/DBs touched, security requirements (auth, sensitive
-  data), performance, edge cases, external dependencies.
+A subagent cannot ask the user anything directly — `AskUserQuestion` is unavailable to it by design —
+so that part stays here, in the main thread:
+- If `open_questions` is non-empty, or `feasibility_verdict` isn't `feasible`, resolve each one with the
+  user before proceeding — never guess at intent. Use `AskUserQuestion` for anything with a finite,
+  enumerable set of likely answers (see `references/interview-questions.md` for question framing per
+  category — PM lens: user value, scope, priority; Dev lens: technical feasibility, security,
+  performance, edge cases); use open-ended chat only when the answer space can't be enumerated in
+  advance. Don't ask a free-text question when a structured choice would work just as well.
+- Fold the user's answers into `business-analyst`'s output (resolve `open_questions`, update
+  `requirement_clarified`/`feasibility_verdict` if the answers changed them) before Step 2 — no need to
+  re-invoke `business-analyst` unless the answers substantially reopen a `not_feasible_as_stated` verdict.
 
-Use `AskUserQuestion` for any question with a finite, enumerable set of likely answers (priority,
-format, MVP vs. full scope, etc.); use open-ended questions only when the answer space can't be
-enumerated in advance (e.g. "describe the user journey in your own words"). Don't ask a free-text
-question when a structured choice would work just as well.
+## Step 2 — Solution Proposal (delegated to `solution-architect`, refined and checkpointed here)
 
-## Step 2 — Solution Proposal (technology-agnostic; references technical skills only by name)
-
-1. Read the existing architecture/conventions — propose something consistent with them; don't invent
-   an unfamiliar pattern without a clear reason.
-2. Write the Functional Requirements in EARS format (see `references/ears-syntax.md`) — each
-   requirement is one unambiguous sentence: `While <precondition>, when <trigger>, the system shall
-   <response>` (or the matching Ubiquitous/Event/State/Optional variant).
-3. If more than one direction is reasonable, present them as separate, distinct proposals. Every
-   proposal must include the diagrams that actually apply to it (see `references/diagram-guide.md` for
-   which diagram types are mandatory vs. conditional vs. skip, with templates) — Flow and Sequence
-   diagrams are always required; Architecture/Component diagrams are required only if the proposal
-   changes system boundaries or adds/removes a service/module; an ERD is required only if the proposal
-   changes the data model/schema. Don't draw a diagram type that doesn't apply to the change's scope.
-   Beyond diagrams, every proposal also includes:
+1. Launch the `solution-architect` subagent (Task tool) with `business-analyst`'s finalized output from
+   Step 1. Like `business-analyst`, it is restricted to read-only tools (`Read, Grep, Glob`, no `Bash`,
+   no `Edit`/`Write`) — it designs, it does not touch code. It returns one or more `proposals`, each with
+   sequence/flow diagrams, trade-off analysis, architecture decisions, finalized acceptance
+   criteria/edge cases/DoD, and a `task_breakdown` assigning work to Tier-2 agents where one exists (see
+   `agents/solution-architect.md` for its full contract).
+2. For each proposal, bring it up to this workflow's own documentation bar before writing it down —
+   `solution-architect`'s own contract doesn't require these, so add them here only where they actually
+   apply:
+   - Restate the acceptance criteria as EARS-format functional requirements where not already phrased
+     that way (see `references/ears-syntax.md`), and check them against the INVEST bar (see
+     `references/acceptance-criteria.md`).
+   - Add an Architecture/Component diagram if the proposal changes system boundaries or adds/removes a
+     service, and an ERD if it changes the data model (see `references/diagram-guide.md` for the full
+     mandatory/conditional/skip rules) — don't add a diagram type the change's scope doesn't call for.
+   - An Error Handling table (error condition → response/status → message) for any new logic, where
+     applicable.
    - Relevant Non-Functional Requirements (performance, security, scalability) where there's a concrete
      constraint — never invent a number when it isn't known; write "needs confirmation" instead of
      guessing.
-   - Trade-offs versus the other proposal(s).
-   - Acceptance Criteria in Given/When/Then form, meeting the INVEST bar (see
-     `references/acceptance-criteria.md`), plus Edge Cases and a Definition of Done for this proposal.
-   - An Error Handling table (error condition → response/status → message) for any new logic, where
-     applicable.
-   - The task list to complete — for each task, note which technical skill it's expected to draw on
-     when implemented; no need to spell out technology detail here.
-4. Write the full contents of this step (every proposal — FR/EARS, diagrams, NFRs, trade-offs,
-   AC/Edge Cases/DoD, error handling, task list) to `docs/plans/<feature-slug>.md`, following the
-   section layout in `references/specification-template.md`. This file is the durable record for later
-   reference — it does not replace presenting the full proposal directly to the user in conversation.
-5. A recommended proposal with rationale is fine to offer; never pick one on the user's behalf.
+3. Write the full contents (every proposal, refined per above) to `docs/plans/<feature-slug>.md`,
+   following the section layout in `references/specification-template.md`. This file is the durable
+   record for later reference — it does not replace presenting the full proposal directly to the user in
+   conversation.
+4. `solution-architect` may mark one proposal `recommended` with a reason — fine to offer that to the
+   user, but never pick one on the user's behalf regardless of the recommendation.
 
 **CHECKPOINT (required)**: present the full proposal (already written to `docs/plans/<feature-slug>.md`),
 then ask for confirmation via `AskUserQuestion` with `header` set exactly to `"Checkpoint"` (options: one
@@ -127,6 +130,13 @@ writing any code for that task — don't read one, code some, then read the next
 
 Once read, follow that skill's conventions/knowledge exactly — don't invent an approach from general
 background knowledge when the matching skill already specifies one.
+
+**Optional Tier-2 dispatch**: if `solution-architect`'s `task_breakdown` assigned a task to a Tier-2
+agent that actually exists (e.g. `java-ecosystem-engineer`, `tauri-react-engineer`,
+`data-storage-architect`, `api-spec-designer`), it may be dispatched via the Task tool instead of
+implemented inline here — those agents write and run their own tests for the piece they own. Not
+required: a task with no matching Tier-2 agent, or any technical skill without one, is implemented
+directly per the `Read`-the-`SKILL.md` rule above, exactly as before.
 
 ### 3.2 Test
 
@@ -194,6 +204,13 @@ first avoids retrying an approach already known not to work.
   capture) — it holds no language/framework/database-specific knowledge itself. Any technical
   implementation detail comes from the matching technical skill, read in full at the point it's applied
   (Step 3.1); never improvise technical conventions this workflow doesn't own.
+- Steps 1-2 are deliberately run as `business-analyst`/`solution-architect` subagents rather than done
+  directly here, so that requirements analysis and solution design happen with no `Edit`/`Write` tool
+  available at all — a checkpoint enforced by the tool set, not just by asking nicely. This is why this
+  file's own job through Step 2 is orchestration (launch the subagent, resolve `open_questions` with the
+  user, refine the proposal to this workflow's documentation bar) rather than doing the analysis/design
+  itself. Step 3 runs directly in the main thread as before, since implementation genuinely needs
+  `Edit`/`Write` and is already gated by `skill-gate`/`checkpoint-gate`/`quality-gate`.
 - This skill is for **new capability or intentionally changed behavior** only. If the current behavior
   is actually wrong (a defect), that's `bug-fix`'s job, even if the user phrases the request as
   "improve X" — `workflow-router` makes this classification; if invoked directly without going through
