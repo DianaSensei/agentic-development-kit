@@ -9,6 +9,11 @@
     "quality_gate": "warn"
   },
 
+  "$comment_session_context": "general_guidelines is a fixed block of engineering/style conventions injected every SessionStart, independent of whether this kit's own skills are installed. Set to false in a project's own .claude/quality-check.config.json to keep the kit's routing/checkpoint reminders but drop these.",
+  "session_context": {
+    "general_guidelines": true
+  },
+
   "$comment_skill_map": "Ordered list. The FIRST entry whose ERE `match` hits the changed file's repo-relative path decides which SKILL.md must have been read before that file may be edited. Add project-specific rows here; remove rows for stacks the project does not use.",
   "skill_map": [
     { "match": "(^|/)src-tauri/", "skill": "tauri-react-skill" },

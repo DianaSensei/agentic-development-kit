@@ -21,7 +21,7 @@ owns that judgement actually runs.
 
 | Hook | Event | Default | What it does |
 |---|---|---|---|
-| `session-context.sh` | `SessionStart` | on | Injects the routing + self-check rules once per session. Non-blocking. |
+| `session-context.sh` | `SessionStart` | on | Injects a fixed set of general engineering/style guidelines, plus (if this kit's skills are installed) the routing + self-check rules, once per session. Non-blocking. |
 | `skill-gate.sh` | `PreToolUse` on edits | `warn` | Maps the edited file to its owning skill via `skill_map`, then checks the transcript for a read of that `SKILL.md` **since the last user message**. A read from an earlier request does not count — the file may have changed since. |
 | `checkpoint-gate.sh` | `PreToolUse` on **code** edits | `warn` | Inside `feature-development`/`bug-fix`/`refactor` only: checks the transcript, since that workflow skill was last invoked, for an `AskUserQuestion` call with `header` exactly `"Checkpoint"`. Presenting a proposal and moving on without asking no longer passes silently. Never fires on a documentation write (the plan doc itself is written before the checkpoint, by design). |
 | `write-lint.sh` | `PostToolUse` on edits | `warn` | Scans only the newly written text for hardcoded secrets and leftover placeholders. Advisory by protocol: `PostToolUse` cannot block. |
@@ -106,6 +106,12 @@ a project overrides it without forking the plugin by dropping its own copy at
 bundled default entirely (not merged field-by-field).
 
 - `mode.<gate>` — `off` | `warn` | `block`.
+- `session_context.general_guidelines` — `true`/`false`. The fixed engineering/style block
+  `session-context.sh` injects every session (em dash, commit co-author, CHANGELOG.md, Markdown
+  one-sentence-per-line, quality over dev cost, E2E-first bug fixes, pixel-perfect UI, fix
+  adjacent lint/test issues you notice). This is a specific team's conventions, not something every
+  installer necessarily wants — set to `false` in a project's own config to keep the kit's
+  routing/checkpoint reminders below without these.
 - `skill_map` — ordered `{match, skill}` rows; first ERE match against the repo-relative path wins.
   **Edit this per project**: remove stacks you do not use, add your own.
 - `checkpoint_gate.header`, `.workflows` — the exact `AskUserQuestion` header to look for, and which

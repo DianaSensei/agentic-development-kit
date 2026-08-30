@@ -39,10 +39,13 @@ jq_in() {
 }
 
 # jq_cfg <filter> [default] — read a field out of quality-check.config.json.
+# Uses `select(. != null)` rather than `// empty`: jq's `//` treats a literal
+# `false` value the same as missing/null, which would make a config field that
+# defaults to true impossible to turn off. `select` only filters true nulls.
 jq_cfg() {
   local out
   [ -f "$CONFIG_FILE" ] || { printf '%s' "${2-}"; return; }
-  out="$(jq -r "$1 // empty" "$CONFIG_FILE" 2>/dev/null)" || out=""
+  out="$(jq -r "($1) | select(. != null)" "$CONFIG_FILE" 2>/dev/null)" || out=""
   [ -n "$out" ] && printf '%s' "$out" || printf '%s' "${2-}"
 }
 

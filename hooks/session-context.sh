@@ -9,7 +9,32 @@
 
 [ "$(mode_of session_context warn)" = "off" ] && exit 0
 
-# Only speak up if the skill library is actually installed here.
+# General engineering/style guidelines — independent of whether this kit's own
+# skills are installed here, so this block does not gate on resolve_skill.
+# A project can turn just this block off (keeping the kit-specific rules below)
+# via .claude/quality-check.config.json: {"session_context":{"general_guidelines":false}}.
+if [ "$(jq_cfg '.session_context.general_guidelines' true)" = "true" ]; then
+  cat <<'TXT'
+[agentic-development-kit] General Guidelines:
+- Never use the em dash "—". Use plain dash "-" instead.
+- When writing commit messages, NEVER auto-add your agent name as co-author.
+- Never manually modify CHANGELOG.md files or any files that are marked as auto-generated.
+- When writing or substantially editing long Markdown files, put each full sentence on its own line.
+  Preserve normal Markdown structure, but avoid wrapping multiple sentences onto one physical line.
+- When making technical decisions, do not give much weight to development cost. Instead, prefer
+  quality, simplicity, robustness, scalability, and long term maintainability.
+- When doing bug fixes, always start with reproducing the bug in an E2E setting as closely aligned
+  with how an end user would experience it. This makes sure you find the real problem so your fix
+  will actually solve it.
+- When end-to-end testing a product, be picky about the UI you see and be obsessed with pixel
+  perfection. If something clearly looks off, even if it is not directly related to what you are
+  doing, try to get it fixed alongside it.
+- Apply that same high standard to engineering excellence: lint, test failures, and test flakiness.
+  If you see one, even if it is not caused by what you are working on right now, still get it fixed.
+TXT
+fi
+
+# Only speak up about the kit's own rules if the skill library is actually installed here.
 [ -n "$(resolve_skill workflow-router)" ] || exit 0
 
 REVIEW_SKILL="$(jq_cfg '.quality_gate.review_skill' 'code-review-skill')"
