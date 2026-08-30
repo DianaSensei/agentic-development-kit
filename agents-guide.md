@@ -1,9 +1,11 @@
 # Agents
 
-A set of Claude Code subagents (`.claude/agents/*.md`, invoked via the Task tool) forming a tiered
-pipeline for feature development: Tier 1 clarifies requirements + proposes a plan, Tier 2 implements
-specialized work per technical area. Each agent receives input and returns output following a fixed JSON
-contract, so the next agent can use it directly without having to re-infer anything.
+A set of Claude Code subagents (`agents/*.md` at this plugin's root, invoked via the Task tool) forming
+a tiered pipeline for feature development: Tier 1 clarifies requirements + proposes a plan, Tier 2
+implements specialized work per technical area. Each agent receives input and returns output following
+a fixed JSON contract, so the next agent can use it directly without having to re-infer anything. Once
+this plugin is enabled, each agent also appears under `/context` → Custom Agents and can be @-mentioned
+by its scoped name.
 
 > **How this differs from `skills/`**: this directory is a separate multi-agent system (multiple
 > distinct Task subagents talking to each other via JSON), independent from `skills/` (a skill library

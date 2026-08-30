@@ -39,7 +39,7 @@ Before reporting this work done:
    plus any untracked files), applying only the per-technology sections the change actually touches.
 2. Fix every severe finding — a self-review is less objective than an independent one, which is a
    reason to be stricter with it, not more lenient.
-3. Record that it happened: \`.claude/hooks/mark-reviewed.sh\`
+3. Record that it happened by running: \`${PLUGIN_ROOT}/hooks/mark-reviewed.sh\`
 Editing code afterwards invalidates the record, which is intended: the next review covers the new state."
 
 # Optional Step-5 artifact checks, off by default — a small refactor legitimately

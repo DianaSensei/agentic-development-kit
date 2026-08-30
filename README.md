@@ -1,19 +1,47 @@
 # Agentic Development Kit
 
-A Claude Code configuration kit for AI-assisted software development: 1 skill library used within a
-single agent, 1 tiered multi-agent pipeline, MCP configuration so Claude Code can connect beyond
-the codebase (database, dashboard, ticket tracker), and hooks that check the workflow rules a model
-cannot be trusted to self-police (advisory by default, enforcing when configured to). Usable for any project/stack — the core (workflow,
-process) has no dependency on any specific technology; tech-specific details live in their own modules.
+A Claude Code plugin for AI-assisted software development: a library of skills used within a single
+agent, a tiered multi-agent pipeline, MCP configuration so Claude Code can connect beyond the codebase
+(database, dashboard, ticket tracker), and quality-check hooks that check the workflow rules a model
+cannot be trusted to self-police (advisory by default, enforcing when configured to). Usable for any
+project/stack — the core (workflow, process) has no dependency on any specific technology; tech-specific
+details live in their own modules.
+
+## Install
+
+This repo is itself a Claude Code plugin (`.claude-plugin/plugin.json`) and its own marketplace
+(`.claude-plugin/marketplace.json`), so it installs the same way any plugin does — no copying files
+into `.claude/`:
+
+```
+/plugin marketplace add DianaSensei/agentic-development-kit
+/plugin install agentic-development-kit@agentic-development-kit
+```
+
+(or the `claude plugin marketplace add` / `claude plugin install` CLI equivalents, run from outside
+Claude Code). To try changes locally before publishing them, run Claude Code against the checked-out
+repo directly instead of installing it:
+
+```
+claude --plugin-dir /path/to/agentic-development-kit
+```
+
+Once enabled, `skills/` and `agents/` work exactly as described below in every project the plugin is
+active in — nothing about them is specific to this repo. See
+[`hooks/README.md`](./hooks/README.md) if a hook needs troubleshooting, and
+`.claude-plugin/plugin.json` for the manifest itself.
 
 ## Directory structure
 
+Every directory below sits at the plugin root — this is where Claude Code's plugin loader expects
+`skills/`, `agents/`, and `hooks/` to live (see [Create plugins](https://code.claude.com/docs/en/plugins)).
+
 | Directory | What it is | See also |
 |---|---|---|
-| [`skills/`](./skills/README.md) | A library of 30 Claude Code Skills — workflow (feature/bug-fix/refactor), technical knowledge by language/infrastructure, quality/security, MCP integration. Claude Code automatically recognizes the right skill via its `description`, no manual invocation needed (except a few skills marked manual-only). | [`skills/README.md`](./skills/README.md) |
-| [`agents/`](./agents/README.md) | A tiered Task subagent pipeline (Tier 1 clarifies requirements + proposes solutions, Tier 2 implements specialized work), communicating via a fixed JSON contract. | [`agents/README.md`](./agents/README.md) |
-| [`mcp/`](./mcp/README.md) | MCP server configuration so Claude Code can connect to external systems: database (PostgreSQL/MySQL/TiDB/Redis/MongoDB, read-only), Grafana, self-hosted Jira/Confluence. | [`mcp/README.md`](./mcp/README.md) |
-| [`.claude/hooks/`](./.claude/hooks/README.md) | Quality-check hooks covering the parts of the skill workflow a model cannot be trusted to self-police: that the owning `SKILL.md` was read before code was edited, and that `code-review-skill` ran on the diff before the change was reported done. They warn by default and can be switched to block per gate. | [`.claude/hooks/README.md`](./.claude/hooks/README.md) |
+| [`skills/`](./skills/README.md) | A library of 30 Claude Code Skills — workflow (feature/bug-fix/refactor), technical knowledge by language/infrastructure, quality/security, MCP integration. Claude Code automatically recognizes the right skill via its `description`, no manual invocation needed (except a few skills marked manual-only); each is also reachable explicitly as `/agentic-development-kit:<skill-name>`. | [`skills/README.md`](./skills/README.md) |
+| [`agents/`](./agents-guide.md) | A tiered Task subagent pipeline (Tier 1 clarifies requirements + proposes solutions, Tier 2 implements specialized work), communicating via a fixed JSON contract. | [`agents-guide.md`](./agents-guide.md) |
+| [`hooks/`](./hooks/README.md) | Quality-check hooks covering the parts of the skill workflow a model cannot be trusted to self-police: that the owning `SKILL.md` was read before code was edited, and that `code-review-skill` ran on the diff before the change was reported done. They warn by default and can be switched to block per gate. | [`hooks/README.md`](./hooks/README.md) |
+| [`mcp/`](./mcp/README.md) | MCP server configuration so Claude Code can connect to external systems: database (PostgreSQL/MySQL/TiDB/Redis/MongoDB, read-only), Grafana, self-hosted Jira/Confluence. This one is documentation to follow manually, not something the plugin wires up automatically. | [`mcp/README.md`](./mcp/README.md) |
 
 ## How do `skills/` and `agents/` differ?
 
@@ -32,16 +60,16 @@ Which to use depends on the situation — `skills/` is suited when you want a si
 to follow within one session; `agents/` is suited when you want clear separation of responsibility per
 role and the ability to run multiple independent pieces of work in parallel.
 
-## Quick start
+## Using it once installed
 
-1. **Skill**: no extra setup needed — open Claude Code in this repo, describe your request,
-   `workflow-router` will recognize and route it automatically. See the full list at
-   [`skills/README.md`](./skills/README.md).
+1. **Skill**: nothing to invoke manually — describe your request, `workflow-router` recognizes it and
+   routes automatically. See the full list at [`skills/README.md`](./skills/README.md).
 2. **Agent**: invoke directly via the Task tool, starting from `business-analyst` for a new request. See
-   [`agents/README.md`](./agents/README.md) for the order and input/output schema of each agent.
-3. **Hook**: nothing to do — `.claude/settings.json` and the three workflow skills already register
-   them. See [`.claude/hooks/README.md`](./.claude/hooks/README.md) for what each gate checks and how
-   to trim `skill_map` to your own stack.
+   [`agents-guide.md`](./agents-guide.md) for the order and input/output schema of each agent.
+3. **Hook**: nothing to do — `hooks/hooks.json` and the three workflow skills' frontmatter register them
+   automatically wherever the plugin is enabled. See [`hooks/README.md`](./hooks/README.md) for what
+   each gate checks, how to switch a gate from warn to block, and how to trim `skill_map` to your stack
+   by dropping an override file in the target project.
 4. **MCP**: if you need Claude Code to access database/Grafana/Jira-Confluence, follow
    [`mcp/README.md`](./mcp/README.md) — or just ask directly, e.g. "set up Grafana MCP for me", and
    Claude Code will read the corresponding README and follow it (or use the `mcp-setup` skill for an MCP
@@ -52,7 +80,9 @@ role and the ability to run multiple independent pieces of work in parallel.
 - The orchestration/workflow part (both in `skills/` and `agents/`) is designed to be independent of any
   specific language/framework — all tech-specific detail lives in specialized modules (technical skills
   or Tier-2 agents), auto-detected from real evidence (dependencies, configuration, existing code), never
-  assumed in advance.
+  assumed in advance. In practice the technical skills currently cover Java/Spring, Rust, and Tauri+React
+  most deeply — a request in an uncovered stack still gets the workflow's structure (checkpoints,
+  fix-attempt limits, reporting), just without a matching technical skill to read at Step 3.1.
 - The rules the workflows state as mandatory are backed by hooks wherever they are mechanically
   checkable (skill read before edit, review before done); judgement-based checks stay with
   `code-review-skill`. Hooks warn by default and are switched to blocking per gate, and every one of

@@ -7,13 +7,13 @@ hooks:
     - matcher: "Edit|Write|MultiEdit|NotebookEdit"
       hooks:
         - type: command
-          command: "${CLAUDE_PROJECT_DIR}/.claude/hooks/skill-gate.sh"
+          command: "${CLAUDE_PLUGIN_ROOT}/hooks/skill-gate.sh"
           timeout: 15
           statusMessage: "Checking the owning skill was read..."
   Stop:
     - hooks:
         - type: command
-          command: "${CLAUDE_PROJECT_DIR}/.claude/hooks/quality-gate.sh"
+          command: "${CLAUDE_PLUGIN_ROOT}/hooks/quality-gate.sh"
           timeout: 30
           statusMessage: "Quality gate..."
 ---

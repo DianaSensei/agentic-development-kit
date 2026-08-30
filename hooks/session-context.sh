@@ -15,12 +15,12 @@
 REVIEW_SKILL="$(jq_cfg '.quality_gate.review_skill' 'code-review-skill')"
 
 cat <<TXT
-[agentic-development-kit] Rules enforced by hooks in this repo:
+[agentic-development-kit] Rules enforced by hooks in this project:
 - Any request to WRITE OR CHANGE code starts at the \`workflow-router\` skill, which classifies it and
   hands off to \`feature-development\` / \`bug-fix\` / \`refactor\`. Pure questions and read-only
   exploration skip this.
 - Before editing a file that a technical skill owns, Read that skill's SKILL.md in full, within the
   scope of the CURRENT request (a read from an earlier request does not count).
 - Before reporting any code change done, run the \`$REVIEW_SKILL\` self-check on the diff and fix
-  severe findings, then record it with \`.claude/hooks/mark-reviewed.sh\`. A Stop hook checks this.
+  severe findings, then record it with the mark-reviewed hook. A Stop hook checks this.
 TXT

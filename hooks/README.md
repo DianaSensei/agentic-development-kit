@@ -56,15 +56,24 @@ fingerprint of the change for `quality-gate` — rather than repeating on every 
 
 Split deliberately:
 
-- **`.claude/settings.json`** — `session-context` and `write-lint`. Global, cheap, never blocks, so
-  they are harmless in a session that is only answering questions.
+- **`hooks/hooks.json`** (this plugin's own hook manifest) — `session-context` and `write-lint`.
+  Global, cheap, never blocks, so they are harmless in a session that is only answering questions.
+  Registered automatically wherever the plugin is enabled, no per-project setup.
 - **Frontmatter of `feature-development`, `bug-fix`, `refactor`** — `skill-gate` and `quality-gate`.
   Frontmatter hooks are registered when the skill is invoked, so the blocking gates apply exactly
   while a code-changing workflow is running, and the rule lives next to the prose it enforces.
 
+Every command in both places is written as `${CLAUDE_PLUGIN_ROOT}/hooks/<script>.sh` — the plugin
+install directory, resolved by Claude Code at hook-invocation time — never `${CLAUDE_PROJECT_DIR}`.
+The scripts themselves still act on `${CLAUDE_PROJECT_DIR}` (the project the plugin is enabled in) for
+everything project-specific: git state, `.claude/state/`, and a project's own config override.
+
 ## Configuration
 
-`quality-check.config.json`, all keys optional:
+`quality-check.config.json`, all keys optional. The plugin ships a default at `hooks/quality-check.config.json`;
+a project overrides it without forking the plugin by dropping its own copy at
+`.claude/quality-check.config.json` in the project root — if that file exists, it wins over the
+bundled default entirely (not merged field-by-field).
 
 - `mode.<gate>` — `off` | `warn` | `block`.
 - `skill_map` — ordered `{match, skill}` rows; first ERE match against the repo-relative path wins.
@@ -75,8 +84,9 @@ Split deliberately:
 - `write_lint.secret_patterns`, `.placeholder_patterns` — POSIX ERE, matched case-insensitively.
 
 Overrides, in order of bluntness: `QUALITY_CHECK_MODE=off` in the environment forces every gate off;
-`.claude/settings.local.json` (gitignored) overrides project settings on one machine;
-`"disableAllHooks": true` turns off everything.
+a project's own `.claude/quality-check.config.json` overrides the mode/skill_map/patterns for that
+project only; `.claude/settings.local.json` (gitignored) can disable or reconfigure the plugin's hooks
+on one machine; disabling the plugin (`/plugin`) or `"disableAllHooks": true` turns off everything.
 
 ## Operating rules these scripts follow
 
@@ -85,19 +95,24 @@ Overrides, in order of bluntness: `QUALITY_CHECK_MODE=off` in the environment fo
   each script.
 - **Bounded blocking.** `quality_gate.max_blocks` (default 2) caps how many times one session may be
   held; `stop_hook_active` is honoured. A gate that can trap a session is worse than one that misses.
-- **No network, no writes outside `.claude/state/`.** These scripts run with the user's permissions on
-  every machine that installs this kit, so they stay short and readable on purpose.
+- **No network, no writes outside the target project's `.claude/state/`.** These scripts run with the
+  user's permissions in every project the plugin is enabled in, so they stay short and readable on
+  purpose, and never touch the plugin's own install directory.
 
-State lives in `.claude/state/` (gitignored): `reviewed` holds the fingerprint of the last reviewed
-change; `<session>.blocks` counts holds; `<session>.skillgate.<skill>` suppresses repeat warnings.
+State lives in the target project's `.claude/state/` (gitignored there): `reviewed` holds the
+fingerprint of the last reviewed change; `<session>.blocks` counts holds; `warned` and
+`<session>.skillgate.<skill>` suppress repeat warnings.
 
-## Installing into another project
+## How a project adopts this without forking it
 
-Copy `.claude/hooks/` and merge `.claude/settings.json`, alongside the skills themselves. The scripts
-resolve skills in both `.claude/skills/<name>/SKILL.md` and `skills/<name>/SKILL.md`, and no-op for any
-skill that is not installed. Then trim `skill_map` to the project's real stack.
+Nothing to copy. Enable the plugin (see the root [`README.md`](../README.md#install)) and its skills,
+agents, and hooks are active in that project immediately. To tune the hooks for that project's actual
+stack, drop a `.claude/quality-check.config.json` in the project root with just the overrides needed —
+see Configuration above; the plugin's bundled `hooks/quality-check.config.json` stays untouched as the
+fallback for every project that doesn't override it.
 
-Requires `bash`, `git`, and `jq`. Without `jq` every hook silently does nothing.
+Requires `bash`, `git`, and `jq` on the machine running Claude Code. Without `jq` every hook silently
+does nothing.
 
 ## Checking them
 
@@ -106,5 +121,9 @@ To exercise one by hand, feed it the event JSON on stdin:
 
 ```bash
 echo '{"hook_event_name":"Stop","session_id":"t","stop_hook_active":false}' \
-  | CLAUDE_PROJECT_DIR=$PWD .claude/hooks/quality-gate.sh; echo "exit=$?"
+  | CLAUDE_PROJECT_DIR=$PWD CLAUDE_PLUGIN_ROOT=/path/to/agentic-development-kit \
+    /path/to/agentic-development-kit/hooks/quality-gate.sh; echo "exit=$?"
 ```
+
+Run from inside a checkout of this plugin itself, `CLAUDE_PLUGIN_ROOT` can be omitted — the scripts
+fall back to resolving it from their own location on disk.

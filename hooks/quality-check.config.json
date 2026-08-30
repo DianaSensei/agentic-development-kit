@@ -1,5 +1,5 @@
 {
-  "$comment": "Configuration for the quality-check hooks in this directory. Every entry is optional and falls back to the default shown in the script that reads it; if this file is missing or malformed, skill_map is empty (skill-gate no-ops) and the other gates run on their built-in defaults. See .claude/hooks/README.md.",
+  "$comment": "Configuration for the quality-check hooks in this directory. Every entry is optional and falls back to the default shown in the script that reads it; if this file is missing or malformed, skill_map is empty (skill-gate no-ops) and the other gates run on their built-in defaults. See hooks/README.md.",
 
   "mode": {
     "session_context": "warn",

@@ -8,10 +8,21 @@
 
 set -u
 
+# PROJECT_DIR is the project these hooks are running against — where the git
+# repo, its state, and any per-project override live. PLUGIN_ROOT is where this
+# plugin's own files (skills/, the bundled default config) live, which is a
+# different place once this ships as a plugin installed into someone else's
+# project. The fallback lets these scripts still work run by hand, or under the
+# older standalone (non-plugin) layout.
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$PWD}"
-HOOK_DIR="$PROJECT_DIR/.claude/hooks"
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null 2>&1 && pwd)}"
+PLUGIN_ROOT="${PLUGIN_ROOT:-$PROJECT_DIR}"
 STATE_DIR="$PROJECT_DIR/.claude/state"
-CONFIG_FILE="$HOOK_DIR/quality-check.config.json"
+
+# The bundled config ships with the plugin; a project can override it without
+# forking the plugin by dropping its own copy at .claude/quality-check.config.json.
+CONFIG_FILE="$PROJECT_DIR/.claude/quality-check.config.json"
+[ -f "$CONFIG_FILE" ] || CONFIG_FILE="$PLUGIN_ROOT/hooks/quality-check.config.json"
 
 # No jq -> we cannot parse hook input at all. Fail open.
 command -v jq >/dev/null 2>&1 || exit 0
@@ -58,11 +69,13 @@ warn() {
 git_repo_root() { git -C "$PROJECT_DIR" rev-parse --show-toplevel 2>/dev/null || true; }
 
 # resolve_skill <skill-name> — path to that skill's SKILL.md, or nothing.
-# Checks both layouts: this kit's own `skills/`, and a consumer project that
-# installed the library under `.claude/skills/`.
+# Checks the plugin's own `skills/` first (where these skills actually live once
+# installed as a plugin), then falls back to a project that vendored the skill
+# locally (`.claude/skills/` or `skills/` inside the project itself) — e.g. a
+# project-local override of one skill, or the older standalone layout.
 resolve_skill() {
   local name="$1" root
-  for root in "$PROJECT_DIR/.claude/skills" "$PROJECT_DIR/skills"; do
+  for root in "$PLUGIN_ROOT/skills" "$PROJECT_DIR/.claude/skills" "$PROJECT_DIR/skills"; do
     [ -f "$root/$name/SKILL.md" ] && { printf '%s' "$root/$name/SKILL.md"; return; }
   done
 }

@@ -1,0 +1,14 @@
+{
+  "name": "agentic-development-kit",
+  "description": "Self-hosted marketplace for the agentic-development-kit plugin.",
+  "owner": {
+    "name": "DianaSensei"
+  },
+  "plugins": [
+    {
+      "name": "agentic-development-kit",
+      "source": "./",
+      "description": "Skill library, subagent pipeline, and quality-check hooks for AI-assisted software development."
+    }
+  ]
+}
