@@ -35,16 +35,12 @@ SKILL_MD="$(resolve_skill "$SKILL")"
 TRANSCRIPT="$(jq_in '.transcript_path')"
 [ -f "$TRANSCRIPT" ] || exit 0  # cannot verify — fail open
 
-# Start of the current request = the last genuine user message. Tool results are
-# also recorded as type "user", so they must be excluded or every tool call would
-# look like a fresh request.
-START="$(grep -n '"type":"user"' "$TRANSCRIPT" 2>/dev/null \
-         | grep -v 'tool_result' | tail -n 1 | cut -d: -f1)"
-[ -n "$START" ] || START=1
+# Start of the current request = the last genuine user message (see common.sh).
+START="$(last_user_message_line "$TRANSCRIPT")"
 
 # Did anything in the current request actually load this skill? Either a Read of
 # its SKILL.md, or an invocation of it through the Skill tool.
-if tail -n "+$START" "$TRANSCRIPT" 2>/dev/null \
+if transcript_tail_from "$TRANSCRIPT" "$START" \
    | grep -qE "$SKILL/SKILL\.md|\"skill\"[[:space:]]*:[[:space:]]*\"$SKILL\""; then
   exit 0
 fi

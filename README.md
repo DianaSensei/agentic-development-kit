@@ -19,11 +19,7 @@ into `.claude/`:
 ```
 
 (or the `claude plugin marketplace add` / `claude plugin install` CLI equivalents, run from outside
-Claude Code). This single install also pulls in [`taste-skill`](https://github.com/Leonxlnx/taste-skill)
-(design-taste skills: `brandkit`, `gpt-taste`, `minimalist-ui`, and others) — declared as a
-[plugin dependency](#bundled-plugins) below, so it's installed and enabled automatically alongside this
-plugin, with no separate step. Verified end to end: `claude plugin install agentic-development-kit@...`
-reports `(+ 1 dependency: taste-skill)`, and both show zero errors in `claude plugin list --json`.
+Claude Code).
 
 To try changes locally before publishing them, run Claude Code against the checked-out repo directly
 instead of installing it:
@@ -32,46 +28,40 @@ instead of installing it:
 claude --plugin-dir /path/to/agentic-development-kit
 ```
 
-`--plugin-dir` does not resolve marketplace dependencies, so `taste-skill` won't come along this way —
-add a second `--plugin-dir` pointing at a checkout of it if you need both while developing locally (see
-[Test a plugin and its dependency locally](https://code.claude.com/docs/en/plugin-dependencies#test-a-plugin-and-its-dependency-locally)).
-
 Once enabled, `skills/` and `agents/` work exactly as described below in every project the plugin is
 active in — nothing about them is specific to this repo. See
 [`hooks/README.md`](./hooks/README.md) if a hook needs troubleshooting, and
 `.claude-plugin/plugin.json` for the manifest itself.
 
-### Bundled plugins
+### Companion plugins (not a manifest dependency, and deliberately so)
 
-`agentic-development-kit`'s own skills/agents/hooks are only part of what one install can bring in.
-`.claude-plugin/plugin.json` declares a `dependencies` array — every plugin listed there installs and
-enables automatically alongside this one, and stays enabled as long as this plugin is (Claude Code
-refuses to disable a dependency that another enabled plugin still needs). Currently:
+[`taste-skill`](https://github.com/Leonxlnx/taste-skill) (design-taste skills: `brandkit`, `gpt-taste`,
+`minimalist-ui`, and others) pairs well with this plugin but is **not** declared as a `dependencies`
+entry in `.claude-plugin/plugin.json`, even though Claude Code supports that mechanism. This was tried
+and reverted after testing it for real: Claude Code resolves a plugin's `dependencies` at load time, and
+if that dependency's marketplace was never added (the common first-run case — a `dependencies` entry
+only *names* an already-known marketplace, it never adds an unknown one itself), the *entire declaring
+plugin* fails to load — not just the missing piece. Verified two ways: `--plugin-dir` silently loaded
+zero skills/agents with `taste-skill` undeclared as a marketplace, and even `claude plugin install`
+(which reports `√ Successfully installed` with no visible warning) left every one of this plugin's own
+skills uninvokable, confirmed by trying to actually call one rather than trusting the success message or
+the `errors` field in `claude plugin list --json`. That is a single point of failure this plugin's core
+functionality must never depend on.
 
-| Dependency | Marketplace | What it adds |
-|---|---|---|
-| [`taste-skill`](https://github.com/Leonxlnx/taste-skill) | `taste-skill` (self-hosted by that repo) | Frontend design-taste skills (`brandkit`, `gpt-taste`, `minimalist-ui`, `stitch-design-taste`, and others) |
+Install both with one copy-paste instead — no manifest coupling, so a problem with one marketplace can
+never take the other down:
 
-To bundle another plugin (another skill/agent/MCP-server plugin — the same `dependencies` mechanism
-covers all three, since an MCP server just ships as part of some plugin's `.mcp.json`):
+```
+claude plugin marketplace add Leonxlnx/taste-skill
+claude plugin marketplace add DianaSensei/agentic-development-kit
+claude plugin install taste-skill@taste-skill
+claude plugin install agentic-development-kit@agentic-development-kit
+```
 
-1. Confirm the target is an actual Claude Code plugin (has its own `.claude-plugin/plugin.json`) — a
-   plain skill/agent repo with no manifest has to be packaged as a plugin first, either upstream or by
-   listing it as a second entry in *this* repo's own `marketplace.json`.
-2. If it lives in a different marketplace than this one (the common case — most plugins are), add that
-   marketplace's `name` (from *its* `marketplace.json`, not the repo name) to
-   `allowCrossMarketplaceDependenciesOn` in this repo's `.claude-plugin/marketplace.json`. Skipped this
-   step → install fails with a `cross-marketplace` error naming exactly this field.
-3. Add `{ "name": "<plugin-name>", "marketplace": "<marketplace-name>" }` to `dependencies` in
-   `.claude-plugin/plugin.json` (a bare version constraint like `"version": "^1.0"` is optional).
-4. A user who has never added that dependency's marketplace before needs to run
-   `claude plugin marketplace add <owner>/<repo>` once, manually — a `dependencies` entry names an
-   already-known marketplace, it does not discover/add an unknown one on its own. After that one-time
-   step, install/update/`/reload-plugins` resolve it automatically from then on.
-
-For a role-specific set with no skills/hooks of its own, a `plugin.json` containing only `name` +
-`dependencies` works too — installing it pulls in every dependency as one bundle (see
-[Bundle plugins for a team](https://code.claude.com/docs/en/plugin-dependencies#bundle-plugins-for-a-team)).
+To bundle another companion plugin the same way, add its `marketplace add` + `install` pair to that
+same block rather than reaching for `dependencies` — unless you have specifically verified, the way
+described above, that its marketplace will already be present for every user before they ever install
+this plugin.
 
 ## Directory structure
 

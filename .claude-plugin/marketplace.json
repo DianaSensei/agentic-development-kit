@@ -4,7 +4,6 @@
   "owner": {
     "name": "DianaSensei"
   },
-  "allowCrossMarketplaceDependenciesOn": ["taste-skill"],
   "plugins": [
     {
       "name": "agentic-development-kit",

@@ -10,6 +10,10 @@ hooks:
           command: "${CLAUDE_PLUGIN_ROOT}/hooks/skill-gate.sh"
           timeout: 15
           statusMessage: "Checking the owning skill was read..."
+        - type: command
+          command: "${CLAUDE_PLUGIN_ROOT}/hooks/checkpoint-gate.sh"
+          timeout: 15
+          statusMessage: "Checking the CHECKPOINT was confirmed..."
   Stop:
     - hooks:
         - type: command
@@ -80,7 +84,9 @@ A safe refactor requires test coverage of the CURRENT behavior before touching a
 3. Decide scope: a single-pass refactor (if small) or split into incremental small steps (if large) —
    prefer splitting so each step is easy to verify and easy to roll back if something goes wrong.
 
-**CHECKPOINT (required)**: present the proposal and wait for the user to confirm before executing.
+**CHECKPOINT (required)**: present the proposal, then ask for confirmation via `AskUserQuestion` with
+`header` set exactly to `"Checkpoint"` before executing. Step 4 is gated on this literal
+`AskUserQuestion` call, so presenting the proposal and moving straight to execution will be caught.
 
 ## Step 4 — Execute (small steps, continuously verified)
 

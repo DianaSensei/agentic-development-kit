@@ -10,6 +10,10 @@ hooks:
           command: "${CLAUDE_PLUGIN_ROOT}/hooks/skill-gate.sh"
           timeout: 15
           statusMessage: "Checking the owning skill was read..."
+        - type: command
+          command: "${CLAUDE_PLUGIN_ROOT}/hooks/checkpoint-gate.sh"
+          timeout: 15
+          statusMessage: "Checking the CHECKPOINT was confirmed..."
   Stop:
     - hooks:
         - type: command
@@ -56,8 +60,11 @@ direction (with the technical skill(s) expected to be referenced — kept abstra
 technology detail), related edge cases that must not recur, and the Definition of Done (what counts as
 fixed).
 
-**CHECKPOINT**: wait for the user to confirm/approve the fix direction before implementing. Never fix
-code without confirmation — even when very confident about the root cause.
+**CHECKPOINT**: ask for confirmation of the fix direction via `AskUserQuestion` with `header` set exactly
+to `"Checkpoint"` (e.g. options "Proceed with this fix" / "Need more diagnosis" / "Different approach").
+Never fix code without this confirmation — even when very confident about the root cause. Step 4 is
+gated on this literal `AskUserQuestion` call, so presenting the direction and moving on without asking
+will be caught.
 
 ## Step 4 — Implement + Retest (loop until quality is met)
 

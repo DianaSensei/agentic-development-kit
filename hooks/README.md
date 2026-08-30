@@ -23,6 +23,7 @@ owns that judgement actually runs.
 |---|---|---|---|
 | `session-context.sh` | `SessionStart` | on | Injects the routing + self-check rules once per session. Non-blocking. |
 | `skill-gate.sh` | `PreToolUse` on edits | `warn` | Maps the edited file to its owning skill via `skill_map`, then checks the transcript for a read of that `SKILL.md` **since the last user message**. A read from an earlier request does not count — the file may have changed since. |
+| `checkpoint-gate.sh` | `PreToolUse` on edits | `warn` | Inside `feature-development`/`bug-fix`/`refactor` only: checks the transcript, since that workflow skill was last invoked, for an `AskUserQuestion` call with `header` exactly `"Checkpoint"`. Presenting a proposal and moving on without asking no longer passes silently. |
 | `write-lint.sh` | `PostToolUse` on edits | `warn` | Scans only the newly written text for hardcoded secrets and leftover placeholders. Advisory by protocol: `PostToolUse` cannot block. |
 | `quality-gate.sh` | `Stop` | `warn` | Flags — or, set to `block`, refuses to end — a turn that leaves uncommitted **code** changes no review has vouched for. |
 | `mark-reviewed.sh` | — | — | Run after the review to record it and satisfy the gate. |
@@ -46,11 +47,25 @@ is not cosmetic:
   read it against, and the command that releases the gate. This is the mode in which
   "review before reporting done" is actually enforced.
 
-`skill_gate` is the one to be most careful about promoting to `block`: it infers from transcript
-structure, which is the likeliest source of a false positive here.
+`skill_gate` and `checkpoint_gate` are the two to be most careful about promoting to `block`: both infer
+from transcript structure, which is the likeliest source of a false positive here. `checkpoint_gate`
+in particular depends on the workflow skill actually using the literal header `"Checkpoint"` — if you
+edit the CHECKPOINT wording in `feature-development`/`bug-fix`/`refactor`, keep that exact string (or
+update `checkpoint_gate.header` in config to match).
 
-In `warn`, each gate speaks once per distinct state — per session per skill for `skill-gate`, per
-fingerprint of the change for `quality-gate` — rather than repeating on every turn.
+In `warn`, each gate speaks once per distinct state — per session per skill for `skill-gate`, once per
+session for `checkpoint-gate`, per fingerprint of the change for `quality-gate` — rather than repeating
+on every turn.
+
+### Why `checkpoint-gate` scopes differently than `skill-gate`
+
+`skill-gate` resets on every user message on purpose — a skill's content can change between requests, so
+only a read *in this request* counts. A CHECKPOINT is different: Step 1's interview can span several
+user replies before the proposal is even ready, so scoping to "since the last user message" would make
+the gate fire on Step 3's very first edit even when the checkpoint was properly asked two turns earlier.
+`checkpoint-gate` instead scopes to "since this workflow skill was last invoked" — long enough to cover
+a whole workflow run, but short enough that an approval from an *earlier, separate* feature request
+doesn't silently satisfy a brand new one once the skill is invoked again.
 
 ## Where each gate is configured
 
@@ -59,9 +74,9 @@ Split deliberately:
 - **`hooks/hooks.json`** (this plugin's own hook manifest) — `session-context` and `write-lint`.
   Global, cheap, never blocks, so they are harmless in a session that is only answering questions.
   Registered automatically wherever the plugin is enabled, no per-project setup.
-- **Frontmatter of `feature-development`, `bug-fix`, `refactor`** — `skill-gate` and `quality-gate`.
-  Frontmatter hooks are registered when the skill is invoked, so the blocking gates apply exactly
-  while a code-changing workflow is running, and the rule lives next to the prose it enforces.
+- **Frontmatter of `feature-development`, `bug-fix`, `refactor`** — `skill-gate`, `checkpoint-gate`, and
+  `quality-gate`. Frontmatter hooks are registered when the skill is invoked, so the blocking gates apply
+  exactly while a code-changing workflow is running, and the rule lives next to the prose it enforces.
 
 Every command in both places is written as `${CLAUDE_PLUGIN_ROOT}/hooks/<script>.sh` — the plugin
 install directory, resolved by Claude Code at hook-invocation time — never `${CLAUDE_PROJECT_DIR}`.
@@ -78,6 +93,8 @@ bundled default entirely (not merged field-by-field).
 - `mode.<gate>` — `off` | `warn` | `block`.
 - `skill_map` — ordered `{match, skill}` rows; first ERE match against the repo-relative path wins.
   **Edit this per project**: remove stacks you do not use, add your own.
+- `checkpoint_gate.header`, `.workflows` — the exact `AskUserQuestion` header to look for, and which
+  workflow skills' Step 3/4 it gates.
 - `code_extensions` — what the Stop gate counts as code.
 - `quality_gate.review_skill`, `.max_blocks`, `.require_changelog`, `.require_experience_log`.
   The artifact checks are off by default: a small refactor legitimately produces neither file.

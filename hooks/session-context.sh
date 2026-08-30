@@ -21,6 +21,9 @@ cat <<TXT
   exploration skip this.
 - Before editing a file that a technical skill owns, Read that skill's SKILL.md in full, within the
   scope of the CURRENT request (a read from an earlier request does not count).
+- Inside \`feature-development\`/\`bug-fix\`/\`refactor\`, a CHECKPOINT is not satisfied by presenting a
+  proposal — it requires an actual \`AskUserQuestion\` call with \`header\` set exactly to
+  \`"Checkpoint"\`. A PreToolUse hook checks the transcript for this before Step 3/4 may write code.
 - Before reporting any code change done, run the \`$REVIEW_SKILL\` self-check on the diff and fix
   severe findings, then record it with the mark-reviewed hook. A Stop hook checks this.
 TXT

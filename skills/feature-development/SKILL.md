@@ -10,6 +10,10 @@ hooks:
           command: "${CLAUDE_PLUGIN_ROOT}/hooks/skill-gate.sh"
           timeout: 15
           statusMessage: "Checking the owning skill was read..."
+        - type: command
+          command: "${CLAUDE_PLUGIN_ROOT}/hooks/checkpoint-gate.sh"
+          timeout: 15
+          statusMessage: "Checking the CHECKPOINT was confirmed..."
   Stop:
     - hooks:
         - type: command
@@ -91,9 +95,12 @@ question when a structured choice would work just as well.
    reference — it does not replace presenting the full proposal directly to the user in conversation.
 5. A recommended proposal with rationale is fine to offer; never pick one on the user's behalf.
 
-**CHECKPOINT (required)**: present the full proposal (already written to `docs/plans/<feature-slug>.md`)
-and wait for the user to confirm the requirements/solution. Do not proceed to Step 3 without an
-explicit confirmation.
+**CHECKPOINT (required)**: present the full proposal (already written to `docs/plans/<feature-slug>.md`),
+then ask for confirmation via `AskUserQuestion` with `header` set exactly to `"Checkpoint"` (options: one
+per proposal if more than one, plus "Revise" — free text is always available via "Other"). Do not proceed
+to Step 3 without an explicit confirmation. Presenting the proposal is not the same as confirming it —
+Step 3 is gated on this literal `AskUserQuestion` call, so simply moving on after presenting will be
+caught.
 
 Immediately after the user decides at the CHECKPOINT: update `docs/plans/<feature-slug>.md` — move the
 chosen proposal to the top, clearly marked (e.g. `## ✅ Chosen: <name>`); move rejected proposals below

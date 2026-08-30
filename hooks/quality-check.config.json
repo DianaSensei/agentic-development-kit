@@ -4,6 +4,7 @@
   "mode": {
     "session_context": "warn",
     "skill_gate": "warn",
+    "checkpoint_gate": "warn",
     "write_lint": "warn",
     "quality_gate": "warn"
   },
@@ -20,6 +21,12 @@
 
   "$comment_code_extensions": "What the Stop gate counts as a code change worth reviewing. Documentation-only turns never trigger it.",
   "code_extensions": "\\.(java|kt|kts|rs|ts|tsx|js|jsx|py|go|rb|php|cs|sql|sh|bash|yaml|yml|tf|gradle|xml|toml)$",
+
+  "$comment_checkpoint_gate": "workflows are the skills whose CHECKPOINT this gate enforces — each is instructed to confirm via AskUserQuestion using this exact header before Step 3/4 may write code. Add a workflow name here only if its SKILL.md documents a CHECKPOINT the same way.",
+  "checkpoint_gate": {
+    "header": "Checkpoint",
+    "workflows": ["feature-development", "bug-fix", "refactor"]
+  },
 
   "$comment_quality_gate": "review_skill is the skill Claude is told to run on the diff before it may report done. max_blocks caps how many times one session may be held at the Stop gate, so a stuck loop can never trap a session.",
   "quality_gate": {

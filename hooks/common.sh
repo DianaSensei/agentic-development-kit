@@ -68,6 +68,29 @@ warn() {
 # git_repo_root — echoes the repo root, or nothing if this is not a git repo.
 git_repo_root() { git -C "$PROJECT_DIR" rev-parse --show-toplevel 2>/dev/null || true; }
 
+# last_line_matching <transcript> <ere-pattern> — 1-based line number of the
+# LAST line matching pattern in the transcript, or empty if none matched (or
+# the transcript can't be read).
+last_line_matching() {
+  grep -nE "$2" "$1" 2>/dev/null | tail -n 1 | cut -d: -f1
+}
+
+# last_user_message_line <transcript> — 1-based line number of the last
+# GENUINE user message. Tool results are also recorded as type "user" in the
+# transcript, so they're excluded — otherwise every tool call would look like
+# the start of a fresh request.
+last_user_message_line() {
+  grep -n '"type":"user"' "$1" 2>/dev/null | grep -v 'tool_result' | tail -n 1 | cut -d: -f1
+}
+
+# transcript_tail_from <transcript> <line-number-or-empty> — the transcript
+# content from that line to the end. An empty line number means "the whole
+# transcript" (caller had nothing to anchor to).
+transcript_tail_from() {
+  local transcript="$1" from="${2:-1}"
+  tail -n "+$from" "$transcript" 2>/dev/null
+}
+
 # resolve_skill <skill-name> — path to that skill's SKILL.md, or nothing.
 # Checks the plugin's own `skills/` first (where these skills actually live once
 # installed as a plugin), then falls back to a project that vendored the skill
