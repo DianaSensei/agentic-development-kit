@@ -13,6 +13,12 @@
 # workflow skill was last invoked" — long enough to span the whole workflow,
 # short enough that an approval from an EARLIER, separate feature request
 # doesn't silently satisfy a new one.
+#
+# Only CODE writes are gated — Step 2 itself must write the plan document
+# (docs/plans/<slug>.md) BEFORE the checkpoint by design (present it, then
+# ask), so a non-code write is never in scope here. This was found by actually
+# running the workflow end to end, not reasoned out in advance: the first
+# version of this gate fired on that exact plan-document write.
 
 . "${0%/*}/common.sh" || exit 0
 
@@ -21,6 +27,14 @@ MODE="$(mode_of checkpoint_gate warn)"
 
 FILE_PATH="$(jq_in '.tool_input.file_path')"
 [ -n "$FILE_PATH" ] || exit 0
+
+# The gate is "no CODE before the checkpoint", not "no file at all" — Step 2
+# itself must write docs/plans/<slug>.md BEFORE the checkpoint runs, by design
+# (present the written proposal, then ask). Reuse quality-gate's own
+# code/not-code line so a non-code write (the plan doc, a README, a changelog)
+# never trips this gate in the first place.
+EXT="$(jq_cfg '.code_extensions' '\.(java|kt|rs|ts|tsx|js|jsx|py|go|rb|php|cs|sql|sh)$')"
+printf '%s' "$FILE_PATH" | grep -qE "$EXT" || exit 0
 
 TRANSCRIPT="$(jq_in '.transcript_path')"
 [ -f "$TRANSCRIPT" ] || exit 0  # cannot verify — fail open

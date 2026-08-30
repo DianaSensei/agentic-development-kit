@@ -23,7 +23,7 @@ owns that judgement actually runs.
 |---|---|---|---|
 | `session-context.sh` | `SessionStart` | on | Injects the routing + self-check rules once per session. Non-blocking. |
 | `skill-gate.sh` | `PreToolUse` on edits | `warn` | Maps the edited file to its owning skill via `skill_map`, then checks the transcript for a read of that `SKILL.md` **since the last user message**. A read from an earlier request does not count — the file may have changed since. |
-| `checkpoint-gate.sh` | `PreToolUse` on edits | `warn` | Inside `feature-development`/`bug-fix`/`refactor` only: checks the transcript, since that workflow skill was last invoked, for an `AskUserQuestion` call with `header` exactly `"Checkpoint"`. Presenting a proposal and moving on without asking no longer passes silently. |
+| `checkpoint-gate.sh` | `PreToolUse` on **code** edits | `warn` | Inside `feature-development`/`bug-fix`/`refactor` only: checks the transcript, since that workflow skill was last invoked, for an `AskUserQuestion` call with `header` exactly `"Checkpoint"`. Presenting a proposal and moving on without asking no longer passes silently. Never fires on a documentation write (the plan doc itself is written before the checkpoint, by design). |
 | `write-lint.sh` | `PostToolUse` on edits | `warn` | Scans only the newly written text for hardcoded secrets and leftover placeholders. Advisory by protocol: `PostToolUse` cannot block. |
 | `quality-gate.sh` | `Stop` | `warn` | Flags — or, set to `block`, refuses to end — a turn that leaves uncommitted **code** changes no review has vouched for. |
 | `mark-reviewed.sh` | — | — | Run after the review to record it and satisfy the gate. |
@@ -66,6 +66,21 @@ the gate fire on Step 3's very first edit even when the checkpoint was properly 
 `checkpoint-gate` instead scopes to "since this workflow skill was last invoked" — long enough to cover
 a whole workflow run, but short enough that an approval from an *earlier, separate* feature request
 doesn't silently satisfy a brand new one once the skill is invoked again.
+
+It also only gates **code** writes (the same `code_extensions` pattern `quality-gate` uses), never
+documentation. This was a real bug caught by actually running the wired-up workflow end to end, not
+something reasoned out in advance: Step 2 itself must write `docs/plans/<slug>.md` *before* the
+checkpoint runs — present the proposal, then ask — and the first version of this gate fired on that
+exact write, because it didn't yet distinguish a plan document from an implementation file.
+
+That same test run also showed the gate earning its keep: `solution-architect` returned two proposals
+requiring a real architectural decision (cache strategy for a promotion-evaluation hot path), the main
+thread wrote up the checkpoint clearly as a 3-option question in its final chat message — but never
+actually called `AskUserQuestion` with `header: "Checkpoint"`, presenting it as prose instead. In
+`block` mode, this gate would have caught exactly that gap and held Step 3 until the literal call was
+made; in the default `warn` mode it recorded the gap without stopping anything. That's the gap this
+hook exists to catch — presenting a checkpoint clearly is not the same as the transcript proving it was
+actually asked.
 
 ## Where each gate is configured
 
