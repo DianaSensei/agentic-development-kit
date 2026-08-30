@@ -6,5 +6,6 @@
     "name": "DianaSensei"
   },
   "homepage": "https://github.com/DianaSensei/agentic-development-kit",
-  "repository": "https://github.com/DianaSensei/agentic-development-kit"
+  "repository": "https://github.com/DianaSensei/agentic-development-kit",
+  "license": "MIT"
 }
