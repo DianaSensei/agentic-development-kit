@@ -69,11 +69,18 @@ this plugin.
 iterating on HTML artifacts with an agent) pairs well with this kit but, unlike `taste-skill` above,
 isn't a Claude Code plugin to begin with: its `plugin.json` follows the generic
 [agent-plugins.org](https://agent-plugins.org) schema, not `.claude-plugin/plugin.json`, and it has no
-marketplace — `claude plugin marketplace add`/`install` cannot see it at all. It installs and registers
-itself through its own CLI instead. There is no automatic step here: an install hook running a global
-`npm install` on every session would reach outside this plugin's own scope and onto the user's machine
-without asking, which this kit's hooks deliberately never do (see [`hooks/README.md`](./hooks/README.md)
-→ Operating rules). Install it yourself when you want it:
+marketplace — `claude plugin marketplace add`/`install` cannot see it at all. There is no automatic
+step here: an install hook running this on every session would reach outside this plugin's own scope
+and onto the user's machine without asking, which this kit's hooks deliberately never do (see
+[`hooks/README.md`](./hooks/README.md) → Operating rules). Install it yourself when you want it — its
+own README recommends the skill-only method, which needs no global install at all (the skill teaches
+the agent to run `npx -y lavish-axi` on demand):
+
+```
+npx skills add kunchenguid/lavish-axi --skill lavish
+```
+
+For the deeper hook/plugin integration instead (persistent, requires a global install):
 
 ```
 npm install -g lavish-axi
