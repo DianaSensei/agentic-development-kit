@@ -1,4 +1,4 @@
-# Capabilities & Permissions — Concrete Examples
+# Capabilities & Permissions - Concrete Examples
 
 ## File Structure
 
@@ -55,7 +55,7 @@ default.
 | `tauri-plugin-store` | `store:default`, `store:allow-get`, `store:allow-set`, `store:allow-save` |
 | `tauri-plugin-sql` | `sql:allow-execute`, `sql:allow-select`, `sql:allow-load` |
 | `tauri-plugin-clipboard-manager` | `clipboard-manager:allow-read-text`, `clipboard-manager:allow-write-text` |
-| `tauri-plugin-shell` | `shell:allow-execute` (scoped to specific binaries — never a blanket allow) |
+| `tauri-plugin-shell` | `shell:allow-execute` (scoped to specific binaries - never a blanket allow) |
 
 ## Platform-Specific Capability (different scope per OS)
 
@@ -70,7 +70,7 @@ default.
 ```
 
 Use `"platforms"` instead of writing OS branches into application logic when the difference is purely
-about *what's allowed*, not *what the code does* — keep `#[cfg(target_os)]` for behavioral differences
+about *what's allowed*, not *what the code does* - keep `#[cfg(target_os)]` for behavioral differences
 (see the main SKILL.md's Cross-OS section), and `platforms` in capabilities for permission differences.
 
 ## Multi-Window Capability Isolation
@@ -100,8 +100,8 @@ lower-trust window (e.g. one rendering remote/untrusted content):
 
 When a command that compiles fine fails silently or with a generic permission error at runtime:
 
-1. Check the exact permission identifier the plugin's own docs/`permissions/*.toml` require — plugin
+1. Check the exact permission identifier the plugin's own docs/`permissions/*.toml` require - plugin
    permission names don't always match the command name.
 2. Confirm the capability's `"windows"` list includes the window actually calling `invoke`.
-3. Confirm the capability file is picked up (correct directory, valid JSON — a syntax error can cause
+3. Confirm the capability file is picked up (correct directory, valid JSON - a syntax error can cause
    the whole capability file to be silently skipped rather than erroring loudly).

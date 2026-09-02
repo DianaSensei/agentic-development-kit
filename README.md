@@ -1,156 +1,121 @@
 # Agentic Development Kit
 
-A Claude Code plugin for AI-assisted software development: a library of skills used within a single
-agent, a tiered multi-agent pipeline, MCP configuration so Claude Code can connect beyond the codebase
-(database, dashboard, ticket tracker), and quality-check hooks that check the workflow rules a model
-cannot be trusted to self-police (advisory by default, enforcing when configured to). Usable for any
-project/stack — the core (workflow, process) has no dependency on any specific technology; tech-specific
-details live in their own modules.
+A Claude Code plugin for AI-assisted software development: a library of 30 skills, a tiered subagent
+pipeline, quality-check hooks, and MCP configs for reaching beyond the codebase.
+
+The workflow core is stack-agnostic. Anything technology-specific lives in its own skill, so a project
+in an uncovered stack still gets the structure (checkpoints, fix-attempt limits, reporting).
 
 ## Install
-
-This repo is itself a Claude Code plugin (`.claude-plugin/plugin.json`) and its own marketplace
-(`.claude-plugin/marketplace.json`), so it installs the same way any plugin does — no copying files
-into `.claude/`:
 
 ```
 /plugin marketplace add DianaSensei/agentic-development-kit
 /plugin install agentic-development-kit@agentic-development-kit
 ```
 
-(or the `claude plugin marketplace add` / `claude plugin install` CLI equivalents, run from outside
-Claude Code).
+This repo is both the plugin and its own marketplace, so nothing gets copied into `.claude/`.
+To test local changes instead of installing: `claude --plugin-dir /path/to/agentic-development-kit`.
 
-To try changes locally before publishing them, run Claude Code against the checked-out repo directly
-instead of installing it:
+## What's in it
 
-```
-claude --plugin-dir /path/to/agentic-development-kit
-```
+Each directory sits at the plugin root, where Claude Code's
+[plugin loader](https://code.claude.com/docs/en/plugins) expects it.
 
-Once enabled, `skills/` and `agents/` work exactly as described below in every project the plugin is
-active in — nothing about them is specific to this repo. See
-[`hooks/README.md`](./hooks/README.md) if a hook needs troubleshooting, and
-`.claude-plugin/plugin.json` for the manifest itself.
+| Directory | What it is |
+|---|---|
+| [`skills/`](./skills/README.md) | 30 skills. Claude Code picks the right one from its `description`, so there is nothing to invoke by hand (a few are manual-only). Also reachable as `/agentic-development-kit:<skill-name>`. |
+| [`agents/`](./agents-guide.md) | Tiered Task subagents. Tier 1 clarifies requirements and proposes solutions, Tier 2 implements. They pass a fixed JSON contract between steps. |
+| [`hooks/`](./hooks/README.md) | Gates for the rules a model cannot self-police: the owning `SKILL.md` was read before an edit, and `code-review-skill` ran before "done". Warn by default, blocking per gate. |
+| [`mcp/`](./mcp/README.md) | Configs for databases (PostgreSQL/MySQL/TiDB/Redis/MongoDB, read-only), Grafana, and self-hosted Jira/Confluence. Documentation to follow, not wired up automatically. |
 
-### Companion plugins (not a manifest dependency, and deliberately so)
+## Using it
 
-[`taste-skill`](https://github.com/Leonxlnx/taste-skill) (design-taste skills: `brandkit`, `gpt-taste`,
-`minimalist-ui`, and others) pairs well with this plugin but is **not** declared as a `dependencies`
-entry in `.claude-plugin/plugin.json`, even though Claude Code supports that mechanism. This was tried
-and reverted after testing it for real: Claude Code resolves a plugin's `dependencies` at load time, and
-if that dependency's marketplace was never added (the common first-run case — a `dependencies` entry
-only *names* an already-known marketplace, it never adds an unknown one itself), the *entire declaring
-plugin* fails to load — not just the missing piece. Verified two ways: `--plugin-dir` silently loaded
-zero skills/agents with `taste-skill` undeclared as a marketplace, and even `claude plugin install`
-(which reports `√ Successfully installed` with no visible warning) left every one of this plugin's own
-skills uninvokable, confirmed by trying to actually call one rather than trusting the success message or
-the `errors` field in `claude plugin list --json`. That is a single point of failure this plugin's core
-functionality must never depend on.
+- **Skills** run themselves. Describe the request; `workflow-router` classifies it and hands off to
+  `feature-development` / `bug-fix` / `refactor`.
+- **Agents** are invoked through the Task tool, starting at `business-analyst`. See
+  [`agents-guide.md`](./agents-guide.md).
+- **Hooks** need no setup. They register wherever the plugin is enabled. To tune them for a project,
+  drop a `.claude/quality-check.config.json` in that project's root.
+- **MCP** needs manual setup: follow [`mcp/README.md`](./mcp/README.md), or just ask ("set up Grafana
+  MCP for me").
 
-Install both with one copy-paste instead — no manifest coupling, so a problem with one marketplace can
-never take the other down:
+## skills/ vs agents/
+
+Two models for the same work. A skill runs in the current session, sequentially, reading further
+skills as it goes. An agent is a separate subagent with a fixed role.
+
+`feature-development` uses both: Steps 1 and 2 go to `business-analyst` and `solution-architect` as
+subagents precisely because those carry no `Edit`/`Write` tool, so requirements and design happen where
+code is impossible to touch. A missing tool guarantees that; a hook reading transcripts afterwards
+cannot. Step 3 may dispatch a Tier-2 specialist when one exists for the task. `bug-fix` and `refactor`
+stay in-session, since their checkpoints are simpler.
+
+## Companion tools
+
+None of these ship with this plugin, and none is a declared dependency. Install what you want:
 
 ```
 claude plugin marketplace add Leonxlnx/taste-skill
-claude plugin marketplace add DianaSensei/agentic-development-kit
-claude plugin install taste-skill@taste-skill
-claude plugin install agentic-development-kit@agentic-development-kit
+claude plugin install taste-skill@taste-skill          # design-taste skills
+
+npx skills add kunchenguid/lavish-axi --skill lavish   # lavish: review HTML artifacts with an agent
 ```
 
-To bundle another companion plugin the same way, add its `marketplace add` + `install` pair to that
-same block rather than reaching for `dependencies` — unless you have specifically verified, the way
-described above, that its marketplace will already be present for every user before they ever install
-this plugin.
+[`taste-skill`](https://github.com/Leonxlnx/taste-skill) is a normal plugin.
+[`lavish-axi`](https://github.com/kunchenguid/lavish-axi) is not: it follows the generic
+[agent-plugins.org](https://agent-plugins.org) schema and has no marketplace, so
+`claude plugin install` cannot see it. The command above installs it as a skill only, with no global
+install; for the persistent hook integration use `npm install -g lavish-axi && lavish-axi setup plugin`.
 
-### Companion tools that aren't Claude Code plugins at all
+Nothing here installs automatically. A hook that reached onto your machine uninvited is exactly what
+this kit's hooks never do (see [`hooks/README.md`](./hooks/README.md)). `ui-ux-design-skill` picks up a
+design-taste skill if one is present, and works normally when none is.
 
-[`lavish-axi`](https://github.com/kunchenguid/lavish-axi) (`lavish` — a CLI/editor for reviewing and
-iterating on HTML artifacts with an agent) pairs well with this kit but, unlike `taste-skill` above,
-isn't a Claude Code plugin to begin with: its `plugin.json` follows the generic
-[agent-plugins.org](https://agent-plugins.org) schema, not `.claude-plugin/plugin.json`, and it has no
-marketplace — `claude plugin marketplace add`/`install` cannot see it at all. There is no automatic
-step here: an install hook running this on every session would reach outside this plugin's own scope
-and onto the user's machine without asking, which this kit's hooks deliberately never do (see
-[`hooks/README.md`](./hooks/README.md) → Operating rules). Install it yourself when you want it — its
-own README recommends the skill-only method, which needs no global install at all (the skill teaches
-the agent to run `npx -y lavish-axi` on demand):
+<details>
+<summary><b>Why no <code>dependencies</code> entry in the manifest</b></summary>
 
-```
-npx skills add kunchenguid/lavish-axi --skill lavish
-```
+Claude Code supports `dependencies`, and this plugin deliberately does not use it.
 
-For the deeper hook/plugin integration instead (persistent, requires a global install):
+Claude Code resolves them at load time. A `dependencies` entry only *names* an already-known
+marketplace; it never adds an unknown one. So on the common first run, where the dependency's
+marketplace was never added, **the entire declaring plugin fails to load** rather than just the missing
+piece.
 
-```
-npm install -g lavish-axi
-lavish-axi setup plugin
-```
+Verified twice: `--plugin-dir` silently loaded zero skills and agents, and `claude plugin install`
+printed `√ Successfully installed` while leaving every skill here uninvokable. Neither the success
+message nor the `errors` field in `claude plugin list --json` showed anything wrong; only actually
+calling a skill revealed it.
 
-## Directory structure
+To add another companion, extend the copy-paste block above instead.
+</details>
 
-Every directory below sits at the plugin root — this is where Claude Code's plugin loader expects
-`skills/`, `agents/`, and `hooks/` to live (see [Create plugins](https://code.claude.com/docs/en/plugins)).
+<details>
+<summary><b>Do not upload these skills to claude.ai</b></summary>
 
-| Directory | What it is | See also |
-|---|---|---|
-| [`skills/`](./skills/README.md) | A library of 30 Claude Code Skills — workflow (feature/bug-fix/refactor), technical knowledge by language/infrastructure, quality/security, MCP integration. Claude Code automatically recognizes the right skill via its `description`, no manual invocation needed (except a few skills marked manual-only); each is also reachable explicitly as `/agentic-development-kit:<skill-name>`. | [`skills/README.md`](./skills/README.md) |
-| [`agents/`](./agents-guide.md) | A tiered Task subagent pipeline (Tier 1 clarifies requirements + proposes solutions, Tier 2 implements specialized work), communicating via a fixed JSON contract. | [`agents-guide.md`](./agents-guide.md) |
-| [`hooks/`](./hooks/README.md) | Quality-check hooks covering the parts of the skill workflow a model cannot be trusted to self-police: that the owning `SKILL.md` was read before code was edited, and that `code-review-skill` ran on the diff before the change was reported done. They warn by default and can be switched to block per gate. | [`hooks/README.md`](./hooks/README.md) |
-| [`mcp/`](./mcp/README.md) | MCP server configuration so Claude Code can connect to external systems: database (PostgreSQL/MySQL/TiDB/Redis/MongoDB, read-only), Grafana, self-hosted Jira/Confluence. This one is documentation to follow manually, not something the plugin wires up automatically. | [`mcp/README.md`](./mcp/README.md) |
+Skills reach a session through three channels:
 
-## How do `skills/` and `agents/` relate?
+| Channel | Updates when |
+|---|---|
+| Plugin skill (this repo) | the plugin updates |
+| Personal skill synced from claude.ai | you upload it again by hand |
+| Project skill in `.claude/skills/` | that project's git |
 
-Mostly two different models for structured feature development, but `feature-development` now bridges
-them for its two highest-stakes steps:
+Uploading a skill *from this repo* to claude.ai forks it under the same name. Two copies then answer to
+it, you cannot tell which one loaded, and the synced copy never follows this repo again. The web upload
+also flattens it, keeping `SKILL.md` and dropping `references/`.
 
-- **`skills/`** — 1 agent (the current Claude Code session) reads the appropriate skill itself and does
-  the work in the same session, sequentially. It starts from `workflow-router` (a skill), classifies the
-  request, then hands off to `feature-development`/`bug-fix`/`refactor`, and these skills read further
-  technical skills (`java-spring-skill`, `database-skill`...) as needed.
-- **`agents/`** — separate Task subagents, each with a fixed role and a JSON contract so the next step
-  can use its output directly. `feature-development` launches `business-analyst` (Step 1) and
-  `solution-architect` (Step 2) as subagents specifically *because* they carry no `Edit`/`Write` tool —
-  requirements analysis and solution design happen where code is architecturally impossible to touch,
-  which a hook checking transcripts after the fact can't guarantee the way a missing tool can. Its
-  Step 3 may optionally dispatch a Tier-2 specialist (`java-ecosystem-engineer`, etc.) for a task
-  `solution-architect` assigned to one that actually exists; everything else stays a direct
-  technical-skill implementation, unchanged. `bug-fix` and `refactor` don't use this pipeline (their
-  checkpoints are simpler, single-direction decisions) — see [`agents-guide.md`](./agents-guide.md).
+This happened to `architecture-designer`: frozen at its 2026-07-18 state, missing the
+deployment-topology step added on 2026-08-23, still telling the agent to open eleven `references/*.md`
+files its copy did not have. The upload has since been removed. Nothing warns you when this occurs,
+which is why it is written down here.
+</details>
 
-Which to reach for depends on the situation — a skill invoked directly (not through
-`feature-development`) is suited to a single continuous flow, easy to follow within one session;
-`agents/` is suited when a step needs a hard guarantee the main thread's tool access can't provide, or
-when independent Tier-2 work can run in parallel.
+## Conventions
 
-## Using it once installed
-
-1. **Skill**: nothing to invoke manually — describe your request, `workflow-router` recognizes it and
-   routes automatically. See the full list at [`skills/README.md`](./skills/README.md).
-2. **Agent**: invoke directly via the Task tool, starting from `business-analyst` for a new request. See
-   [`agents-guide.md`](./agents-guide.md) for the order and input/output schema of each agent.
-3. **Hook**: nothing to do — `hooks/hooks.json` and the three workflow skills' frontmatter register them
-   automatically wherever the plugin is enabled. See [`hooks/README.md`](./hooks/README.md) for what
-   each gate checks, how to switch a gate from warn to block, and how to trim `skill_map` to your stack
-   by dropping an override file in the target project.
-4. **MCP**: if you need Claude Code to access database/Grafana/Jira-Confluence, follow
-   [`mcp/README.md`](./mcp/README.md) — or just ask directly, e.g. "set up Grafana MCP for me", and
-   Claude Code will read the corresponding README and follow it (or use the `mcp-setup` skill for an MCP
-   server not already covered here).
-
-## General conventions
-
-- The orchestration/workflow part (both in `skills/` and `agents/`) is designed to be independent of any
-  specific language/framework — all tech-specific detail lives in specialized modules (technical skills
-  or Tier-2 agents), auto-detected from real evidence (dependencies, configuration, existing code), never
-  assumed in advance. In practice the technical skills currently cover Java/Spring, Rust, and Tauri+React
-  most deeply — a request in an uncovered stack still gets the workflow's structure (checkpoints,
-  fix-attempt limits, reporting), just without a matching technical skill to read at Step 3.1.
-- The rules the workflows state as mandatory are backed by hooks wherever they are mechanically
-  checkable (skill read before edit, review before done); judgement-based checks stay with
-  `code-review-skill`. Hooks warn by default and are switched to blocking per gate, and every one of
-  them fails open, so none can become the reason work cannot proceed.
-- Changes affecting external behavior (new features, bug fixes) always have a checkpoint waiting for user
-  confirmation before execution; purely structural refactors must preserve 100% of observable behavior.
-- Secret/credential files are never committed to the repo — see each `README.md` under `mcp/*/` for how
-  to use `.env` (not tracked by git).
+- Tech-specific detail is detected from real evidence (dependencies, config, existing code), never
+  assumed. Coverage is deepest for Java/Spring, Rust, and Tauri+React.
+- Mechanically checkable rules are enforced by hooks; judgement-based ones stay with
+  `code-review-skill`. Every hook fails open, so none can block work.
+- Changes to external behavior wait at a checkpoint for user confirmation. Refactors must preserve
+  observable behavior exactly.
+- Secrets never get committed. See each `mcp/*/README.md` for `.env` handling.

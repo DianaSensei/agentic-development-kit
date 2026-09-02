@@ -1,6 +1,6 @@
-# Project Setup — Spring Boot 3.x / Java 21
+# Project Setup - Spring Boot 3.x / Java 21
 
-## Project structure (Clean Architecture, reference only — not mandatory if the project already has a different layout)
+## Project structure (Clean Architecture, reference only - not mandatory if the project already has a different layout)
 
 ```
 src/main/java/com/example/
@@ -20,7 +20,7 @@ src/main/java/com/example/
     └── rest/           # REST controllers
 ```
 
-If the project already has a different layout (e.g. flat Controller/Service/Repository) — keep the existing convention, don't change the directory structure midway on your own.
+If the project already has a different layout (e.g. flat Controller/Service/Repository) - keep the existing convention, don't change the directory structure midway on your own.
 
 ## pom.xml (Spring Boot 3.2, Java 21)
 
@@ -117,7 +117,7 @@ management:
       prometheus: { enabled: true }
 ```
 
-`ddl-auto: validate` (not `update`) — the real schema is managed via Flyway migrations; JPA only validates that it matches the schema rather than auto-generating DDL in real environments (avoiding silent schema drift between instances).
+`ddl-auto: validate` (not `update`) - the real schema is managed via Flyway migrations; JPA only validates that it matches the schema rather than auto-generating DDL in real environments (avoiding silent schema drift between instances).
 
 ## Main Application Class
 
@@ -146,7 +146,7 @@ public class OpenApiConfig {
 }
 ```
 
-The actual spec content (paths, schemas, security schemes) is the scope of `api-contract-skill` — this file only sets up the bean that renders Swagger UI from an existing spec.
+The actual spec content (paths, schemas, security schemes) is the scope of `api-contract-skill` - this file only sets up the bean that renders Swagger UI from an existing spec.
 
 ## Quick Reference
 
@@ -154,7 +154,7 @@ The actual spec content (paths, schemas, security schemes) is the scope of `api-
 |-----------|---------|
 | `@SpringBootApplication` | Entry point |
 | `@Configuration` / `@Bean` | Manual bean declaration |
-| `@Value` / `@ConfigurationProperties` | Inject config (prefer `@ConfigurationProperties` for groups of related properties — more type-safe) |
+| `@Value` / `@ConfigurationProperties` | Inject config (prefer `@ConfigurationProperties` for groups of related properties - more type-safe) |
 | `@Profile` | Environment-specific beans |
 | `@EnableJpaAuditing` | Automatic audit fields (`@CreatedDate`/`@LastModifiedDate`) |
-| `ProblemDetail` | RFC 7807 error response — see `references/web-layer.md` |
+| `ProblemDetail` | RFC 7807 error response - see `references/web-layer.md` |

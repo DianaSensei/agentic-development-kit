@@ -338,7 +338,7 @@ Cons:
 ```
 
 For the saga *transaction/compensation* mechanics themselves (state persistence, idempotency,
-choreography vs. orchestration trade-offs in depth), see `references/resilience-patterns.md` — this
+choreography vs. orchestration trade-offs in depth), see `references/resilience-patterns.md` - this
 section covers when to reach for a saga as a communication-pattern choice; that one covers how to
 implement it correctly.
 

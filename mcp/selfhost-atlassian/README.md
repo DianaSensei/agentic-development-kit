@@ -1,4 +1,4 @@
-# Atlassian MCP — Self-hosted Jira + Confluence
+# Atlassian MCP - Self-hosted Jira + Confluence
 
 Configuration for [mcp-atlassian](https://github.com/sooperset/mcp-atlassian),
 run locally via `uvx`. Once connected, you can ask Claude Code things like: "find
@@ -6,7 +6,7 @@ tickets assigned to me", "summarize Confluence page X" without opening the
 Jira/Confluence UI.
 
 This configuration only applies to self-hosted Jira/Confluence (Server or Data
-Center — an address that isn't a `*.atlassian.net` domain).
+Center - an address that isn't a `*.atlassian.net` domain).
 
 ## Using Atlassian Cloud
 
@@ -26,7 +26,7 @@ Code, select this server, and choose Authenticate to log in via the browser.
 
 The official install and run instructions are at the
 [sooperset/mcp-atlassian README](https://github.com/sooperset/mcp-atlassian#quick-start)
-— refer to that page if the suggestions below become outdated. This repo defaults to
+- refer to that page if the suggestions below become outdated. This repo defaults to
 running via `uv`/`uvx` since it's the simplest option, requiring no Docker:
 
 ```bash
@@ -41,11 +41,11 @@ release, no need to specify a version.
 
 ## Create a Personal Access Token
 
-The exact UI navigation in Jira/Confluence can change between versions — refer to the
+The exact UI navigation in Jira/Confluence can change between versions - refer to the
 [official mcp-atlassian authentication docs](https://mcp-atlassian.soomiles.com/docs/authentication)
 if the steps below don't match.
 
-Do this separately for each product — Jira and Confluence use different tokens even
+Do this separately for each product - Jira and Confluence use different tokens even
 though they're part of the same suite: log in → avatar in the top-right corner →
 **Profile** → **Personal Access Tokens** → **Create token**. Copy the token
 immediately after creating it.
@@ -64,7 +64,7 @@ cp .env.example .env
 | `JIRA_PERSONAL_TOKEN` | If using Jira | the token you just created |
 | `CONFLUENCE_URL` | If using Confluence | Confluence address |
 | `CONFLUENCE_PERSONAL_TOKEN` | If using Confluence | the token you just created |
-| `READ_ONLY_MODE` | No, defaults to `true` | `true` disables every write/edit/delete tool — see the section at the end of this document |
+| `READ_ONLY_MODE` | No, defaults to `true` | `true` disables every write/edit/delete tool - see the section at the end of this document |
 | `JIRA_PROJECTS_FILTER` / `CONFLUENCE_SPACES_FILTER` | No | limits the project/space scope, comma-separated |
 
 Any product you're not using can be left blank, the server will skip it automatically.
@@ -78,7 +78,7 @@ claude mcp add selfhost-atlassian --scope user -- uvx mcp-atlassian --env-file /
 ```
 
 Unlike Grafana/Toolbox, this server reads the `.env` file directly via
-`--env-file` — no need to pass the token into the command, just the exact
+`--env-file` - no need to pass the token into the command, just the exact
 path to the file.
 
 Confirm:
@@ -97,13 +97,13 @@ check whether the URL is reachable and whether the token has expired or been rev
 - "Any bugs created this week?"
 
 With `READ_ONLY_MODE=true`, requests to create a new ticket or page will be
-rejected — see below.
+rejected - see below.
 
 ---
 
 ## Advanced configuration
 
-**Registering via a config file instead of the CLI command** — since `--env-file`
+**Registering via a config file instead of the CLI command** - since `--env-file`
 only needs a path rather than direct values, this approach is safe at any scope, even
 when shared via git:
 
@@ -125,7 +125,7 @@ when shared via git:
 Personal scope: paste into `~/.claude.json`, replacing `${CLAUDE_PROJECT_DIR}`
 with the absolute path (this variable only has a value within a session tied
 to a specific project). Sharing with the team: paste into `.mcp.json` at the
-project root and commit it to git, keeping `${CLAUDE_PROJECT_DIR}` as-is — each
+project root and commit it to git, keeping `${CLAUDE_PROJECT_DIR}` as-is - each
 team member still needs to create their own `.env` file on their machine.
 
 `.mcp.json` is only re-read when a new session is opened.

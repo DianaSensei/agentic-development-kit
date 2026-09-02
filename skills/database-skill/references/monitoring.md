@@ -3,7 +3,7 @@
 For container-based testing (Testcontainers), see `testcontainers-skill`. This file covers health-monitoring
 queries for a **real** database (staging/production), not tests.
 
-## Baseline before optimizing — ALWAYS measure before/after every change, don't change multiple things at once
+## Baseline before optimizing - ALWAYS measure before/after every change, don't change multiple things at once
 
 ```sql
 -- PostgreSQL: top queries by total time (requires pg_stat_statements)
@@ -50,7 +50,7 @@ SELECT count(*) AS current, current_setting('max_connections')::int AS max,
 FROM pg_stat_activity;
 ```
 
-## Sequential scans on large tables — the earliest sign of a missing index (check regularly, not just once at launch)
+## Sequential scans on large tables - the earliest sign of a missing index (check regularly, not just once at launch)
 
 ```sql
 -- PostgreSQL
@@ -67,7 +67,7 @@ WHERE INDEX_NAME IS NULL AND COUNT_STAR > 0 ORDER BY SUM_NO_INDEX_USED DESC;
 
 ## Monitoring Best Practices
 
-1. Record a baseline while the system is running normally — without a baseline, "slower than normal" is meaningless.
+1. Record a baseline while the system is running normally - without a baseline, "slower than normal" is meaningless.
 2. Track trends (daily/weekly), not just point-in-time values.
-3. Use automated alerting (Prometheus/Grafana/Datadog) instead of manual checks — for specific tooling, see the `monitoring-expert` skill.
+3. Use automated alerting (Prometheus/Grafana/Datadog) instead of manual checks - for specific tooling, see the `monitoring-expert` skill.
 4. Test optimizations in staging first, revert immediately if write performance/replication lag worsens after applying to production.

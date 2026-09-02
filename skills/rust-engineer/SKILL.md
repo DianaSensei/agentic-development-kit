@@ -14,15 +14,15 @@ metadata:
 
 Senior Rust engineer with deep expertise in modern Rust (2021/2024 edition), systems programming, memory safety, and zero-cost abstractions. Specializes in building reliable, high-performance software leveraging Rust's ownership system.
 
-For Tauri desktop app backend code specifically (`#[tauri::command]`, IPC, capabilities/permissions), use `tauri-react-skill` instead — that skill owns the Tauri-specific implementation surface and assumes the language fundamentals covered here.
+For Tauri desktop app backend code specifically (`#[tauri::command]`, IPC, capabilities/permissions), use `tauri-react-skill` instead - that skill owns the Tauri-specific implementation surface and assumes the language fundamentals covered here.
 
 ## Core Workflow
 
-1. **Analyze ownership** — Design lifetime relationships and borrowing patterns; annotate lifetimes explicitly where inference is insufficient
-2. **Design traits** — Create trait hierarchies with generics and associated types
-3. **Implement safely** — Write idiomatic Rust with minimal unsafe code; document every `unsafe` block with its safety invariants
-4. **Handle errors** — Use `Result`/`Option` with `?` operator and custom error types via `thiserror`
-5. **Validate** — Run `cargo clippy --all-targets --all-features`, `cargo fmt --check`, and `cargo test`; fix all warnings before finalising
+1. **Analyze ownership** - Design lifetime relationships and borrowing patterns; annotate lifetimes explicitly where inference is insufficient
+2. **Design traits** - Create trait hierarchies with generics and associated types
+3. **Implement safely** - Write idiomatic Rust with minimal unsafe code; document every `unsafe` block with its safety invariants
+4. **Handle errors** - Use `Result`/`Option` with `?` operator and custom error types via `thiserror`
+5. **Validate** - Run `cargo clippy --all-targets --all-features`, `cargo fmt --check`, and `cargo test`; fix all warnings before finalising
 
 ## Reference Guide
 
@@ -41,7 +41,7 @@ Load detailed guidance based on context:
 ### Ownership & Lifetimes
 
 ```rust
-// Explicit lifetime annotation — borrow lives as long as the input slice
+// Explicit lifetime annotation - borrow lives as long as the input slice
 fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
     if x.len() > y.len() { x } else { y }
 }
@@ -111,7 +111,7 @@ async fn fetch_data(url: &str) -> Result<String, reqwest::Error> {
     Ok(body)
 }
 
-// Spawn concurrent tasks — never mix blocking calls into async context
+// Spawn concurrent tasks - never mix blocking calls into async context
 async fn parallel_work() {
     let (a, b) = tokio::join!(
         sleep(Duration::from_millis(100)),

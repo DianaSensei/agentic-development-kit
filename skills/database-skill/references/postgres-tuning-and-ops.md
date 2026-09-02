@@ -1,16 +1,16 @@
 # PostgreSQL Tuning & Operations
 
-Only change production config when you have measured evidence (don't guess) — every value below is a
+Only change production config when you have measured evidence (don't guess) - every value below is a
 reference starting point for a dedicated 16GB RAM server and needs to be tuned against real load.
 
 ## Memory Configuration
 
 ```ini
-# postgresql.conf — dedicated 16GB RAM server
+# postgresql.conf - dedicated 16GB RAM server
 shared_buffers = 4GB              # 25% of RAM (up to ~40% for a fully dedicated server)
-effective_cache_size = 12GB       # 50-75% of RAM — just a hint for the planner, not actually allocated
-work_mem = 40MB                   # per-operation (sort/hash) — reference formula: (RAM*0.25)/max_connections
-maintenance_work_mem = 2GB        # for VACUUM/CREATE INDEX — can be set much higher than work_mem
+effective_cache_size = 12GB       # 50-75% of RAM - just a hint for the planner, not actually allocated
+work_mem = 40MB                   # per-operation (sort/hash) - reference formula: (RAM*0.25)/max_connections
+maintenance_work_mem = 2GB        # for VACUUM/CREATE INDEX - can be set much higher than work_mem
 ```
 
 Target cache hit ratio >99%:
@@ -23,7 +23,7 @@ FROM pg_statio_user_tables;
 ## Query Planner
 
 ```ini
-default_statistics_target = 200   # default is 100 — increase for large tables/high-cardinality columns needing more accurate estimates
+default_statistics_target = 200   # default is 100 - increase for large tables/high-cardinality columns needing more accurate estimates
 random_page_cost = 1.1            # SSD (default 4.0 is meant for spinning HDDs)
 max_parallel_workers_per_gather = 4
 ```
@@ -34,14 +34,14 @@ ALTER TABLE users ALTER COLUMN email SET STATISTICS 500;
 ANALYZE users;  -- apply immediately, no need to wait for autoanalyze
 ```
 
-## VACUUM & Autovacuum — NEVER disable autovacuum globally
+## VACUUM & Autovacuum - NEVER disable autovacuum globally
 
 PostgreSQL uses MVCC: UPDATE/DELETE doesn't remove old rows immediately, it marks them as "dead tuples."
 Without VACUUM → table bloat, gradually degrading performance, and eventually transaction ID wraparound
-(severe — can cause the DB to refuse writes).
+(severe - can cause the DB to refuse writes).
 
 ```sql
--- Monitor dead tuple ratio — alert when dead_pct is high and last_autovacuum hasn't run in a while
+-- Monitor dead tuple ratio - alert when dead_pct is high and last_autovacuum hasn't run in a while
 SELECT relname, n_dead_tup, n_live_tup,
        round(n_dead_tup * 100.0 / NULLIF(n_live_tup + n_dead_tup, 0), 2) AS dead_pct,
        last_autovacuum
@@ -50,10 +50,10 @@ FROM pg_stat_user_tables ORDER BY n_dead_tup DESC LIMIT 20;
 -- High-churn tables (lots of update/delete): vacuum more aggressively than the default (10% dead tuples)
 ALTER TABLE orders SET (autovacuum_vacuum_scale_factor = 0.05, autovacuum_vacuum_cost_delay = 2);
 
--- Manual VACUUM does not lock the table — use when you need it urgently instead of waiting for autovacuum
+-- Manual VACUUM does not lock the table - use when you need it urgently instead of waiting for autovacuum
 VACUUM (ANALYZE, VERBOSE) orders;
 
--- VACUUM FULL locks the table completely (exclusive lock) — avoid in production, prefer pg_repack (online, non-locking)
+-- VACUUM FULL locks the table completely (exclusive lock) - avoid in production, prefer pg_repack (online, non-locking)
 ```
 
 ## Connections & Locks
@@ -63,7 +63,7 @@ VACUUM (ANALYZE, VERBOSE) orders;
 SELECT pid, now() - query_start AS duration, query
 FROM pg_stat_activity WHERE state = 'active' AND now() - query_start > interval '5 minutes';
 
--- Idle-in-transaction — holds locks for a long time, blocks VACUUM, usually caused by a bug that forgets to COMMIT/ROLLBACK
+-- Idle-in-transaction - holds locks for a long time, blocks VACUUM, usually caused by a bug that forgets to COMMIT/ROLLBACK
 SELECT pid, now() - state_change AS idle_duration, query
 FROM pg_stat_activity WHERE state = 'idle in transaction' AND now() - state_change > interval '1 minute';
 
@@ -76,16 +76,16 @@ JOIN pg_locks kl ON kl.locktype = bl.locktype AND kl.database IS NOT DISTINCT FR
     AND kl.relation IS NOT DISTINCT FROM bl.relation AND kl.pid != bl.pid AND kl.granted
 JOIN pg_stat_activity blocking ON blocking.pid = kl.pid;
 
--- Automatic timeouts for sessions/statements — avoid a single connection hanging indefinitely and holding a pool slot
+-- Automatic timeouts for sessions/statements - avoid a single connection hanging indefinitely and holding a pool slot
 ALTER SYSTEM SET idle_in_transaction_session_timeout = '5min';
 ALTER SYSTEM SET statement_timeout = '30s';
 ```
 
 Connection pool exhaustion is usually caused by connections/transactions not being closed properly (a leak
-from an exception that skips release) — use pgBouncer (`pool_mode = transaction`) to reduce the number of
+from an exception that skips release) - use pgBouncer (`pool_mode = transaction`) to reduce the number of
 real connections hitting Postgres when there are many clients.
 
-## Partitioning — consider when a table exceeds 10M rows or you need to drop old data quickly
+## Partitioning - consider when a table exceeds 10M rows or you need to drop old data quickly
 
 ```sql
 CREATE TABLE events (id BIGSERIAL, created_at TIMESTAMP NOT NULL, data JSONB) PARTITION BY RANGE (created_at);
@@ -97,18 +97,18 @@ EXPLAIN SELECT * FROM events WHERE created_at >= '2024-01-15' AND created_at < '
 -- Expected: only scans the events_2024_01 partition, not the whole table
 ```
 
-Dropping a partition (e.g. data older than 1 year) is much faster than a bulk `DELETE` — no WAL needs to be
+Dropping a partition (e.g. data older than 1 year) is much faster than a bulk `DELETE` - no WAL needs to be
 written per row, and no dead tuples are created that would need a later VACUUM.
 
-## Replication (summary — only when the project genuinely needs HA/read replicas)
+## Replication (summary - only when the project genuinely needs HA/read replicas)
 
 - **Streaming (physical)**: the replica is a byte-for-byte copy, used for simple failover/read scaling.
   Enable `wal_level = replica`, create a replication slot to avoid losing WAL when the replica temporarily
   disconnects.
 - **Logical**: replicates at the row level via publication/subscription, allows selecting specific tables,
-  and supports different Postgres versions on each side — use it when you need selective replication or
+  and supports different Postgres versions on each side - use it when you need selective replication or
   are migrating between two clusters.
-- ALWAYS monitor lag when a replica exists — high lag that goes undetected leads to reading stale data
+- ALWAYS monitor lag when a replica exists - high lag that goes undetected leads to reading stale data
   without realizing it:
 
 ```sql
@@ -119,10 +119,10 @@ SELECT now() - pg_last_xact_replay_timestamp() AS replication_lag;
 ```
 
 - Real production HA usually needs Patroni/pg_auto_failover (automatic failover) + PgBouncer/HAProxy
-  (routing) on top — this is a major infrastructure decision that needs to be discussed with the user
+  (routing) on top - this is a major infrastructure decision that needs to be discussed with the user
   separately, don't add it unprompted.
 
-## Backup — Point-in-Time Recovery (PITR)
+## Backup - Point-in-Time Recovery (PITR)
 
 ```ini
 archive_mode = on

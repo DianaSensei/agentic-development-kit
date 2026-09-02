@@ -98,7 +98,7 @@ logger.error(
 ## Java (Spring Boot / Logback)
 
 Spring Boot uses Logback + SLF4J by default. Add `logstash-logback-encoder` to get JSON output instead
-of plain text — Spring Boot itself has no built-in JSON encoder.
+of plain text - Spring Boot itself has no built-in JSON encoder.
 
 ```xml
 <!-- pom.xml -->
@@ -135,7 +135,7 @@ private static final Logger log = LoggerFactory.getLogger(OrderService.class);
 // includeMdc=true above then adds it to every JSON log line automatically.
 MDC.put("requestId", requestId);
 
-// Structured fields via StructuredArguments — prefer this over string concatenation
+// Structured fields via StructuredArguments - prefer this over string concatenation
 log.info("order.created", StructuredArguments.kv("orderId", order.getId()),
     StructuredArguments.kv("userId", userId), StructuredArguments.kv("durationMs", elapsed));
 ```
@@ -143,13 +143,13 @@ log.info("order.created", StructuredArguments.kv("orderId", order.getId()),
 ## Java (Log4j2)
 
 Use this instead of the Logback section above when the project has standardized on Log4j2 (check
-`pom.xml`/`build.gradle` for `log4j-core`/`spring-boot-starter-log4j2` before assuming — don't add a
+`pom.xml`/`build.gradle` for `log4j-core`/`spring-boot-starter-log4j2` before assuming - don't add a
 second logging framework alongside whichever one is already in use). Log4j2's API differs from SLF4J:
-`ThreadContext` instead of `MDC`, and no `StructuredArguments`-style key-value helper — use a
+`ThreadContext` instead of `MDC`, and no `StructuredArguments`-style key-value helper - use a
 `MapMessage` for structured fields instead.
 
 ```xml
-<!-- pom.xml — Spring Boot excludes its default Logback starter when switching to Log4j2 -->
+<!-- pom.xml - Spring Boot excludes its default Logback starter when switching to Log4j2 -->
 <dependency>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter</artifactId>
@@ -171,7 +171,7 @@ second logging framework alongside whichever one is already in use). Log4j2's AP
 ```
 
 ```xml
-<!-- log4j2-spring.xml — JsonTemplateLayout with the built-in Logstash-compatible template -->
+<!-- log4j2-spring.xml - JsonTemplateLayout with the built-in Logstash-compatible template -->
 <Configuration status="WARN">
     <Appenders>
         <Console name="JSON" target="SYSTEM_OUT">
@@ -194,10 +194,10 @@ import org.apache.logging.log4j.message.MapMessage;
 
 private static final Logger log = LogManager.getLogger(OrderService.class);
 
-// Correlation ID: ThreadContext is Log4j2's MDC equivalent — CloseableThreadContext
+// Correlation ID: ThreadContext is Log4j2's MDC equivalent - CloseableThreadContext
 // auto-clears on close(), avoiding leaked context across requests on pooled threads.
 try (var ignored = CloseableThreadContext.put("requestId", requestId)) {
-    // Structured fields via MapMessage — the built-in Logstash template above
+    // Structured fields via MapMessage - the built-in Logstash template above
     // serializes these as top-level JSON fields, not string-concatenated.
     MapMessage<?, ?> msg = new MapMessage<>()
         .with("event", "order.created")

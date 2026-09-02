@@ -1,6 +1,6 @@
 # Analysis Process
 
-## Step 0: Identify the Stack — always FIRST, never guess
+## Step 0: Identify the Stack - always FIRST, never guess
 
 ```bash
 Glob: **/pom.xml **/build.gradle           # Java/Spring
@@ -11,7 +11,7 @@ Glob: **/go.mod                            # Go
 ```
 
 Read whichever manifest is found to confirm the exact framework/version (e.g. `spring-boot-starter-web`
-in `pom.xml`, `tauri` in `Cargo.toml`) before picking the Glob/Grep patterns below — a single project can
+in `pom.xml`, `tauri` in `Cargo.toml`) before picking the Glob/Grep patterns below - a single project can
 have multiple stacks at once (e.g. a Java/Spring backend with a Tauri/React frontend), in which case
 repeat this process for each part.
 
@@ -59,7 +59,7 @@ Glob: **/models/**/*.{ts,js} **/schema.prisma **/migrations/**/*
 # Python (SQLAlchemy/Django ORM)
 Grep: class .*\(.*Model\)|db\.Column|models\.Model
 
-# Any stack — raw migration/schema files
+# Any stack - raw migration/schema files
 Glob: **/migrations/**/* **/*.sql
 ```
 
@@ -124,7 +124,7 @@ Glob: **/settings.py **/.env                          # Python (Django)
 Glob: **/config/**/*                                   # any stack
 ```
 
-## Quick Reference — Entry Point by Stack
+## Quick Reference - Entry Point by Stack
 
 | Stack | Entry Point Pattern | Route/Controller Pattern |
 |-------|---------------------|---------------------------|

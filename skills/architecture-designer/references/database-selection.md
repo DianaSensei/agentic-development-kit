@@ -1,6 +1,6 @@
 # Database Selection
 
-This file is for choosing a database *category* at the architecture-design stage — which of
+This file is for choosing a database *category* at the architecture-design stage - which of
 relational/document/key-value/time-series/graph/search fits the access pattern. Once a category is
 chosen, `database-skill` owns the depth: RDBMS vs. NoSQL sub-type comparisons (document/key-value/
 column-based), transaction isolation, indexing, query optimization, and specific-technology tuning

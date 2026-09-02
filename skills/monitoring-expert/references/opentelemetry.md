@@ -107,7 +107,7 @@ def process_order(order_id: str):
 
 ## Java (Spring Boot)
 
-The Java agent gives zero-code auto-instrumentation (HTTP, JDBC, messaging clients — 150+ libraries)
+The Java agent gives zero-code auto-instrumentation (HTTP, JDBC, messaging clients - 150+ libraries)
 by attaching at JVM startup, no source changes needed:
 
 ```bash
@@ -125,7 +125,7 @@ import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
 
-private final Tracer tracer; // injected — obtained from the GlobalOpenTelemetry / agent-provided SDK
+private final Tracer tracer; // injected - obtained from the GlobalOpenTelemetry / agent-provided SDK
 
 public void processOrder(String orderId) {
     Span span = tracer.spanBuilder("order.process").startSpan();
@@ -145,7 +145,7 @@ public void processOrder(String orderId) {
 
 ```java
 // Simpler alternative when the agent is attached: annotate the method instead of
-// manually managing spans — the agent processes @WithSpan at runtime.
+// manually managing spans - the agent processes @WithSpan at runtime.
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 
 @WithSpan("order.process")

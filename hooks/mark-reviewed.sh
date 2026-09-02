@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Records that the current uncommitted code changes have been reviewed, which
 # releases the Stop gate. Run it only AFTER actually running the review skill's
-# checklist and fixing what it found — recording a review that did not happen
+# checklist and fixing what it found - recording a review that did not happen
 # defeats the only thing this gate does.
 HOOK_NO_STDIN=1
 . "${0%/*}/common.sh" || exit 0

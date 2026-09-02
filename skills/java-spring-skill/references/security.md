@@ -1,4 +1,4 @@
-# Spring Security 6 — JWT, Method Security, OAuth2
+# Spring Security 6 - JWT, Method Security, OAuth2
 
 ## Security Filter Chain
 
@@ -112,7 +112,7 @@ public class JwtService {
 }
 ```
 
-`jwt.secret` MUST be read from an environment variable/secret manager (`${JWT_SECRET}`), not hardcoded in `application.yml` — a security risk if the config file is ever committed.
+`jwt.secret` MUST be read from an environment variable/secret manager (`${JWT_SECRET}`), not hardcoded in `application.yml` - a security risk if the config file is ever committed.
 
 ## UserDetailsService + Authentication Service
 
@@ -195,7 +195,7 @@ public class UserService {
 
 `@PreAuthorize` checks BEFORE the method runs (use when the condition is known from the input parameters); `@PostAuthorize` checks AFTER a result is returned (use when the condition depends on the returned object itself, e.g. a user can only view their own record).
 
-## OAuth2 Resource Server (JWT issued by an external IdP — e.g. Keycloak/Auth0/Cognito)
+## OAuth2 Resource Server (JWT issued by an external IdP - e.g. Keycloak/Auth0/Cognito)
 
 Use this when the project does NOT issue its own JWTs (unlike the JwtService above) but instead validates tokens issued by an external Identity Provider.
 
@@ -256,5 +256,5 @@ public class UserSecurityService {
 - Secrets (JWT signing key, DB password) must ALWAYS come from environment variables/secret managers, never hardcoded.
 - `BCryptPasswordEncoder` strength should be at least 12.
 - Have a refresh token mechanism instead of a long-lived access token.
-- Rate-limit auth endpoints (login/register) specifically — a common brute-force target.
+- Rate-limit auth endpoints (login/register) specifically - a common brute-force target.
 - Never log raw JWT/password values to standard logs.

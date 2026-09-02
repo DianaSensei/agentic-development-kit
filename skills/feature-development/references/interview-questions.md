@@ -1,4 +1,4 @@
-# Interview Questions (Step 1 — Requirements Analysis)
+# Interview Questions (Step 1 - Requirements Analysis)
 
 ## PM Hat Questions
 
@@ -50,7 +50,7 @@ For a "User Export" feature:
 - Need progress indicator for large exports?
 ```
 
-Interview from both hats for every non-trivial feature — the PM hat alone misses feasibility/edge-case
+Interview from both hats for every non-trivial feature - the PM hat alone misses feasibility/edge-case
 risk, and the Dev hat alone misses whether the feature is worth building at all.
 
 ## Tool Usage: AskUserQuestions

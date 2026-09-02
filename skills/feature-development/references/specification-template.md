@@ -88,7 +88,7 @@ Then [expected result]
 ## Save Location
 
 This template is the section layout for `docs/plans/<feature-slug>.md` (written in Step 2 of the
-feature-development workflow), not a separate spec file — the workflow does not produce a standalone
+feature-development workflow), not a separate spec file - the workflow does not produce a standalone
 spec document, it produces this plan file, then later a `docs/changelog/<feature-slug>.md` that
 records what was actually built.
 

@@ -124,11 +124,11 @@ MCP is built on JSON-RPC 2.0 and enables bidirectional communication between cli
 
 ### Version Negotiation
 
-The client sends the latest protocol version it supports. The server does not have to match it — the
+The client sends the latest protocol version it supports. The server does not have to match it - the
 server replies with the version it will actually speak: its own latest version if it supports the
 client's request, or otherwise the latest version it does support. If the client does not support the
 version the server returned, the client must disconnect rather than proceed with a version mismatch.
-Never assume the negotiated version equals what either side initially requested — always use the value
+Never assume the negotiated version equals what either side initially requested - always use the value
 in the server's `initialize` response for anything version-conditional afterward (for HTTP transports,
 this value is also expected on the `MCP-Protocol-Version` header of subsequent requests).
 
@@ -215,7 +215,7 @@ const ERROR_CODES = {
 // Server reads from stdin, writes to stdout
 // Each message is newline-delimited JSON
 // Used for local integration (Claude Desktop default)
-// Log to stderr only — stdout is reserved for protocol messages
+// Log to stderr only - stdout is reserved for protocol messages
 ```
 
 ### Streamable HTTP (remote servers)
@@ -233,24 +233,24 @@ MCP-Protocol-Version: 2025-11-25
 
 // Server replies with either a plain JSON response, or upgrades to an
 // SSE stream on the same response (for long-running calls / server-initiated
-// notifications) — the client does not open a second, separate connection.
+// notifications) - the client does not open a second, separate connection.
 Content-Type: text/event-stream
 
 event: message
 data: {"jsonrpc":"2.0","id":1,"result":{...}}
 ```
 
-Remote servers exposed over Streamable HTTP must implement OAuth 2.1 authorization — see
+Remote servers exposed over Streamable HTTP must implement OAuth 2.1 authorization - see
 `references/authorization.md`. Do not build a new server on the legacy dual-endpoint HTTP+SSE
 transport; only maintain it if required for backward compatibility with an old client.
 
 ## Protocol Versions
 
 Current stable version: `2025-11-25`. The spec has revised several times since the original
-`2024-11-05` release — notably `2025-03-26` (added the OAuth 2.1 authorization framework; replaced
+`2024-11-05` release - notably `2025-03-26` (added the OAuth 2.1 authorization framework; replaced
 HTTP+SSE with Streamable HTTP) and `2025-06-18` (structured tool output, elicitation, hardened OAuth
 requirements). Do not hardcode a version string as "current" in server code without checking the
-live spec — this changes faster than most protocol versions do. See "Version Negotiation" above for
+live spec - this changes faster than most protocol versions do. See "Version Negotiation" above for
 how a server should actually behave when a client requests a different version.
 
 Servers must declare their negotiated version in the initialize response. Clients must verify
@@ -267,4 +267,4 @@ compatibility and disconnect if the server's returned version is unsupported.
 7. **Idempotency**: Make tool calls idempotent when possible
 8. **Notifications**: Use notifications for real-time updates
 9. **Authorization**: For any remote (Streamable HTTP) server, implement OAuth 2.1 per the MCP
-   authorization spec — see `references/authorization.md`; do not roll a custom auth scheme
+   authorization spec - see `references/authorization.md`; do not roll a custom auth scheme

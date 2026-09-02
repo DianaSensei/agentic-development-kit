@@ -1,8 +1,8 @@
-# Testing — JUnit 5, Mockito, MockMvc/WebTestClient, Testcontainers
+# Testing - JUnit 5, Mockito, MockMvc/WebTestClient, Testcontainers
 
-Container setup/lifecycle (dependencies, wait strategies, reuse, network) is the scope of `testcontainers-skill` — this file focuses only on PATTERNS for writing tests at each layer (unit/slice/integration), and doesn't repeat container configuration content.
+Container setup/lifecycle (dependencies, wait strategies, reuse, network) is the scope of `testcontainers-skill` - this file focuses only on PATTERNS for writing tests at each layer (unit/slice/integration), and doesn't repeat container configuration content.
 
-## Unit Test — mock all external dependencies
+## Unit Test - mock all external dependencies
 
 ```java
 @ExtendWith(MockitoExtension.class)
@@ -48,7 +48,7 @@ class UserServiceTest {
 }
 ```
 
-## Web Layer Test — `@WebMvcTest` (mocks the service, doesn't load the full context)
+## Web Layer Test - `@WebMvcTest` (mocks the service, doesn't load the full context)
 
 ```java
 @WebMvcTest(UserController.class)
@@ -80,7 +80,7 @@ class UserControllerTest {
 }
 ```
 
-## Reactive Controller Test — `@WebFluxTest` + `WebTestClient`
+## Reactive Controller Test - `@WebFluxTest` + `WebTestClient`
 
 ```java
 @WebFluxTest(UserController.class)
@@ -101,9 +101,9 @@ class UserControllerReactiveTest {
 }
 ```
 
-## Repository Test — `@DataJpaTest` + real Testcontainers (not H2)
+## Repository Test - `@DataJpaTest` + real Testcontainers (not H2)
 
-Use a real Postgres via Testcontainers instead of in-memory H2 when a query relies on dialect-specific features (JSONB, native queries, index hints) — H2 doesn't reproduce that behavior correctly. See `testcontainers-skill` for detailed container setup; the example below only illustrates how to write a test using an already-set-up container.
+Use a real Postgres via Testcontainers instead of in-memory H2 when a query relies on dialect-specific features (JSONB, native queries, index hints) - H2 doesn't reproduce that behavior correctly. See `testcontainers-skill` for detailed container setup; the example below only illustrates how to write a test using an already-set-up container.
 
 ```java
 @DataJpaTest
@@ -131,7 +131,7 @@ class UserRepositoryTest {
 }
 ```
 
-## Full Integration Test — `@SpringBootTest`
+## Full Integration Test - `@SpringBootTest`
 
 ```java
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -203,7 +203,7 @@ public abstract class AbstractIntegrationTest {
 | `@WebMvcTest` | Test the MVC controller layer, mocked service |
 | `@WebFluxTest` + `WebTestClient` | Test a reactive controller |
 | `@DataJpaTest` | Test a repository (use Testcontainers instead of H2 when real dialect behavior matters) |
-| `@SpringBootTest` | Full context — end-to-end integration test |
+| `@SpringBootTest` | Full context - end-to-end integration test |
 | `@MockBean` | Mock a single bean in the Spring context |
 | `@WithMockUser` | Simulate an already-authenticated user |
 | `AssertJ` (`assertThat`) | Fluent assertions, preferred over plain assertions |
@@ -211,7 +211,7 @@ public abstract class AbstractIntegrationTest {
 ## Testing Best Practices
 
 - Use a clear AAA pattern (Arrange/Given, Act/When, Assert/Then) in every test.
-- Unit tests mock all external dependencies; integration tests use Testcontainers for real infrastructure — don't mix the two in the same test class.
+- Unit tests mock all external dependencies; integration tests use Testcontainers for real infrastructure - don't mix the two in the same test class.
 - Test the exception path as well, not just the happy path.
 - Test method names should clearly describe the behavior under test (`should_X_when_Y`, or a clear `@DisplayName`).
-- Actually run the tests (`mvn test`/`gradle test`) before reporting completion — don't consider it done just because it's written.
+- Actually run the tests (`mvn test`/`gradle test`) before reporting completion - don't consider it done just because it's written.

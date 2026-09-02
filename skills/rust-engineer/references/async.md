@@ -269,7 +269,7 @@ async fn rwlock_example() {
 
 ## Async Traits (with async-trait)
 
-Native `async fn` in traits has been stable since Rust 1.75 and works without any crate — use it
+Native `async fn` in traits has been stable since Rust 1.75 and works without any crate - use it
 directly (`trait Repo { async fn find(&self, id: u64) -> Result<User, Error>; }`) when the trait is
 only ever used with static dispatch (`impl Trait` / generics). The `async_trait` crate below is still
 needed when the trait must support `dyn` trait objects (dynamic dispatch), since native async fn in

@@ -2,7 +2,7 @@
 
 For Java/Spring integration testing (`@WebMvcTest`+MockMvc, `@WebFluxTest`+WebTestClient, `@DataJpaTest`
 with Testcontainers), see `java-spring-skill/references/testing.md` and `testcontainers-skill` for
-container lifecycle setup — this file covers Node (Supertest) and Python (httpx) instead of duplicating
+container lifecycle setup - this file covers Node (Supertest) and Python (httpx) instead of duplicating
 the JVM patterns.
 
 ## API Testing (Supertest)

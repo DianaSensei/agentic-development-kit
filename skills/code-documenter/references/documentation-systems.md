@@ -3,7 +3,7 @@
 ## Choosing a Doc-Site Generator
 
 A documentation site's generator choice is a project decision, not something this skill should default
-without asking — many options exist and new ones appear regularly. Decide using the project's actual
+without asking - many options exist and new ones appear regularly. Decide using the project's actual
 constraints rather than defaulting to whatever's most familiar:
 
 | Criterion | What to check |
@@ -11,10 +11,10 @@ constraints rather than defaulting to whatever's most familiar:
 | Ecosystem fit | Does a generator already ship with, or is conventional for, this project's primary language/framework? Using the ecosystem-native option usually means less integration friction (build pipeline, dependency management, hosting). |
 | Versioning needs | Does this project need multiple documented versions live simultaneously (e.g. a library with several supported major versions)? Not all generators support this equally well. |
 | Content authoring format | Does the team want plain Markdown, or is embedding live/interactive code samples in the docs itself a requirement? |
-| Search | Hosted/managed search vs. self-hosted/local search — see "Search" below. |
+| Search | Hosted/managed search vs. self-hosted/local search - see "Search" below. |
 | Hosting | Static output deployable anywhere vs. a generator that expects a specific hosting platform. |
 
-Do not assume a specific generator without checking what the project already uses or asking — if the
+Do not assume a specific generator without checking what the project already uses or asking - if the
 repository already has a doc-site configured, use it; don't introduce a second one.
 
 ## Multi-Version Documentation
@@ -22,7 +22,7 @@ repository already has a doc-site configured, use it; don't introduce a second o
 When a project supports multiple versions simultaneously (a library, an API with versioned releases),
 the documentation site needs:
 - A version switcher exposed in the navigation.
-- Each version's docs frozen to match that version's actual behavior — never let a "latest" doc page
+- Each version's docs frozen to match that version's actual behavior - never let a "latest" doc page
   silently describe behavior that changed in a later, undocumented version.
 - A migration guide between adjacent versions, structured as: breaking changes, renamed/removed
   APIs (old name → new name, with any semantic change flagged), and a deprecation timeline (when the
@@ -36,18 +36,18 @@ the documentation site needs:
 | Self-hosted search service | Keeps docs private/internal if needed; requires operating the search infrastructure. |
 | Local/offline search (indexed at build time, runs in the browser) | No server dependency, works offline; index size and relevance quality degrade on very large doc sets. |
 
-Pick based on whether the documentation is public or internal-only, and how large the corpus is — a
+Pick based on whether the documentation is public or internal-only, and how large the corpus is - a
 local index that's fine for a few hundred pages stops being practical for a multi-thousand-page corpus.
 
 ## Documentation Testing
 
 Two independent things need testing, not just one:
-- **Link checking** — verify every internal and external link in the docs actually resolves; run this
+- **Link checking** - verify every internal and external link in the docs actually resolves; run this
   on a schedule (external links rot even when the docs don't change) as well as on every doc change.
-- **Code example testing** — every code sample in the documentation should be extracted and actually
+- **Code example testing** - every code sample in the documentation should be extracted and actually
   executed/type-checked as part of CI, using whatever mechanism the language/ecosystem provides for
   that (a doctest-style runner, a script that extracts fenced code blocks and runs them, a type
-  checker). See `SKILL.md`'s Core Workflow step 5 — an untested example is a liability, not a bonus.
+  checker). See `SKILL.md`'s Core Workflow step 5 - an untested example is a liability, not a bonus.
 
 ## Performance & Delivery
 

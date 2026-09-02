@@ -1,6 +1,6 @@
-# Testing Patterns — Rust, React, Storage
+# Testing Patterns - Rust, React, Storage
 
-What to test and when (see SKILL.md's Test section) — this file covers the actual test code.
+What to test and when (see SKILL.md's Test section) - this file covers the actual test code.
 
 ## Rust: Testing Command Logic Without the Tauri Runtime
 
@@ -8,13 +8,13 @@ Extract the business logic out of the `#[tauri::command]` wrapper so it can be u
 function, with no Tauri runtime, no `AppHandle`, no async executor setup:
 
 ```rust
-// Thin wrapper — not directly tested
+// Thin wrapper - not directly tested
 #[tauri::command]
 fn calculate_discount(price: f64, tier: String) -> Result<f64, CommandError> {
     apply_discount(price, &tier).map_err(CommandError::Validation)
 }
 
-// Pure function — this is what gets tested
+// Pure function - this is what gets tested
 fn apply_discount(price: f64, tier: &str) -> Result<f64, String> {
     if price < 0.0 {
         return Err("price must be non-negative".into());
@@ -50,7 +50,7 @@ full mock builder isn't already set up in the project.
 ## React: Mocking `invoke` (Never Call the Real Runtime in Unit Tests)
 
 ```typescript
-// ProjectList.test.tsx (Vitest example — swap for Jest equivalents if that's the project's runner)
+// ProjectList.test.tsx (Vitest example - swap for Jest equivalents if that's the project's runner)
 import { render, screen, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { ProjectList } from './ProjectList';
@@ -89,13 +89,13 @@ describe('ProjectList', () => {
 ```
 
 Covering all three states (loading/error/success-or-empty) per component that calls `invoke` is the
-concrete test-side check for the MUST DO rule in SKILL.md's Constraints section — a component that only
+concrete test-side check for the MUST DO rule in SKILL.md's Constraints section - a component that only
 has a happy-path test hasn't actually verified the state machine it's supposed to implement.
 
 ## Storage: Migration Fixture Testing
 
 Testing a migration only against a freshly created empty DB doesn't prove it's safe for users who
-already have data from a previous app version — build the fixture from the prior schema explicitly:
+already have data from a previous app version - build the fixture from the prior schema explicitly:
 
 ```rust
 #[cfg(test)]
@@ -132,15 +132,15 @@ mod migration_tests {
 ## E2E: Desktop Integration (Manual/QA vs. Automated)
 
 If the project has no desktop E2E infrastructure yet, don't build one as a side effect of a feature
-task — write the manual QA steps instead and flag automation as a proposal:
+task - write the manual QA steps instead and flag automation as a proposal:
 
 ```markdown
-## Manual QA — Import Flow (no automated E2E infra yet)
+## Manual QA - Import Flow (no automated E2E infra yet)
 1. Launch the app on macOS, Windows, and Linux builds from CI.
 2. Trigger Import from the toolbar; select a >50MB test file.
 3. Confirm progress events update the UI (see `ipc-patterns.md`'s progress example) without freezing.
 4. Confirm the imported data appears in the list on all 3 OS.
 
-Proposal: automate this with `@wdio/tauri-service` (see `cross-os-patterns.md`) — not set up without
+Proposal: automate this with `@wdio/tauri-service` (see `cross-os-patterns.md`) - not set up without
 sign-off, since it adds CI time and a new dependency surface to maintain.
 ```

@@ -1,10 +1,10 @@
 # SOLID Principles
 
-Five class/module-level design principles. They exist to keep a codebase *changeable* — cheap to extend,
+Five class/module-level design principles. They exist to keep a codebase *changeable* - cheap to extend,
 safe to modify, easy to test in isolation. Judge every violation by what change becomes expensive or
 risky, not by the label alone.
 
-## S — Single Responsibility Principle (SRP)
+## S - Single Responsibility Principle (SRP)
 
 **Definition**: A class/module should have exactly one reason to change.
 
@@ -13,7 +13,7 @@ unrelated data. A change requested by "the billing team" and a change requested 
 team" both require editing the same file.
 
 ```
-// Violates SRP — one reason to change becomes three
+// Violates SRP - one reason to change becomes three
 class OrderService {
   process(order)         // business logic
   chargeCard(order)       // payment concern
@@ -29,16 +29,16 @@ be split "for SRP." SRP is about reasons to change driven by different stakehold
 about method count. Splitting code that always changes together adds indirection without adding
 flexibility.
 
-## O — Open/Closed Principle (OCP)
+## O - Open/Closed Principle (OCP)
 
-**Definition**: A module should be open for extension, closed for modification — add new behavior
+**Definition**: A module should be open for extension, closed for modification - add new behavior
 without editing existing, tested code.
 
 **Symptom of violation**: A recurring `if/else` or `switch` on a type code that grows every time a new
 case is added, scattered across multiple files.
 
 ```
-// Violates OCP — every new payment type edits this function
+// Violates OCP - every new payment type edits this function
 function calculateFee(type) {
   if (type === "credit") return amount * 0.03;
   if (type === "debit")  return amount * 0.01;
@@ -46,36 +46,36 @@ function calculateFee(type) {
 }
 ```
 
-**Fix**: Polymorphism or a strategy/registry pattern — new payment types register a new implementation
+**Fix**: Polymorphism or a strategy/registry pattern - new payment types register a new implementation
 without touching existing ones.
 
 **When NOT to over-apply**: Don't build a plugin/strategy abstraction for a `switch` with 2 stable cases
 that changes once a year. OCP pays off when new cases are added *frequently* and independently; applied
 prematurely it's speculative generality (YAGNI violation).
 
-## L — Liskov Substitution Principle (LSP)
+## L - Liskov Substitution Principle (LSP)
 
 **Definition**: A subtype must be substitutable for its base type without altering the correctness of
-the program — callers relying on the base type's contract must not break when handed a subtype.
+the program - callers relying on the base type's contract must not break when handed a subtype.
 
 **Symptom of violation**: A subclass overrides a method to throw, no-op, or narrow the accepted input
 range in a way the base type's callers don't expect.
 
 ```
-// Violates LSP — callers of Bird.fly() break on Penguin
+// Violates LSP - callers of Bird.fly() break on Penguin
 class Bird { fly() { ... } }
 class Penguin extends Bird { fly() { throw new Error("can't fly"); } }
 ```
 
-**Fix**: Model the capability, not the taxonomy — `FlyingBird` vs. `FlightlessBird`, or a `canFly()`
+**Fix**: Model the capability, not the taxonomy - `FlyingBird` vs. `FlightlessBird`, or a `canFly()`
 capability check, instead of forcing every bird through one interface.
 
 **Concrete failure mode this prevents**: Runtime type-checking (`if (obj instanceof Penguin) skip()`)
-scattered through calling code — the clearest sign LSP has already been violated upstream.
+scattered through calling code - the clearest sign LSP has already been violated upstream.
 
-## I — Interface Segregation Principle (ISP)
+## I - Interface Segregation Principle (ISP)
 
-**Definition**: Clients should not be forced to depend on methods they don't use — prefer several small,
+**Definition**: Clients should not be forced to depend on methods they don't use - prefer several small,
 focused interfaces over one large one.
 
 **Symptom of violation**: A class implements an interface with 10 methods but provides real
@@ -96,7 +96,7 @@ class RobotWorker implements Worker {
 **When NOT to over-apply**: Splitting a 3-method interface used identically by every implementer into
 three 1-method interfaces adds ceremony with no real client ever needing a subset.
 
-## D — Dependency Inversion Principle (DIP)
+## D - Dependency Inversion Principle (DIP)
 
 **Definition**: High-level modules should not depend on low-level modules; both should depend on
 abstractions. Abstractions should not depend on details; details depend on abstractions.
@@ -106,12 +106,12 @@ abstractions. Abstractions should not depend on details; details depend on abstr
 infrastructure being live.
 
 ```
-// Violates DIP — OrderService is welded to PostgresOrderRepo
+// Violates DIP - OrderService is welded to PostgresOrderRepo
 class OrderService {
   constructor() { this.repo = new PostgresOrderRepo(); }
 }
 
-// Follows DIP — depends on an abstraction, injected
+// Follows DIP - depends on an abstraction, injected
 class OrderService {
   constructor(repo: OrderRepository) { this.repo = repo; }
 }
@@ -121,13 +121,13 @@ class OrderService {
 container, or manual wiring at the composition root).
 
 **Concrete failure mode this prevents**: Unit tests for business logic that require a real database,
-network, or filesystem — the clearest sign DIP is missing.
+network, or filesystem - the clearest sign DIP is missing.
 
 ## Applying SOLID as a Set
 
 The five principles reinforce each other: DIP is often *how* you satisfy OCP (extend via new
 implementations of an abstraction); ISP is what keeps the abstractions DIP introduces from becoming
-another SRP violation. Don't evaluate them in isolation on a real review — a DIP violation and an OCP
+another SRP violation. Don't evaluate them in isolation on a real review - a DIP violation and an OCP
 violation are frequently the same root cause seen from two angles.
 
 **The overriding rule**: SOLID exists to make future change cheap. If a "fix" makes the code harder to

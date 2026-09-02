@@ -1,6 +1,6 @@
-# Reactive — Spring WebFlux / Project Reactor / R2DBC
+# Reactive - Spring WebFlux / Project Reactor / R2DBC
 
-Only use this when the project has already chosen WebFlux or has genuinely high I/O-bound load (see the reasoning for MVC vs WebFlux in the main SKILL.md) — the content below is a set of concrete patterns for when you're already in a reactive context.
+Only use this when the project has already chosen WebFlux or has genuinely high I/O-bound load (see the reasoning for MVC vs WebFlux in the main SKILL.md) - the content below is a set of concrete patterns for when you're already in a reactive context.
 
 ## WebFlux Controller
 
@@ -23,7 +23,7 @@ public class UserController {
 }
 ```
 
-## Reactive Service — always propagate errors via `Mono.error`, do NOT throw directly
+## Reactive Service - always propagate errors via `Mono.error`, do NOT throw directly
 
 ```java
 @Service
@@ -48,7 +48,7 @@ public class UserService {
 }
 ```
 
-Throwing directly inside a reactive chain does not propagate the error correctly to the subscriber (the error occurs while building the chain, not while executing it) — always use `Mono.error()`/`Flux.error()`, or let the error surface naturally from an operator (an exception thrown inside `.map()` is caught correctly by Reactor, but a `throw` outside the chain is not).
+Throwing directly inside a reactive chain does not propagate the error correctly to the subscriber (the error occurs while building the chain, not while executing it) - always use `Mono.error()`/`Flux.error()`, or let the error surface naturally from an operator (an exception thrown inside `.map()` is caught correctly by Reactor, but a `throw` outside the chain is not).
 
 ## R2DBC Repository & Entity
 
@@ -67,7 +67,7 @@ public record User(
 ) {}
 ```
 
-An R2DBC record entity is immutable — updating any field requires creating a new instance (`new User(...)` or a `withX()` method); there's no JPA-style dirty checking.
+An R2DBC record entity is immutable - updating any field requires creating a new instance (`new User(...)` or a `withX()` method); there's no JPA-style dirty checking.
 
 ```yaml
 spring:
@@ -106,18 +106,18 @@ Mono<UserDetails> combined = Mono.zip(
     userService.getUser(id), addressService.getAddress(id),
     (user, address) -> new UserDetails(user, address));
 
-// Error handling — fall back to another source on error
+// Error handling - fall back to another source on error
 Mono<User> safe = userRepository.findById(id)
     .onErrorResume(DatabaseException.class, e -> cacheRepository.findById(id))
     .doOnError(e -> log.error("Failed to fetch user", e));
 
-// Backpressure — process in batches, limiting concurrency
+// Backpressure - process in batches, limiting concurrency
 Flux<Data> stream = dataRepository.findAll()
     .buffer(100)
     .flatMap(batch -> processBatch(batch), 5); // at most 5 batches running concurrently
 ```
 
-## Testing Reactive Code — StepVerifier
+## Testing Reactive Code - StepVerifier
 
 ```java
 @ExtendWith(MockitoExtension.class)

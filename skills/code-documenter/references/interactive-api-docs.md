@@ -1,12 +1,12 @@
 # Interactive API Documentation
 
 This file covers the documentation *formats* used to describe APIs (OpenAPI, GraphQL SDL, AsyncAPI,
-Protocol Buffers) — these are schema/interface-definition languages, not implementation languages, so
+Protocol Buffers) - these are schema/interface-definition languages, not implementation languages, so
 the same guidance applies whether the API itself is implemented in any given language or framework.
 
 ## OpenAPI (REST)
 
-Design the spec so definitions are written once and referenced everywhere they recur — a schema, a
+Design the spec so definitions are written once and referenced everywhere they recur - a schema, a
 reusable parameter, a security scheme, or a common error response should each be defined once under
 `components` and referenced (`$ref`) from every path that uses it. Duplicating a schema inline at each
 usage site is what makes an OpenAPI spec drift out of sync with itself as the API evolves.
@@ -76,7 +76,7 @@ typed), every realistic response status documented (not only the success case), 
 ## GraphQL Schema Documentation
 
 GraphQL's schema description syntax (triple-quoted strings preceding a type/field) is itself the
-documentation — a well-documented schema is queryable via introspection, so the doc-comments become
+documentation - a well-documented schema is queryable via introspection, so the doc-comments become
 the API reference automatically.
 
 ```graphql
@@ -103,13 +103,13 @@ type Query {
 }
 ```
 
-Document every field and every argument — an undocumented field in a GraphQL schema is invisible to
+Document every field and every argument - an undocumented field in a GraphQL schema is invisible to
 consumers using introspection-driven tooling, which is how most GraphQL clients discover the API.
 
 ## AsyncAPI (Event-Driven / WebSocket APIs)
 
 For message-based APIs (WebSocket, pub/sub, queues), document channels, the messages published/
-subscribed on them, and the payload schema for each — the same rigor as a REST response schema:
+subscribed on them, and the payload schema for each - the same rigor as a REST response schema:
 
 ```yaml
 asyncapi: 2.5.0
@@ -140,7 +140,7 @@ components:
 
 ## gRPC / Protocol Buffers
 
-`.proto` files support comments directly above services, RPCs, messages, and fields — treat every RPC
+`.proto` files support comments directly above services, RPCs, messages, and fields - treat every RPC
 method's comment as its API-reference entry, including what error condition maps to each gRPC status
 code it can return:
 
@@ -163,7 +163,7 @@ A rendered, browsable portal (generated from the spec above) typically needs: th
 request against a real or sandbox server from the page itself, persisted auth credentials across page
 reloads within a session, and a way to filter/search operations once the API has more than a handful
 of endpoints. Which specific portal tool renders this is an implementation detail to choose based on
-the project's existing stack and hosting constraints — evaluate options against those three
+the project's existing stack and hosting constraints - evaluate options against those three
 capabilities plus how well each renders the specific spec format (OpenAPI vs. AsyncAPI vs. GraphQL
 need different renderers) rather than defaulting to whichever tool is most familiar.
 
@@ -171,7 +171,7 @@ need different renderers) rather than defaulting to whichever tool is most famil
 
 When a product ships client SDKs in multiple languages, the goal is a *parallel* structure: the same
 method, in the same conceptual order, with the same level of coverage (parameters, return value,
-exceptions/errors, one example) in every language's reference — a consumer switching from one SDK's
+exceptions/errors, one example) in every language's reference - a consumer switching from one SDK's
 docs to another's should find the same information in the same place. Missing an error case or an
 example in one language's reference but not another's is a documentation gap, not a stylistic
 difference, and should be flagged the same way an undocumented function would be.
@@ -181,4 +181,4 @@ difference, and should be flagged the same way an undocumented function would be
 This file covers what to document and how the documentation format itself works (schema/interface
 definition languages, which are language/framework-agnostic by design). It does not cover how to write
 the underlying API implementation, or the concrete build/deploy setup for any specific portal-rendering
-tool — those depend on the project's actual stack.
+tool - those depend on the project's actual stack.

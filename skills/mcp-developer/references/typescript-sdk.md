@@ -8,14 +8,14 @@ npm install @modelcontextprotocol/sdk zod
 
 ## Which API to Use
 
-The SDK offers two layers. Default to the high-level `McpServer` API — it handles request routing,
+The SDK offers two layers. Default to the high-level `McpServer` API - it handles request routing,
 JSON Schema generation from Zod schemas, and response shaping for you. See `SKILL.md`'s Minimal
 Working Example for the smallest `McpServer` server; this file adds prompt registration and error
 handling on top of that. Reach for the low-level `Server` + `setRequestHandler` API (further below)
-only when you need custom protocol behavior the high-level API doesn't expose — e.g. a non-standard
+only when you need custom protocol behavior the high-level API doesn't expose - e.g. a non-standard
 request method, or full manual control over response shaping.
 
-## High-Level API — Additional Patterns
+## High-Level API - Additional Patterns
 
 ### Prompt Registration
 
@@ -71,7 +71,7 @@ server.tool(
 
 ## Advanced: Low-Level Server API
 
-Use this only when the high-level `McpServer` API's automatic routing/validation doesn't fit — for
+Use this only when the high-level `McpServer` API's automatic routing/validation doesn't fit - for
 example implementing a custom request method outside the standard tools/resources/prompts primitives,
 or needing raw control over the JSON-RPC response. For ordinary tool/resource/prompt servers, use the
 high-level API above instead.

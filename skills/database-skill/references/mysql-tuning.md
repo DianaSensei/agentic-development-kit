@@ -1,8 +1,8 @@
 # MySQL (InnoDB) Tuning
 
-Only tune when you have measured evidence — the values below are reference starting points for a dedicated 16GB RAM server.
+Only tune when you have measured evidence - the values below are reference starting points for a dedicated 16GB RAM server.
 
-## InnoDB Buffer Pool — the most important setting, equivalent to Postgres's `shared_buffers`
+## InnoDB Buffer Pool - the most important setting, equivalent to Postgres's `shared_buffers`
 
 ```sql
 -- Recommended: 70-80% of RAM for a dedicated MySQL server
@@ -18,11 +18,11 @@ SELECT (1 - (r.v / q.v)) * 100 AS hit_ratio FROM
 ## Log & I/O
 
 ```ini
-innodb_log_file_size = 1G           # larger = better write performance but longer crash recovery — balance against write load
+innodb_log_file_size = 1G           # larger = better write performance but longer crash recovery - balance against write load
 innodb_flush_log_at_trx_commit = 1  # 1 = full ACID (default, safest)
-                                      # 2 = write to OS cache, flush every second (trades safety for speed — acceptable for replicas/analytics)
+                                      # 2 = write to OS cache, flush every second (trades safety for speed - acceptable for replicas/analytics)
 innodb_flush_method = O_DIRECT      # avoids double buffering
-innodb_io_capacity = 10000          # IOPS the storage can handle — SSDs are typically 5000-20000
+innodb_io_capacity = 10000          # IOPS the storage can handle - SSDs are typically 5000-20000
 ```
 
 ## Slow Query Log & Performance Schema
@@ -38,7 +38,7 @@ SELECT DIGEST_TEXT, COUNT_STAR AS exec_count,
 FROM performance_schema.events_statements_summary_by_digest
 ORDER BY SUM_TIMER_WAIT DESC LIMIT 20;
 
--- Full table scans — a sign of missing indexes
+-- Full table scans - a sign of missing indexes
 SELECT * FROM sys.statements_with_full_table_scans ORDER BY exec_count DESC LIMIT 10;
 ```
 
@@ -85,8 +85,8 @@ SELECT Seconds_Behind_Master FROM (SHOW SLAVE STATUS) s;
 ## Table Maintenance
 
 ```sql
-ANALYZE TABLE users;   -- refresh statistics — run after a bulk data change
-OPTIMIZE TABLE users;  -- rebuild, reduces fragmentation (equivalent to Postgres's VACUUM FULL — also locks the table, be careful in production)
+ANALYZE TABLE users;   -- refresh statistics - run after a bulk data change
+OPTIMIZE TABLE users;  -- rebuild, reduces fragmentation (equivalent to Postgres's VACUUM FULL - also locks the table, be careful in production)
 ```
 
 ## Reference config (16GB RAM, production)
@@ -112,6 +112,6 @@ character_set_server = utf8mb4
 
 ## Key differences from PostgreSQL to remember
 
-- Default isolation level is `REPEATABLE READ` (Postgres/Oracle default to `READ COMMITTED`) — see the main SKILL.md, Transaction Isolation section.
-- No full `EXPLAIN ANALYZE` like Postgres until MySQL 8.0 — before that only `EXPLAIN` was available (estimates, not actual runtime).
-- The query cache was completely removed as of MySQL 8.0 — `query_cache_type`/`query_cache_size` no longer exist.
+- Default isolation level is `REPEATABLE READ` (Postgres/Oracle default to `READ COMMITTED`) - see the main SKILL.md, Transaction Isolation section.
+- No full `EXPLAIN ANALYZE` like Postgres until MySQL 8.0 - before that only `EXPLAIN` was available (estimates, not actual runtime).
+- The query cache was completely removed as of MySQL 8.0 - `query_cache_type`/`query_cache_size` no longer exist.
