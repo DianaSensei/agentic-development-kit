@@ -25,8 +25,8 @@ business-analyst  →  solution-architect  →  Tier-2 specialist(s), per task_b
 
 | Step | Agent | Role |
 |------|-------|---------|
-| 1 | [`business-analyst`](./business-analyst.md) | Reviews current state, clarifies requirements, assesses feasibility. Completely agnostic — doesn't know/need to know the stack. Output: draft AC/Edge Case/DoD + a preliminary impact assessment. |
-| 2 | [`solution-architect`](./solution-architect.md) | Takes the output from Step 1, identifies the stack (`CLAUDE.md` → memory/MCP → code evidence), produces 1+ proposal(s) complete with diagrams/tradeoffs/finalized AC-DoD + a `task_breakdown` assigning work to the right Tier-2 agent. Does NOT write code, does NOT finalize a specific storage schema/technology. |
+| 1 | [`business-analyst`](./agents/business-analyst.md) | Reviews current state, clarifies requirements, assesses feasibility. Completely agnostic — doesn't know/need to know the stack. Output: draft AC/Edge Case/DoD + a preliminary impact assessment. |
+| 2 | [`solution-architect`](./agents/solution-architect.md) | Takes the output from Step 1, identifies the stack (`CLAUDE.md` → memory/MCP → code evidence), produces 1+ proposal(s) complete with diagrams/tradeoffs/finalized AC-DoD + a `task_breakdown` assigning work to the right Tier-2 agent. Does NOT write code, does NOT finalize a specific storage schema/technology. |
 | 3 | Tier-2 specialist(s) | Each agent in `task_breakdown` implements exactly the assigned piece of work, can run in parallel if independent (`can_run_parallel_with`). |
 
 `solution-architect` **does not use a hardcoded list of agent names** — it reads `agents/*.md` itself
@@ -38,10 +38,10 @@ assigning work. This means adding a new Tier-2 agent to this directory doesn't r
 
 | Agent | Specialty | Called after |
 |-------|--------------|---------|
-| [`api-spec-designer`](./api-spec-designer.md) | API contracts — synchronous REST (OpenAPI) + asynchronous message contracts (Kafka/RabbitMQ/Pub-Sub, AsyncAPI-style). Defines the contract only, does not implement the server/broker. | `solution-architect` |
-| [`data-storage-architect`](./data-storage-architect.md) | Designs data storage for ANY technology (Oracle/PostgreSQL/MySQL/Redis/MongoDB/Elasticsearch/local SQLite). Auto-detects the technology in use, always presents tradeoffs, never decides unilaterally. | `solution-architect` |
-| [`java-ecosystem-engineer`](./java-ecosystem-engineer.md) | Implements + self-tests Java Spring Boot business/functional flows (MVC/WebFlux, Spring Data, Security, Kafka, RabbitMQ, resilience). | `data-storage-architect` + `api-spec-designer` (if applicable) |
-| [`tauri-react-engineer`](./tauri-react-engineer.md) | Implements + self-tests Tauri (Rust commands) + React (UI) for a cross-platform desktop app. | `data-storage-architect` (if persisted data is needed) + `api-spec-designer` (if applicable) |
+| [`api-spec-designer`](./agents/api-spec-designer.md) | API contracts — synchronous REST (OpenAPI) + asynchronous message contracts (Kafka/RabbitMQ/Pub-Sub, AsyncAPI-style). Defines the contract only, does not implement the server/broker. | `solution-architect` |
+| [`data-storage-architect`](./agents/data-storage-architect.md) | Designs data storage for ANY technology (Oracle/PostgreSQL/MySQL/Redis/MongoDB/Elasticsearch/local SQLite). Auto-detects the technology in use, always presents tradeoffs, never decides unilaterally. | `solution-architect` |
+| [`java-ecosystem-engineer`](./agents/java-ecosystem-engineer.md) | Implements + self-tests Java Spring Boot business/functional flows (MVC/WebFlux, Spring Data, Security, Kafka, RabbitMQ, resilience). | `data-storage-architect` + `api-spec-designer` (if applicable) |
+| [`tauri-react-engineer`](./agents/tauri-react-engineer.md) | Implements + self-tests Tauri (Rust commands) + React (UI) for a cross-platform desktop app. | `data-storage-architect` (if persisted data is needed) + `api-spec-designer` (if applicable) |
 
 Every implementing (Tier 2) agent writes AND runs its own tests for the part it did before reporting
 done, leaving no verification work for a later step.
