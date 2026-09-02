@@ -87,7 +87,9 @@ reference files that are not there.
 
 This is not hypothetical: `architecture-designer` was uploaded that way, froze at the 2026-07-18 state,
 and so never received the deployment-topology step added on 2026-08-23 - while still instructing the
-agent to open eleven `references/*.md` files its copy did not contain.
+agent to open eleven `references/*.md` files its copy did not contain. That upload has since been
+removed, so the plugin copy is authoritative again - the failure mode is recorded here because nothing
+warns you when it happens.
 
 So: install skills from this repo **only** as a plugin. Personal-skill sync is the right channel for
 skills that have no other home, not for anything already published here.
