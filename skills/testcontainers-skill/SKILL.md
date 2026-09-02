@@ -1,6 +1,13 @@
 ---
 name: testcontainers-skill
 description: In-depth Testcontainers setup/operation knowledge for integration tests - dependencies, container lifecycle (singleton pattern, reuse, cleanup), wait strategies, multi-container networking, CI integration. Does NOT cover infrastructure-specific test scenarios (see `database-skill`/`kafka-skill`/`rabbitmq-skill`/`redis-skill`/`elasticsearch-skill`). Use when an integration test needs real infrastructure via containers instead of a mock.
+metadata:
+  domain: quality
+  triggers: Testcontainers, integration test, container lifecycle, singleton container, container reuse, wait strategy, Ryuk, Docker in tests, real infrastructure test, flaky integration test
+  role: specialist
+  scope: testing
+  output-format: code
+  related-skills: test-master, database-skill, kafka-skill, rabbitmq-skill, redis-skill, elasticsearch-skill, java-spring-skill
 ---
 
 # Testcontainers - Container Setup & Execution for Integration Tests

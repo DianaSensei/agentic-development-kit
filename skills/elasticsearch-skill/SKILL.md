@@ -1,6 +1,13 @@
 ---
 name: elasticsearch-skill
 description: In-depth Elasticsearch knowledge - index/mapping design, analyzers, Query DSL, aggregations, reindex strategy, shard/replica sizing. Use when the feature needs full-text search or analysis/aggregation over large datasets.
+metadata:
+  domain: database
+  triggers: Elasticsearch, full-text search, index mapping, analyzer, Query DSL, aggregation, reindex, shard, replica, autocomplete, fuzzy search, search relevance, log analytics
+  role: specialist
+  scope: design-and-optimization
+  output-format: analysis-and-code
+  related-skills: database-skill, java-spring-skill, testcontainers-skill, monitoring-expert
 ---
 
 # Elasticsearch

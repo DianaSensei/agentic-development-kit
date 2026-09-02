@@ -92,6 +92,20 @@ off to the right orchestrator, so in practice you rarely need to name a workflow
 - **`references/` is progressive disclosure** - a skill's `SKILL.md` stays lean; deep detail (code
   patterns, decision tables, troubleshooting trees) lives in `references/*.md`, loaded only when the
   matching step is actually reached, listed in each skill's Reference Guide table.
+- **`metadata:` on every skill** - a fixed block after `description`, present on all 30. Claude Code
+  does not read it; it exists so the library can be audited mechanically. `related-skills` in
+  particular is checked both ways: every name must resolve to a directory under `skills/`, and every
+  skill must be reachable from at least one other, so a skill cannot silently fall out of the graph.
+  The vocabulary is closed - `domain` (`workflow`, `requirements`, `software-design`,
+  `api-architecture`, `java-backend`, `language`, `desktop-app`, `design`, `database`, `messaging`,
+  `quality`, `security`, `devops`, `platform`, `specialized`), `role` (`orchestrator`, `architect`,
+  `expert`, `engineer`, `specialist`), plus `scope` and `output-format`. Reuse an existing value
+  rather than coining a new one.
+- **Soft references to skills outside this plugin** - a `SKILL.md` may name a skill this plugin does
+  not ship (see `ui-ux-design-skill` → the design-taste family) only as an *if present* instruction
+  that no-ops when the skill is absent. It must never be a `dependencies` entry and never a step the
+  skill cannot complete without; the root [`README.md`](../README.md) explains why that hard coupling
+  is deliberately avoided.
 - **`## Boundaries`** - most skills state explicitly what they do *not* own, and which sibling skill
   owns it instead. This is what keeps two skills with adjacent expertise (e.g. `secure-code-guardian` vs.
   `security-reviewer`, `monitoring-expert` vs. `test-master`) from being ambiguous about which one a

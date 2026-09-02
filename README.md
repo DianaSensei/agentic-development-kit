@@ -63,6 +63,35 @@ same block rather than reaching for `dependencies` - unless you have specificall
 described above, that its marketplace will already be present for every user before they ever install
 this plugin.
 
+Where a companion skill is genuinely useful mid-task, a `SKILL.md` here may name it as an *if present*
+instruction that does nothing when the skill is absent - `ui-ux-design-skill` does this for the
+design-taste family, since it owns usability and accessibility but deliberately not visual direction.
+That is the only form of coupling allowed: no `dependencies` entry, and no step a skill cannot finish
+on its own.
+
+### The third install channel, and the one trap in it
+
+Skills reach a session through three independent channels, and only the first is this repository:
+
+| Channel | Installed by | Updates when | Lives in |
+|---|---|---|---|
+| Plugin skill | `/plugin install`, or `--plugin-dir` | the plugin updates | `skills/` in this repo |
+| Personal skill synced from claude.ai | uploading a file at Settings → Capabilities → Skills | **you upload it again by hand** | `~/.claude/skills/synced/<account>/` |
+| Project skill | committed to the project being worked on | that project's git | `.claude/skills/` of that project |
+
+The trap: uploading a skill *from this repo* to claude.ai as a personal skill. Two copies then answer
+to the same name, you cannot tell which one a session loaded, and the synced copy is a frozen snapshot
+that never follows this repo again. It also arrives flattened - the web upload keeps `SKILL.md` and
+drops `references/`, so a skill whose method depends on progressive disclosure ends up pointing at
+reference files that are not there.
+
+This is not hypothetical: `architecture-designer` was uploaded that way, froze at the 2026-07-18 state,
+and so never received the deployment-topology step added on 2026-08-23 - while still instructing the
+agent to open eleven `references/*.md` files its copy did not contain.
+
+So: install skills from this repo **only** as a plugin. Personal-skill sync is the right channel for
+skills that have no other home, not for anything already published here.
+
 ### Companion tools that aren't Claude Code plugins at all
 
 [`lavish-axi`](https://github.com/kunchenguid/lavish-axi) (`lavish` - a CLI/editor for reviewing and

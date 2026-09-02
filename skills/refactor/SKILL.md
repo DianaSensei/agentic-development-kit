@@ -20,6 +20,13 @@ hooks:
           command: "${CLAUDE_PLUGIN_ROOT}/hooks/quality-gate.sh"
           timeout: 30
           statusMessage: "Quality gate..."
+metadata:
+  domain: workflow
+  triggers: refactor, restructure, clean up, improve code quality, reduce technical debt, extract method, rename, behavior-preserving change
+  role: orchestrator
+  scope: end-to-end
+  output-format: code-and-report
+  related-skills: workflow-router, solution-design-principles, code-review-skill, test-master, legacy-modernizer
 ---
 
 # Refactor Workflow

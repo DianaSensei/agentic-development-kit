@@ -1,6 +1,13 @@
 ---
 name: workflow-router
 description: Use FIRST for any request asking Claude to WRITE OR CHANGE code - new feature, bug fix, refactor, enhancement, "improve", "add capability", etc. Classifies the request as feature-development, bug-fix, or refactor by its true nature (does external behavior change, and if so is it fixing a defect or adding/changing capability?), asking the user only if genuinely ambiguous, then hands off. Skip when the request type is already obvious. Do NOT use for no-code-change requests - pure questions/explanations, read-only exploration, or explicit review requests ("review this PR/diff") - handle those directly instead.
+metadata:
+  domain: workflow
+  triggers: write code, change code, add feature, fix bug, refactor, improve, enhance, implement, classify request
+  role: orchestrator
+  scope: routing
+  output-format: handoff
+  related-skills: feature-development, bug-fix, refactor
 ---
 
 # Dev Request Router

@@ -20,6 +20,13 @@ hooks:
           command: "${CLAUDE_PLUGIN_ROOT}/hooks/quality-gate.sh"
           timeout: 30
           statusMessage: "Quality gate..."
+metadata:
+  domain: workflow
+  triggers: bug, defect, broken, not working, wrong behavior, regression, error, reproduce, root cause, postmortem
+  role: orchestrator
+  scope: end-to-end
+  output-format: code-and-report
+  related-skills: workflow-router, code-review-skill, test-master, monitoring-expert, spec-miner
 ---
 
 # Bug Fix Workflow

@@ -1,6 +1,13 @@
 ---
 name: rabbitmq-skill
 description: In-depth RabbitMQ knowledge - exchange types, routing, queue durability, dead-letter exchange, prefetch, quorum queues, priority queues. Use when the feature needs RabbitMQ (project already depends on `spring-boot-starter-amqp` or the user names RabbitMQ explicitly). If the request only says "async processing" with no technology named, check the actual dependency first - don't default to RabbitMQ; for high throughput/replay see `kafka-skill`, for GCP see `pubsub-skill`.
+metadata:
+  domain: messaging
+  triggers: RabbitMQ, AMQP, exchange, direct exchange, topic exchange, fanout, routing key, queue durability, dead letter exchange, prefetch, quorum queue, priority queue, task queue
+  role: specialist
+  scope: implementation
+  output-format: code
+  related-skills: api-contract-skill, kafka-skill, pubsub-skill, java-spring-skill, testcontainers-skill
 ---
 
 # RabbitMQ

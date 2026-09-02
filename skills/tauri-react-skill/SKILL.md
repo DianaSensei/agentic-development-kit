@@ -1,6 +1,13 @@
 ---
 name: tauri-react-skill
 description: Implementation knowledge for Tauri (Rust backend) + React (frontend) desktop apps - IPC commands/invoke, capabilities/permissions, standard plugins (dialog/fs/store/sql), local/offline storage design (SQLite/key-value/file), cross-OS handling (`#[cfg(target_os)]`), and React loading/error/empty state. Coordinates with `ui-ux-design-skill` (UX design) - this skill owns both storage design and the executable code for Tauri+React apps. Use when implementing/modifying code, or designing/changing the storage mechanism, in a Tauri+React app.
+metadata:
+  domain: desktop-app
+  triggers: Tauri, React desktop, IPC command, invoke, capabilities, permissions, tauri plugin, dialog, fs plugin, store plugin, sql plugin, offline storage, SQLite desktop, cross-OS, target_os, loading state, empty state
+  role: engineer
+  scope: implementation
+  output-format: code
+  related-skills: rust-engineer, ui-ux-design-skill, database-skill, testcontainers-skill, test-master, code-review-skill
 ---
 
 # Tauri + React - Implementation & Local Storage

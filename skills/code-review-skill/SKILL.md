@@ -1,6 +1,13 @@
 ---
 name: code-review-skill
 description: Objective code-review checklist to run before reporting work complete - general conventions, clean-code, plus a per-technology checklist for whatever was actually used. This is the SELF-CHECK step Claude ALWAYS proactively runs as the last step before reporting done on any change involving code - no separate user request needed. Do NOT use this when the user actively requests a diff/PR review ("review this", "/code-review") - use the built-in `code-review`/`review` skill for that case.
+metadata:
+  domain: quality
+  triggers: self-check before done, pre-report review, clean code checklist, convention check, per-technology review checklist, quality gate
+  role: specialist
+  scope: review
+  output-format: report
+  related-skills: feature-development, bug-fix, refactor, security-reviewer, solution-design-principles, test-master
 ---
 
 # Code Review Checklist

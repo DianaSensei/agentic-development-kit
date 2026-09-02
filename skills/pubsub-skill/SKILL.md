@@ -1,6 +1,13 @@
 ---
 name: pubsub-skill
 description: In-depth Google Cloud Pub/Sub knowledge - topics/subscriptions, push vs. pull, ack deadlines, ordering keys, dead-letter topics, exactly-once delivery. Use when the feature needs Pub/Sub (project already uses a GCP client, or the infrastructure already runs on GCP). If the request only says "async processing" with no technology named, check the actual dependency/infrastructure first - don't default to Pub/Sub; for multi-cloud/on-prem see `kafka-skill`/`rabbitmq-skill`.
+metadata:
+  domain: messaging
+  triggers: Pub/Sub, Google Cloud Pub/Sub, GCP messaging, topic, subscription, push subscription, pull subscription, ack deadline, ordering key, dead letter topic, exactly-once delivery
+  role: specialist
+  scope: implementation
+  output-format: code
+  related-skills: api-contract-skill, kafka-skill, rabbitmq-skill, architecture-designer
 ---
 
 # Google Cloud Pub/Sub

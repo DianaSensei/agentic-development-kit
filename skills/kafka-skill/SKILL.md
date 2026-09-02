@@ -1,6 +1,13 @@
 ---
 name: kafka-skill
 description: In-depth Apache Kafka knowledge - topic/partition design, consumer groups, delivery semantics, idempotency, schema evolution, dead-letter handling, lag monitoring. Use when the feature needs Kafka (project already depends on `spring-kafka` or an equivalent client, or the user names Kafka explicitly). If the request only says "async processing" with no technology named, check the actual dependency first - don't default to Kafka; for a simple queue see `rabbitmq-skill`, for GCP see `pubsub-skill`.
+metadata:
+  domain: messaging
+  triggers: Kafka, topic, partition, consumer group, offset, delivery semantics, idempotent producer, schema evolution, dead letter topic, consumer lag, rebalance, event streaming, replay
+  role: specialist
+  scope: implementation
+  output-format: code
+  related-skills: api-contract-skill, rabbitmq-skill, pubsub-skill, java-spring-skill, testcontainers-skill, monitoring-expert
 ---
 
 # Apache Kafka

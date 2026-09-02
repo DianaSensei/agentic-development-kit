@@ -2,6 +2,13 @@
 name: mcp-setup
 description: Manually-invoked, end-to-end setup for connecting a third-party MCP server to Claude Code - given a GitHub link, package name, or hosted URL, determines the transport/auth it needs, registers it via `claude mcp add` at the right scope, handles secrets safely, and verifies the connection actually works. Only run when the user explicitly invokes `/mcp-setup` or explicitly asks to install/connect/set up a specific MCP server by name or link. Do NOT auto-trigger this for general MCP questions, for authoring a new MCP server (use `mcp-developer`), or for Atlassian specifically (use `atlassian-mcp`, which already covers that server's setup).
 argument-hint: "[MCP server GitHub link, package name, or hosted URL]"
+metadata:
+  domain: platform
+  triggers: install MCP server, connect MCP server, set up MCP, claude mcp add, MCP transport, stdio, Streamable HTTP, MCP scope, MCP secrets, MCP connection failed
+  role: specialist
+  scope: implementation
+  output-format: code
+  related-skills: mcp-developer, atlassian-mcp, security-reviewer
 ---
 
 # MCP Setup
