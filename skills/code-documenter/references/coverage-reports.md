@@ -4,7 +4,7 @@
 
 A coverage report answers three questions for whoever requested the documentation pass: how much of
 the public surface is documented now, how much was documented before, and what's still missing. Treat
-it as a deliverable, not an afterthought — "I documented some things" isn't verifiable; a before/after
+it as a deliverable, not an afterthought - "I documented some things" isn't verifiable; a before/after
 count is.
 
 ## Report Structure
@@ -29,7 +29,7 @@ count is.
 
 ## Documentation Style Used
 - Inline doc-comment style: {the convention this codebase already uses, or the one agreed with the user}
-- API documentation format: {e.g. OpenAPI, GraphQL SDL, AsyncAPI, protobuf — whichever the project uses}
+- API documentation format: {e.g. OpenAPI, GraphQL SDL, AsyncAPI, protobuf - whichever the project uses}
 
 ## Missing Documentation
 | File | Missing | Priority |
@@ -52,7 +52,7 @@ count is.
 | Example coverage (non-trivial entries) | >50% | 30-50% | <30% |
 
 100% is the bar for classes/types and API endpoints because a caller has no way to discover an
-undocumented public type or endpoint exists except by reading source — unlike a function, where a
+undocumented public type or endpoint exists except by reading source - unlike a function, where a
 clear name can partially substitute for documentation.
 
 ## Checklist During Documentation
@@ -94,6 +94,6 @@ clear name can partially substitute for documentation.
 
 This file defines the report format and coverage checklist, independent of language or ecosystem. The
 specific tool used to measure or enforce coverage (a doc-linter, a coverage script, a CI check) depends
-on what the project's language/ecosystem already provides or has configured — use whatever is already
+on what the project's language/ecosystem already provides or has configured - use whatever is already
 set up in the project; if nothing is configured, note that as a recommendation rather than guessing at
 a specific tool to introduce.

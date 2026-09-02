@@ -16,13 +16,13 @@ Comprehensive testing specialist ensuring software quality through functional, p
 
 ## Core Workflow
 
-1. **Define scope** — Identify what to test and which testing types apply
-2. **Create strategy** — Plan the test approach across functional, performance, and security perspectives
-3. **Write tests** — Implement tests with proper assertions (see example below)
-4. **Execute** — Run tests and collect results
+1. **Define scope** - Identify what to test and which testing types apply
+2. **Create strategy** - Plan the test approach across functional, performance, and security perspectives
+3. **Write tests** - Implement tests with proper assertions (see example below)
+4. **Execute** - Run tests and collect results
    - If tests fail: classify the failure (assertion error vs. environment/flakiness), fix root cause, re-run
    - If tests are flaky: isolate ordering dependencies, check async handling, add retry or stabilization logic
-5. **Report** — Document findings with severity ratings and actionable fix recommendations
+5. **Report** - Document findings with severity ratings and actionable fix recommendations
    - Verify coverage targets are met before closing; flag gaps explicitly
 
 ## Quick-Start Example
@@ -46,7 +46,7 @@ describe("calculateDiscount", () => {
 ```
 
 Apply the same structure for pytest (`def test_…`, `assert result == expected`) or JUnit5
-(`@Test`, `assertEquals(90, result)`) — the shape (isolated setup, one behavior per test, specific
+(`@Test`, `assertEquals(90, result)`) - the shape (isolated setup, one behavior per test, specific
 assertion) is what matters, not the framework syntax. See `java-spring-skill/references/testing.md` for
 full JUnit5/Mockito patterns.
 
@@ -72,17 +72,17 @@ Load detailed guidance based on context:
 **MUST DO**
 
 - Test happy paths AND error/edge cases (e.g., empty input, null, boundary values)
-- Mock external dependencies — never call real APIs or databases in unit tests
+- Mock external dependencies - never call real APIs or databases in unit tests
 - Use meaningful `it('…')` descriptions that read as plain-English specifications
 - Assert specific outcomes (`expect(result).toBe(90)`), not just truthiness
 - Run tests in CI/CD; document and remediate coverage gaps
 
 **MUST NOT**
 
-- Use production data in tests — use fixtures or factories instead
-- Create order-dependent tests — each test must be independently runnable
-- Ignore flaky tests — quarantine and fix them; don't just re-run until green
-- Test implementation details (internal method calls) — test observable behaviour
+- Use production data in tests - use fixtures or factories instead
+- Create order-dependent tests - each test must be independently runnable
+- Ignore flaky tests - quarantine and fix them; don't just re-run until green
+- Test implementation details (internal method calls) - test observable behaviour
 
 ## Output Templates
 

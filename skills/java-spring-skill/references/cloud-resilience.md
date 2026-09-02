@@ -1,6 +1,6 @@
-# Cloud Native — Spring Cloud, Resilience4j, Actuator
+# Cloud Native - Spring Cloud, Resilience4j, Actuator
 
-Only apply this when the project is genuinely a microservices setup that needs these components — don't add Config Server/Eureka/Gateway to a single standalone service just because it's "best practice"; this is heavy infrastructure that only makes sense when there are multiple services that need to share config or discover each other.
+Only apply this when the project is genuinely a microservices setup that needs these components - don't add Config Server/Eureka/Gateway to a single standalone service just because it's "best practice"; this is heavy infrastructure that only makes sense when there are multiple services that need to share config or discover each other.
 
 ## Spring Cloud Config (Server + Client)
 
@@ -29,7 +29,7 @@ public class ConfigController {
 }
 ```
 
-## Service Discovery — Eureka
+## Service Discovery - Eureka
 
 ```yaml
 # Eureka Client
@@ -43,7 +43,7 @@ eureka:
     prefer-ip-address: true
 ```
 
-## Spring Cloud Gateway — routing + circuit breaker + rate limit
+## Spring Cloud Gateway - routing + circuit breaker + rate limit
 
 ```java
 @Bean
@@ -58,9 +58,9 @@ public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
 }
 ```
 
-## Resilience4j — Circuit Breaker / Retry / Rate Limiter
+## Resilience4j - Circuit Breaker / Retry / Rate Limiter
 
-Used for calls that depend on other services — protects the current service from cascading failure when a dependency is slow or down.
+Used for calls that depend on other services - protects the current service from cascading failure when a dependency is slow or down.
 
 ```java
 @Service
@@ -100,7 +100,7 @@ resilience4j:
       externalApi: { limit-for-period: 10, limit-refresh-period: 1s }
 ```
 
-## Distributed Tracing — Micrometer Tracing
+## Distributed Tracing - Micrometer Tracing
 
 ```yaml
 management:
@@ -110,7 +110,7 @@ management:
     tracing: { endpoint: http://localhost:9411/api/v2/spans }
 ```
 
-`sampling.probability: 1.0` (100% tracing) only makes sense in dev/staging or for low-traffic services — high-traffic production should lower this (e.g. `0.1`) to avoid overhead, unless you're temporarily debugging a specific incident that needs full tracing.
+`sampling.probability: 1.0` (100% tracing) only makes sense in dev/staging or for low-traffic services - high-traffic production should lower this (e.g. `0.1`) to avoid overhead, unless you're temporarily debugging a specific incident that needs full tracing.
 
 ## Health Checks & Actuator
 
@@ -138,7 +138,7 @@ management:
     readinessState: { enabled: true }
 ```
 
-Keeping `livenessState`/`readinessState` separate matters for Kubernetes: a liveness failure restarts the pod; a readiness failure removes the pod from the load balancer but does NOT restart it (use the right probe for the right purpose — mixing these up causes unnecessary restart loops when a service is merely temporarily not ready to receive traffic, e.g. while warming up a cache).
+Keeping `livenessState`/`readinessState` separate matters for Kubernetes: a liveness failure restarts the pod; a readiness failure removes the pod from the load balancer but does NOT restart it (use the right probe for the right purpose - mixing these up causes unnecessary restart loops when a service is merely temporarily not ready to receive traffic, e.g. while warming up a cache).
 
 ## Kubernetes Deployment (minimal reference)
 

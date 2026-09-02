@@ -2,10 +2,10 @@
 
 A technology/cloud-agnostic distillation of the pillars shared by AWS, Azure, and Google Cloud's
 Well-Architected/Architecture frameworks. Use to assess whether a *design* (not yet built) or an
-*existing system* has addressed each operational concern — not to pick specific cloud services.
+*existing system* has addressed each operational concern - not to pick specific cloud services.
 
 Score each pillar as: **Addressed** (a concrete decision exists), **Deferred** (explicitly not a
-priority yet, with a stated trigger to revisit), or **Gap** (not considered — this is the finding to
+priority yet, with a stated trigger to revisit), or **Gap** (not considered - this is the finding to
 raise).
 
 ## 1. Operational Excellence
@@ -40,7 +40,7 @@ Is data and access to the system protected commensurate with what it's worth to 
 credentials), input validation at trust boundaries, dependency vulnerability scanning, audit logging of
 sensitive actions.
 
-**Boundary**: This pillar's design-level check is this skill's job — the actual secure-coding
+**Boundary**: This pillar's design-level check is this skill's job - the actual secure-coding
 implementation is `secure-code-guardian`'s job, and a vulnerability audit of existing code is
 `security-reviewer`'s job.
 
@@ -65,7 +65,7 @@ fail?
 procedures, chaos/failure testing, defined RTO/RPO, circuit breakers and bulkheads for distributed calls
 (see `architecture-designer`'s `resilience-patterns.md` for the distributed-systems-specific patterns).
 
-**Common gap**: Backups exist but restoration has never actually been tested — the recovery plan is
+**Common gap**: Backups exist but restoration has never actually been tested - the recovery plan is
 theoretical.
 
 ## 4. Performance Efficiency
@@ -107,7 +107,7 @@ patterns, storage tiering (hot/cold) matched to access frequency, tagging/attrib
 per team or feature.
 
 **Scope note**: This skill flags cost-*relevant design choices* (e.g. "this always-on worker could be
-event-triggered") — actual dollar-cost modeling and cloud-provider pricing comparisons are out of scope.
+event-triggered") - actual dollar-cost modeling and cloud-provider pricing comparisons are out of scope.
 
 **Common gap**: A batch job that runs for 5 minutes a day on an instance that's provisioned and billed
 24/7.
@@ -115,16 +115,16 @@ event-triggered") — actual dollar-cost modeling and cloud-provider pricing com
 ## 6. Sustainability (where applicable)
 
 Is the system designed to minimize its resource footprint, not just its dollar cost? (Most cost-optimal
-choices are also sustainability-optimal, since both track actual resource consumption — treat this as a
+choices are also sustainability-optimal, since both track actual resource consumption - treat this as a
 secondary lens on the Cost Optimization findings rather than a separate analysis, unless environmental
 impact is an explicit stated requirement.)
 
 ## Using the Pillars in Review
 
-1. Go through all six pillars for every system-level review — don't skip a pillar silently.
+1. Go through all six pillars for every system-level review - don't skip a pillar silently.
 2. For each, land on **Addressed / Deferred / Gap**. A **Deferred** verdict must state the trigger that
    would make it a priority (e.g. "revisit autoscaling once traffic exceeds current single-instance
-   capacity" — not just "later").
+   capacity" - not just "later").
 3. Weight the pillars by what the system actually is: an internal admin tool over-indexing on
    auto-scaling Cost Optimization is itself a design smell (effort spent where it doesn't pay for the
    system's actual risk profile); a payments system treating Security as **Deferred** is a Gap, not a

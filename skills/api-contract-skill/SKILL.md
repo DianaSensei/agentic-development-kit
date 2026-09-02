@@ -1,6 +1,6 @@
 ---
 name: api-contract-skill
-description: In-depth API contract design knowledge — REST (OpenAPI 3.x/3.1), GraphQL, RPC (gRPC/Protobuf), and asynchronous message contracts for Kafka/RabbitMQ/Pub-Sub under the AsyncAPI 3.x standard (the same role as OpenAPI, but for messages instead of REST). Covers design principles, security (OWASP API Security Top 10), naming/versioning, and standardized error format (RFC 7807). Use before implementation, to finalize the communication contract before writing code.
+description: In-depth API contract design knowledge - REST (OpenAPI 3.x/3.1), GraphQL, RPC (gRPC/Protobuf), and asynchronous message contracts for Kafka/RabbitMQ/Pub-Sub under the AsyncAPI 3.x standard (the same role as OpenAPI, but for messages instead of REST). Covers design principles, security (OWASP API Security Top 10), naming/versioning, and standardized error format (RFC 7807). Use before implementation, to finalize the communication contract before writing code.
 metadata:
   domain: api-architecture
   triggers: API design, REST API, OpenAPI, GraphQL, gRPC, Protobuf, message contract, AsyncAPI, event schema, API versioning, API security
@@ -12,7 +12,7 @@ metadata:
 
 # API & Message Contract Design
 
-Acts as the contract architect — finalizes the communication contract before a single line of
+Acts as the contract architect - finalizes the communication contract before a single line of
 implementation code is written, for both synchronous (REST/GraphQL/RPC) and asynchronous
 (message-via-broker) communication.
 
@@ -25,12 +25,12 @@ implementation code is written, for both synchronous (REST/GraphQL/RPC) and asyn
 
 ## Core Workflow
 
-1. **Discover** — Read the existing contract (OpenAPI/`.graphql`/`.proto`/AsyncAPI if present) and the naming/versioning/auth conventions already in use. Determine the kind of communication being designed: synchronous (REST/GraphQL/RPC) or asynchronous via a broker (`kafka-skill`/`rabbitmq-skill`/`pubsub-skill`). If a distributed-systems-level decision is still open (which services should even talk to each other, sync vs. async as an architecture choice), that's `architecture-designer`'s call to make first — this skill takes it from there to the concrete contract.
-2. **Choose the Protocol** — If not already constrained by an existing convention, compare trade-offs (see `references/protocol-choice.md`) and choose the best-fitting option, stating the reasoning in the report. Only ask the user back when the decision affects multiple services already running in production.
-3. **Design the Contract** — Apply the correct principles for the chosen protocol type (see the Reference Guide below), including error format and security scheme. Always write message contracts to the AsyncAPI standard.
-4. **Validate** — If the project already has a spec-lint tool (e.g. `@redocly/cli` for OpenAPI), run it before reporting done. Don't add a new tool just for this purpose if the project doesn't already have one.
-5. **Write the Contract to a Real File** — Mandatory, see Output below. This is an artifact that must exist BEFORE coding — not something held in mind and coded straight into a Controller/Producer.
-6. **Handoff** — List every file created/updated clearly in the report, so the lead orchestrator (`feature-development`/`bug-fix`) can add it to the "Files Changed" list.
+1. **Discover** - Read the existing contract (OpenAPI/`.graphql`/`.proto`/AsyncAPI if present) and the naming/versioning/auth conventions already in use. Determine the kind of communication being designed: synchronous (REST/GraphQL/RPC) or asynchronous via a broker (`kafka-skill`/`rabbitmq-skill`/`pubsub-skill`). If a distributed-systems-level decision is still open (which services should even talk to each other, sync vs. async as an architecture choice), that's `architecture-designer`'s call to make first - this skill takes it from there to the concrete contract.
+2. **Choose the Protocol** - If not already constrained by an existing convention, compare trade-offs (see `references/protocol-choice.md`) and choose the best-fitting option, stating the reasoning in the report. Only ask the user back when the decision affects multiple services already running in production.
+3. **Design the Contract** - Apply the correct principles for the chosen protocol type (see the Reference Guide below), including error format and security scheme. Always write message contracts to the AsyncAPI standard.
+4. **Validate** - If the project already has a spec-lint tool (e.g. `@redocly/cli` for OpenAPI), run it before reporting done. Don't add a new tool just for this purpose if the project doesn't already have one.
+5. **Write the Contract to a Real File** - Mandatory, see Output below. This is an artifact that must exist BEFORE coding - not something held in mind and coded straight into a Controller/Producer.
+6. **Handoff** - List every file created/updated clearly in the report, so the lead orchestrator (`feature-development`/`bug-fix`) can add it to the "Files Changed" list.
 
 ## Reference Guide
 
@@ -50,26 +50,26 @@ Load detail based on the context currently being designed:
 ## Constraints
 
 ### MUST DO
-- Determine clearly whether this is a NEW contract or a change to one with existing dependent consumers/producers — that determines whether a breaking change needs user confirmation first.
-- Use one shared error schema across the whole API/service — never let each endpoint invent its own format.
+- Determine clearly whether this is a NEW contract or a change to one with existing dependent consumers/producers - that determines whether a breaking change needs user confirmation first.
+- Use one shared error schema across the whole API/service - never let each endpoint invent its own format.
 - Include a clear deprecation policy whenever releasing a version with a breaking change.
 - For message contracts (Kafka/RabbitMQ/Pub-Sub): always write them to the AsyncAPI 3.x standard, never an ad-hoc, disconnected JSON format.
-- Always specify the REQUIRED delivery semantics (at-least-once/exactly-once) for a message contract — this is a contract term, not a broker implementation detail.
+- Always specify the REQUIRED delivery semantics (at-least-once/exactly-once) for a message contract - this is a contract term, not a broker implementation detail.
 - Write the contract to a real file (see Output), even when the feature only adds one small endpoint/event.
 
 ### MUST NOT DO
-- Never decide broker infrastructure detail (partitions, consumer groups, ack mode) — that belongs to `kafka-skill`/`rabbitmq-skill`/`pubsub-skill` at implementation time.
+- Never decide broker infrastructure detail (partitions, consumer groups, ack mode) - that belongs to `kafka-skill`/`rabbitmq-skill`/`pubsub-skill` at implementation time.
 - Never change the shape/field number/type of a contract that ALREADY has real dependent consumers without asking the user first.
 - Never skip writing the file just because "the endpoint is too simple to need its own contract."
-- Never put a verb in a REST URI (`/getUser/{id}` — wrong; `/users/{id}` — right).
+- Never put a verb in a REST URI (`/getUser/{id}` - wrong; `/users/{id}` - right).
 - Never change or reuse a `.proto` field number that's already been published.
 
-## Output — MANDATORY, must be written to a real file
+## Output - MANDATORY, must be written to a real file
 
 1. **REST**: update the existing OpenAPI file (`openapi.yaml`/`.json`) if the project has one, or create `docs/api/<feature-slug>.openapi.yaml`.
 2. **GraphQL**: update the existing schema file (`.graphql`/`schema.gql`) if the project has one, or create `docs/api/<feature-slug>.graphql`.
 3. **RPC**: update/create the matching `.proto` file in the project's existing package.
-4. **Message contract (Kafka/RabbitMQ/Pub-Sub)**: ALWAYS write it to the AsyncAPI standard at `docs/api/<feature-slug>.asyncapi.yaml` — a living doc to cross-check against later, even if the project has no existing AsyncAPI convention (see `references/message-contract.md` for a starter skeleton).
+4. **Message contract (Kafka/RabbitMQ/Pub-Sub)**: ALWAYS write it to the AsyncAPI standard at `docs/api/<feature-slug>.asyncapi.yaml` - a living doc to cross-check against later, even if the project has no existing AsyncAPI convention (see `references/message-contract.md` for a starter skeleton).
 
 ## Templates
 
@@ -141,14 +141,14 @@ See `references/error-handling.md` for the full application rules.
 
 This skill decides data shape, endpoint/method/topic naming, required delivery semantics, and
 versioning strategy. It does NOT decide deployment infrastructure detail (partitions, consumer groups,
-ack mode, resolver caching) — that belongs to the relevant technical skill at implementation time.
+ack mode, resolver caching) - that belongs to the relevant technical skill at implementation time.
 It also does NOT decide whether two services should communicate synchronously or asynchronously in the
-first place, or what the service boundaries are — that's `architecture-designer`'s job; this skill
+first place, or what the service boundaries are - that's `architecture-designer`'s job; this skill
 finalizes the contract once that architectural decision is already made.
 
 For a COMPLETELY NEW contract (no consumer/producer depends on it yet), if multiple reasonable designs
-exist, choose the best one by clear criteria — simplicity, consistency with existing conventions, fewest
-breaking changes — and state the reasoning in the report, no need to ask first. Only stop to ask the
+exist, choose the best one by clear criteria - simplicity, consistency with existing conventions, fewest
+breaking changes - and state the reasoning in the report, no need to ask first. Only stop to ask the
 user when the contract already has a real consumer and the change would be breaking, or when the
 original request is too vague to infer the actual business intent.
 

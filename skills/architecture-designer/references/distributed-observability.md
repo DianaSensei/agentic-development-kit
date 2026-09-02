@@ -1,9 +1,9 @@
 # Observability in Distributed Systems
 
-This file covers what's specific to *distributed* observability — correlating signals across service
+This file covers what's specific to *distributed* observability - correlating signals across service
 boundaries, SLOs/error budgets, dependency mapping, and multi-service incident debugging. For the
 actual logging/metrics/tracing instrumentation itself (structured logging setup, Prometheus metric
-types, OpenTelemetry SDK configuration, alert rule syntax, tool selection) see `monitoring-expert` —
+types, OpenTelemetry SDK configuration, alert rule syntax, tool selection) see `monitoring-expert` -
 that skill owns the pillars themselves; this file assumes them and focuses on what changes when a
 request spans multiple services instead of one.
 
@@ -13,17 +13,17 @@ A single service can often be debugged from its own logs. A distributed request 
 might be in any of N services, so the something all three pillars need is a way to correlate them
 *across* service boundaries, not just within one:
 
-- **Correlation ID propagation** — every service a request touches must accept an incoming
+- **Correlation ID propagation** - every service a request touches must accept an incoming
   correlation/trace ID (or generate one if absent, as the entry point) and forward it to every
-  downstream call it makes — HTTP headers, message headers, and log context alike. A gap anywhere in
+  downstream call it makes - HTTP headers, message headers, and log context alike. A gap anywhere in
   this chain breaks the ability to reconstruct the full request path later.
-- **Distributed tracing** — a **trace** is the full journey of one request across every service it
+- **Distributed tracing** - a **trace** is the full journey of one request across every service it
   touched; a **span** is one operation within that trace (one HTTP call, one DB query), with a parent
   span linking it back to what triggered it. The trace is what turns "service X is slow" into "service
-  X is slow because it's waiting on service Y's database query" — see `monitoring-expert` for how to
+  X is slow because it's waiting on service Y's database query" - see `monitoring-expert` for how to
   actually instrument spans; this file is about *why* the trace must span every service, not drop at a
   boundary.
-- **Sampling at the architecture level** — tracing every request is expensive at scale, so sampling
+- **Sampling at the architecture level** - tracing every request is expensive at scale, so sampling
   strategy is itself an architecture decision made once, consistently, across all services (not
   per-service): probabilistic (trace N% uniformly), tail-based (always trace errors and slow requests,
   sample the rest), or priority-based (always trace premium users / critical endpoints). Whichever is
@@ -94,7 +94,7 @@ Benefits:
 ```
 
 In a distributed system, define an SLO per service boundary that other services depend on, not just
-one SLO for the system as a whole — a downstream service's SLO is effectively a contract the upstream
+one SLO for the system as a whole - a downstream service's SLO is effectively a contract the upstream
 services are implicitly relying on when they set their own SLOs, so an unbudgeted downstream SLO makes
 every upstream SLO built on top of it meaningless.
 
@@ -124,13 +124,13 @@ annotations:
 ```
 
 For the full Prometheus alerting rule syntax and Alertmanager routing setup, see
-`monitoring-expert`'s `references/alerting-rules.md` — the query above is the SLO-specific shape to
+`monitoring-expert`'s `references/alerting-rules.md` - the query above is the SLO-specific shape to
 add on top of that general alerting setup.
 
 ## Dependency Mapping
 
 A service dependency graph (which service calls which, and how critical each edge is) is a
-distributed-observability deliverable in its own right — it's what turns "service X is down" into
+distributed-observability deliverable in its own right - it's what turns "service X is down" into
 "here are the N services whose SLOs are now at risk because they depend on X," and it's the input to
 deciding where circuit breakers and fallbacks are actually necessary (see
 `references/resilience-patterns.md`). Distributed tracing data is the most reliable source for
@@ -208,7 +208,7 @@ Scenario: API returning 500 errors
 ```
 
 This is the concrete payoff of correlation ID propagation and distributed tracing being set up
-correctly ahead of time (see above) — without them, step 2-3 above degenerates into manually
+correctly ahead of time (see above) - without them, step 2-3 above degenerates into manually
 cross-referencing timestamps across N services' separate logs, which doesn't reliably work once
 request volume is more than trivial.
 
@@ -238,7 +238,7 @@ request volume is more than trivial.
 ```
 
 A service that's missing any of these is not actually ready to be a dependency other services rely
-on — treat this checklist as part of the service's Definition of Done during decomposition (see
+on - treat this checklist as part of the service's Definition of Done during decomposition (see
 `references/service-decomposition.md`), not as something bolted on after the service is already live.
 
 ## Summary

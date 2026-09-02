@@ -1,6 +1,6 @@
 # EXPLAIN Analysis & Index Design
 
-## Reading EXPLAIN — always mandatory BEFORE claiming a slow query needs an index
+## Reading EXPLAIN - always mandatory BEFORE claiming a slow query needs an index
 
 ```sql
 -- PostgreSQL: always include BUFFERS to see the cache-hit vs disk-read ratio
@@ -17,7 +17,7 @@ SELECT * FROM orders WHERE status = 'pending' AND created_at > NOW() - INTERVAL 
 EXPLAIN FORMAT=JSON SELECT ...;  -- more detail when needed
 ```
 
-**Reading the results — patterns to watch for:**
+**Reading the results - patterns to watch for:**
 
 | Pattern | Meaning | Fix direction |
 |---------|---------|-------------|
@@ -26,7 +26,7 @@ EXPLAIN FORMAT=JSON SELECT ...;  -- more detail when needed
 | `Buffers: hit low, read high` | Low cache hit ratio | Increase `shared_buffers`, or add a covering index |
 | `Sort Method: external merge` | Sort spilled to disk | Increase `work_mem` for that session |
 | `Nested Loop` with a large outer set | Exponential growth | Index the join column of the inner table |
-| `Index Only Scan` | Best case — no heap read needed | No further action needed |
+| `Index Only Scan` | Best case - no heap read needed | No further action needed |
 
 Node type from fastest to slowest: `Index Only Scan` > `Index Scan` > `Bitmap Index Scan` > `Seq Scan`
 (acceptable for small tables, a problem for large ones).
@@ -37,13 +37,13 @@ Node type from fastest to slowest: `Index Only Scan` > `Index Scan` > `Bitmap In
 CREATE INDEX idx_users_email ON users(email);               -- WHERE
 CREATE INDEX idx_orders_user_id ON orders(user_id);          -- JOIN
 
--- Composite: column order matters — equality columns first, range columns after; most selective column first
+-- Composite: column order matters - equality columns first, range columns after; most selective column first
 CREATE INDEX idx_orders_status_created ON orders(status, created_at);
 -- Good for: WHERE status = 'pending'; WHERE status = 'pending' AND created_at > ...
 -- NOT usable for: WHERE created_at > ... (missing status at the front)
 ```
 
-## Covering Index — avoids heap fetches, enables Index Only Scan
+## Covering Index - avoids heap fetches, enables Index Only Scan
 
 ```sql
 -- PostgreSQL: INCLUDE for columns not needed in the filter/sort condition, only needed in the SELECT
@@ -55,10 +55,10 @@ CREATE INDEX idx_orders_user_covering ON orders(user_id, status, created_at, tot
 ```
 
 Always create indexes with `CREATE INDEX CONCURRENTLY` (PostgreSQL) to avoid locking the table when
-deploying to production — index builds often take a while on large tables, and `CONCURRENTLY` allows
+deploying to production - index builds often take a while on large tables, and `CONCURRENTLY` allows
 normal reads/writes to continue in parallel.
 
-## Partial / Expression Index — smaller, faster when you only need a subset of the data
+## Partial / Expression Index - smaller, faster when you only need a subset of the data
 
 ```sql
 -- Partial: only index the portion of data that's actually queried
@@ -81,7 +81,7 @@ CREATE INDEX idx_users_metadata ON users USING GIN(metadata);       -- WHERE met
 -- GiST: geometric (PostGIS), range types
 CREATE INDEX idx_events_time_range ON events USING GIST(time_range);
 
--- BRIN: very large tables, naturally ordered data (time-series insert-only) — extremely small index
+-- BRIN: very large tables, naturally ordered data (time-series insert-only) - extremely small index
 CREATE INDEX idx_metrics_time_brin ON metrics USING BRIN(timestamp);
 ```
 
@@ -116,8 +116,8 @@ WHERE index_name IS NOT NULL AND count_star = 0 AND object_schema = 'your_databa
 
 ## Index Design Checklist
 
-1. Identify real query patterns via `pg_stat_statements`/slow query log — don't guess.
-2. Check `EXPLAIN` — look for `Seq Scan` on large tables.
+1. Identify real query patterns via `pg_stat_statements`/slow query log - don't guess.
+2. Check `EXPLAIN` - look for `Seq Scan` on large tables.
 3. Design order: equality → range → include.
 4. Create with `CONCURRENTLY` to avoid locking the production table.
 5. Confirm the improvement with `EXPLAIN` before/after.

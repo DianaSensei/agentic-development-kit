@@ -2,7 +2,7 @@
 
 Guide for identifying service boundaries using domain-driven design principles. For the mechanics of
 *incrementally migrating* an existing monolith toward these boundaries (strangler fig, phased
-extraction, parallel-run/shadow testing), see `legacy-modernizer` instead — this file is about
+extraction, parallel-run/shadow testing), see `legacy-modernizer` instead - this file is about
 designing the target boundaries, not the migration path to get there.
 
 ## Domain-Driven Design Foundation
@@ -176,7 +176,7 @@ Data Strategy:
 - Test rollback scenarios
 ```
 
-**4. Extract Service — target end-state per service:**
+**4. Extract Service - target end-state per service:**
 ```
 1. New service skeleton with its own database
 2. Business logic implemented
@@ -184,7 +184,7 @@ Data Strategy:
 4. Deployed to staging, then production
 
 For the actual step-by-step extraction sequence from a live monolith (dual-write, traffic
-shifting, decommissioning the old code path safely) — see `legacy-modernizer`'s strangler-fig-pattern
+shifting, decommissioning the old code path safely) - see `legacy-modernizer`'s strangler-fig-pattern
 and migration-strategies references, which cover this in full depth including rollback mechanics.
 ```
 

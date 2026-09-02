@@ -8,13 +8,13 @@ pip install "mcp[cli]" pydantic
 
 ## Which API to Use
 
-The SDK offers two layers. Default to the high-level `FastMCP` API — `@mcp.tool()` / `@mcp.resource()`
+The SDK offers two layers. Default to the high-level `FastMCP` API - `@mcp.tool()` / `@mcp.resource()`
 / `@mcp.prompt()` decorators generate the schema from type hints and handle routing for you. See
 `SKILL.md`'s Minimal Working Example for the smallest `FastMCP` server; this file adds prompt
 registration and structured error handling on top of that. Reach for the low-level `Server` API
 (further below) only when you need custom protocol behavior `FastMCP` doesn't expose.
 
-## High-Level API — Additional Patterns
+## High-Level API - Additional Patterns
 
 ### Prompt Registration
 
@@ -52,7 +52,7 @@ async def get_weather(location: str) -> str:
 
 ## Advanced: Low-Level Server API
 
-Use this only when `FastMCP`'s automatic routing/validation doesn't fit — for example implementing a
+Use this only when `FastMCP`'s automatic routing/validation doesn't fit - for example implementing a
 custom request method outside the standard tools/resources/prompts primitives, or needing raw control
 over initialization options. For ordinary tool/resource/prompt servers, use the high-level API above
 instead.

@@ -3,7 +3,7 @@
 Principles (why cross-OS behavior/performance consistency matters) live in SKILL.md. This file covers
 the actual code and CI setup.
 
-## `#[cfg(target_os)]` — Divergent Logic
+## `#[cfg(target_os)]` - Divergent Logic
 
 ```rust
 #[cfg(target_os = "macos")]
@@ -17,10 +17,10 @@ fn default_shortcut_modifier() -> &'static str {
 }
 ```
 
-Handle all target OS explicitly — if the app targets macOS + Windows + Linux, write all three arms (or
+Handle all target OS explicitly - if the app targets macOS + Windows + Linux, write all three arms (or
 the `any(...)` grouping above), not just the two you remembered. A missing arm is a compile error for
 an exhaustive `match`, but `#[cfg]` functions fail silently (the function just doesn't exist on the
-unhandled OS) if you forget one entirely — this is the actual footgun, not the compiler catching it for
+unhandled OS) if you forget one entirely - this is the actual footgun, not the compiler catching it for
 you.
 
 ## OS-Correct Paths (Never Hardcode)
@@ -40,7 +40,7 @@ fn get_export_dir(app: tauri::AppHandle) -> Result<String, CommandError> {
 ```
 
 ```rust
-// WRONG — breaks on Windows (backslash separator, different root) and assumes a
+// WRONG - breaks on Windows (backslash separator, different root) and assumes a
 // Unix-style home directory layout that doesn't hold on Windows.
 let bad_path = format!("{}/Library/App Support/myapp", std::env::var("HOME").unwrap());
 ```
@@ -73,7 +73,7 @@ const formatted = new Intl.DateTimeFormat('en-US', {
 ## CI: Building and Testing on All Target OS
 
 Use `tauri-apps/tauri-action` with a GitHub Actions matrix so every push actually builds on macOS,
-Windows, and Linux — not just whichever OS the developer's machine happens to be.
+Windows, and Linux - not just whichever OS the developer's machine happens to be.
 
 ```yaml
 # .github/workflows/build.yml
@@ -113,7 +113,7 @@ jobs:
 ```
 
 A build that only succeeds on the developer's OS but fails in this matrix (missing WebKitGTK deps on
-Linux is the most common case) is a real, frequently-hit failure mode — don't treat "it built on my
+Linux is the most common case) is a real, frequently-hit failure mode - don't treat "it built on my
 machine" as done for a cross-OS-targeted app.
 
 ## Desktop E2E Across OS (WebdriverIO + Tauri)
@@ -140,5 +140,5 @@ export const config: WebdriverIO.Config = {
 ```
 
 This still needs the compiled binary per OS, so E2E in CI runs per matrix leg after the build step, not
-as a single cross-platform job — and per SKILL.md's boundary, don't set this infrastructure up
+as a single cross-platform job - and per SKILL.md's boundary, don't set this infrastructure up
 unprompted if the project doesn't already have it; propose it and wait for the user's decision.

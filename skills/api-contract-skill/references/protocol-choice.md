@@ -1,6 +1,6 @@
-# Protocol Comparison — REST vs GraphQL vs RPC vs Message
+# Protocol Comparison - REST vs GraphQL vs RPC vs Message
 
-Choose the right protocol for the RIGHT type of communication — a wrong choice here is
+Choose the right protocol for the RIGHT type of communication - a wrong choice here is
 hard to fix later because many clients/consumers will depend on it.
 
 ## REST (OpenAPI)
@@ -32,14 +32,14 @@ hard to fix later because many clients/consumers will depend on it.
   like `grpcurl`).
 
 ## Message (Kafka/RabbitMQ/Pub-Sub)
-- Suitable for: ASYNCHRONOUS communication — no immediate response needed, need to
+- Suitable for: ASYNCHRONOUS communication - no immediate response needed, need to
   decouple producer/consumer, need retry/replay capability, one-to-many consumers
   interested in the same event.
 - Not suitable for: needing an immediate response within the same request (use
   REST/RPC), business flows requiring strong consistency right away (use synchronous
   transactions).
 - See `references/message-contract.md` to choose the right broker (Kafka vs RabbitMQ
-  vs Pub/Sub) — that decision belongs to the corresponding broker's technical skill,
+  vs Pub/Sub) - that decision belongs to the corresponding broker's technical skill,
   not this skill.
 
 ## Quick decision rules
@@ -51,7 +51,7 @@ hard to fix later because many clients/consumers will depend on it.
 4. Don't need an immediate response, need decoupling/replay/multiple consumers →
    **Message**.
 
-If a requirement could reasonably go multiple ways — decide using the rules above and
+If a requirement could reasonably go multiple ways - decide using the rules above and
 briefly state the reasoning in the report; no need to ask unless this is a decision
 that affects many services already running in production (changing the communication
 protocol between existing services).

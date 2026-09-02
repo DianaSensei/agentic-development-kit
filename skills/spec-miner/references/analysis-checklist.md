@@ -1,7 +1,7 @@
 # Analysis Checklist
 
 Use this after running the exploration patterns in `references/analysis-process.md` to confirm coverage
-is complete before writing the specification — this file tracks completeness, it does not repeat the
+is complete before writing the specification - this file tracks completeness, it does not repeat the
 Glob/Grep patterns themselves.
 
 ## Analysis Phases

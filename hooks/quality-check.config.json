@@ -27,7 +27,7 @@
   "$comment_code_extensions": "What the Stop gate counts as a code change worth reviewing. Documentation-only turns never trigger it.",
   "code_extensions": "\\.(java|kt|kts|rs|ts|tsx|js|jsx|py|go|rb|php|cs|sql|sh|bash|yaml|yml|tf|gradle|xml|toml)$",
 
-  "$comment_checkpoint_gate": "workflows are the skills whose CHECKPOINT this gate enforces — each is instructed to confirm via AskUserQuestion using this exact header before Step 3/4 may write code. Add a workflow name here only if its SKILL.md documents a CHECKPOINT the same way.",
+  "$comment_checkpoint_gate": "workflows are the skills whose CHECKPOINT this gate enforces - each is instructed to confirm via AskUserQuestion using this exact header before Step 3/4 may write code. Add a workflow name here only if its SKILL.md documents a CHECKPOINT the same way.",
   "checkpoint_gate": {
     "header": "Checkpoint",
     "workflows": ["feature-development", "bug-fix", "refactor"]
@@ -41,9 +41,9 @@
     "require_experience_log": false
   },
 
-  "$comment_write_lint": "Cheap textual checks on freshly written content. Advisory only — real review is the review_skill's job, not a regex's.",
+  "$comment_write_lint": "Cheap textual checks on freshly written content. Advisory only - real review is the review_skill's job, not a regex's.",
   "write_lint": {
-    "$comment_patterns": "POSIX ERE, matched case-insensitively (grep -Ei). Keep them cheap — this hook runs after every single write.",
+    "$comment_patterns": "POSIX ERE, matched case-insensitively (grep -Ei). Keep them cheap - this hook runs after every single write.",
     "secret_patterns": [
       "(api[_-]?key|secret|passwd|password|token)[[:space:]]*[:=][[:space:]]*[\"'][^\"'{$][^\"']{7,}[\"']",
       "-----BEGIN [A-Z ]*PRIVATE KEY-----",

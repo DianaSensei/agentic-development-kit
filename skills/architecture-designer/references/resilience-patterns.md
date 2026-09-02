@@ -372,13 +372,13 @@ covered alongside distributed transactions in `references/distributed-data-manag
 ### Event Sourcing & CQRS (brief)
 
 Both are covered in depth in `references/distributed-data-management.md` (event store design,
-snapshots, schema evolution) — summarized here only for when to reach for them as a *resilience/
+snapshots, schema evolution) - summarized here only for when to reach for them as a *resilience/
 consistency* tool:
 
-- **Event Sourcing** — store state changes as immutable events instead of overwriting rows; use when
+- **Event Sourcing** - store state changes as immutable events instead of overwriting rows; use when
   a full audit trail, temporal queries ("state as of yesterday"), or event replay for debugging are
   required. Costs eventual consistency and added storage/replay infrastructure.
-- **CQRS** — split the write model (validates commands, stores events) from the read model
+- **CQRS** - split the write model (validates commands, stores events) from the read model
   (denormalized, event-driven, eventually consistent); use when read and write load/optimization needs
   diverge significantly. Often paired with event sourcing but not required to be.
 

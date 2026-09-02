@@ -6,10 +6,10 @@
 
 ### Official Atlassian MCP Server
 
-Atlassian hosts an official **remote** MCP server — there is nothing to install locally. It exposes
+Atlassian hosts an official **remote** MCP server - there is nothing to install locally. It exposes
 Jira, Confluence, Jira Service Management, Bitbucket, and Compass over a single OAuth 2.1-authenticated
 endpoint (`https://mcp.atlassian.com/v1/mcp`). Local clients (Claude Desktop, VS Code, Cursor) reach it
-through the `mcp-remote` npm package, which acts as a stdio-to-HTTP proxy — see the Claude Desktop
+through the `mcp-remote` npm package, which acts as a stdio-to-HTTP proxy - see the Claude Desktop
 Configuration example below. Source: [atlassian/atlassian-mcp-server](https://github.com/atlassian/atlassian-mcp-server).
 
 **Capabilities:**
@@ -70,7 +70,7 @@ Edit your Claude Desktop config file:
   }
 }
 ```
-> No env vars needed — the first connection opens a browser window for OAuth 2.1 sign-in; credentials are cached for subsequent sessions.
+> No env vars needed - the first connection opens a browser window for OAuth 2.1 sign-in; credentials are cached for subsequent sessions.
 
 **sooperset with API Token:**
 ```json

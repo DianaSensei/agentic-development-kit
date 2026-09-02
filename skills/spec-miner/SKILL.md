@@ -39,12 +39,12 @@ You operate with two perspectives: **Arch Hat** for system architecture and data
 ### Example Exploration Patterns
 
 Identify the stack FIRST via its dependency manifest (`pom.xml`/`build.gradle` → Java/Spring, `Cargo.toml`
-→ Rust/Tauri, `package.json` → Node/TS, `requirements.txt`/`pyproject.toml` → Python, `go.mod` → Go) —
+→ Rust/Tauri, `package.json` → Node/TS, `requirements.txt`/`pyproject.toml` → Python, `go.mod` → Go) -
 do NOT assume a language before confirming it. See `references/analysis-process.md` for the full pattern
 set per stack:
 
 ```
-# Technical debt markers — applies to every stack
+# Technical debt markers - applies to every stack
 Grep('TODO|FIXME|HACK|XXX')
 
 # Java/Spring: entry point + route
@@ -105,14 +105,14 @@ Save the specification as `specs/{project_name}_reverse_spec.md`, following the 
 
 ## Boundaries
 
-- This skill's output is *understanding* — a specification document describing what existing code does,
+- This skill's output is *understanding* - a specification document describing what existing code does,
   for a reader who doesn't yet know. It doesn't change the code, and it doesn't decide what should
   happen next with it.
-- Overlaps with `legacy-modernizer` on dependency mapping — the difference is purpose: this skill maps
+- Overlaps with `legacy-modernizer` on dependency mapping - the difference is purpose: this skill maps
   dependencies to document and explain an unfamiliar system; `legacy-modernizer` maps them as input to a
   migration plan. If the goal after understanding the system is to actually migrate/decompose it, hand
   off to `legacy-modernizer` rather than re-deriving a migration strategy here.
-- Overlaps with `code-documenter` on generating API documentation from source — the difference is the
+- Overlaps with `code-documenter` on generating API documentation from source - the difference is the
   starting condition: this skill is for a system that's undocumented/legacy/inherited, where the spec
   has to be reverse-engineered from behavior; `code-documenter` is for a system with a known owner,
   documenting code going forward as part of normal development. Once a system has been reverse-engineered

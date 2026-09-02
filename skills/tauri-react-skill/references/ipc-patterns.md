@@ -1,8 +1,8 @@
-# IPC Patterns — Commands, State, and Events
+# IPC Patterns - Commands, State, and Events
 
 ## Command Returning `Result<T, E>`
 
-The error type `E` must implement `serde::Serialize` — this is the single most common gotcha with
+The error type `E` must implement `serde::Serialize` - this is the single most common gotcha with
 Tauri v2 commands. A plain `std::error::Error` type does NOT cross the IPC boundary; if it doesn't
 serialize, the command fails at compile time (or, with `Box<dyn Error>`, at runtime with an opaque
 message) instead of giving the frontend a structured error.
@@ -22,7 +22,7 @@ pub enum CommandError {
     Internal,
 }
 
-// io::Error, sqlx::Error, etc. don't implement Serialize — convert explicitly,
+// io::Error, sqlx::Error, etc. don't implement Serialize - convert explicitly,
 // and don't leak internal details (paths, SQL, stack traces) to the frontend.
 impl From<std::io::Error> for CommandError {
     fn from(err: std::io::Error) -> Self {
@@ -42,7 +42,7 @@ fn get_project(id: u64) -> Result<Project, CommandError> {
 ```
 
 ```typescript
-// React side — invoke rejects with the serialized CommandError, not a generic Error
+// React side - invoke rejects with the serialized CommandError, not a generic Error
 import { invoke } from '@tauri-apps/api/core';
 
 try {
@@ -96,12 +96,12 @@ fn main() {
 ```
 
 Prefer async-aware locks (`tokio::sync::Mutex`) over `std::sync::Mutex` when the lock is held across an
-`.await` point inside an async command — holding a `std::sync::Mutex` guard across `.await` can
+`.await` point inside an async command - holding a `std::sync::Mutex` guard across `.await` can
 deadlock the async runtime.
 
 ## Events for Streaming/Progress (v2 API)
 
-Tauri v2 renamed the event API — `emit_all` (v1) is gone; use the `Emitter`/`Listener` traits.
+Tauri v2 renamed the event API - `emit_all` (v1) is gone; use the `Emitter`/`Listener` traits.
 
 ```rust
 use tauri::{AppHandle, Emitter};
@@ -141,7 +141,7 @@ function useImportProgress() {
       (event) => setProgress(event.payload),
     );
 
-    // MUST unlisten on unmount — otherwise listeners pile up across remounts.
+    // MUST unlisten on unmount - otherwise listeners pile up across remounts.
     return () => {
       unlistenPromise.then((unlisten) => unlisten());
     };
@@ -151,7 +151,7 @@ function useImportProgress() {
 }
 ```
 
-## `useInvoke` Pattern — Loading/Error/Success in One Hook
+## `useInvoke` Pattern - Loading/Error/Success in One Hook
 
 Every `invoke` call needs all three states (see SKILL.md's React section). A small shared hook avoids
 repeating the same three `useState` calls in every component:

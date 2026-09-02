@@ -1,6 +1,6 @@
 ---
 name: code-review-skill
-description: Objective code-review checklist to run before reporting work complete — general conventions, clean-code, plus a per-technology checklist for whatever was actually used. This is the SELF-CHECK step Claude ALWAYS proactively runs as the last step before reporting done on any change involving code — no separate user request needed. Do NOT use this when the user actively requests a diff/PR review ("review this", "/code-review") — use the built-in `code-review`/`review` skill for that case.
+description: Objective code-review checklist to run before reporting work complete - general conventions, clean-code, plus a per-technology checklist for whatever was actually used. This is the SELF-CHECK step Claude ALWAYS proactively runs as the last step before reporting done on any change involving code - no separate user request needed. Do NOT use this when the user actively requests a diff/PR review ("review this", "/code-review") - use the built-in `code-review`/`review` skill for that case.
 ---
 
 # Code Review Checklist
@@ -14,7 +14,7 @@ Read `CLAUDE.md`/existing conventions. Determine which technologies are ACTUALLY
 - Clear naming, consistent with convention.
 - No significant duplication (DRY), no function/class carrying too many responsibilities.
   When one of these does fire and the fix isn't obvious, read `solution-design-principles` to name the
-  principle and the concrete symptom — a finding stated as "changing X breaks unrelated Y" is actionable
+  principle and the concrete symptom - a finding stated as "changing X breaks unrelated Y" is actionable
   where "violates SRP" is not.
 - No hardcoded secret/credential/API key.
 - Exceptions handled explicitly, no silently swallowed errors.
@@ -46,7 +46,7 @@ Read `CLAUDE.md`/existing conventions. Determine which technologies are ACTUALLY
 
 ## A Note on Objectivity
 
-If this is a self-review (the same agent that just wrote the code), it's inherently less objective than a separate session/agent reviewing it. A severe issue MUST be fixed before reporting done — never skip it just because "this is only a self-review." For more objectivity, suggest the user open a new Claude Code session (no shared context) for an independent review.
+If this is a self-review (the same agent that just wrote the code), it's inherently less objective than a separate session/agent reviewing it. A severe issue MUST be fixed before reporting done - never skip it just because "this is only a self-review." For more objectivity, suggest the user open a new Claude Code session (no shared context) for an independent review.
 
 ## Knowledge Reference
 

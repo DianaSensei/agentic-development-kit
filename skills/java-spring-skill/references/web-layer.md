@@ -1,4 +1,4 @@
-# Web Layer — Controller, DTO, Exception Handling
+# Web Layer - Controller, DTO, Exception Handling
 
 ## REST Controller
 
@@ -66,9 +66,9 @@ public record UserResponse(
 }
 ```
 
-## Global Exception Handling (ProblemDetail — RFC 7807)
+## Global Exception Handling (ProblemDetail - RFC 7807)
 
-Use `ProblemDetail` (built-in to Spring 6+) instead of defining a custom error record — it directly matches the RFC 7807 standard that `api-contract-skill` has already chosen as the default error format, avoiding format drift between the spec and the real implementation.
+Use `ProblemDetail` (built-in to Spring 6+) instead of defining a custom error record - it directly matches the RFC 7807 standard that `api-contract-skill` has already chosen as the default error format, avoiding format drift between the spec and the real implementation.
 
 ```java
 @RestControllerAdvice
@@ -99,7 +99,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleUnexpected(Exception ex) {
         log.error("Unexpected error", ex);
-        // Don't expose the raw ex.getMessage() to the client for an unidentified 500 error — the details are
+        // Don't expose the raw ex.getMessage() to the client for an unidentified 500 error - the details are
         // already logged; the client only needs to know an infrastructure error occurred so it can retry/contact support.
         return ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred");
     }

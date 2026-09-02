@@ -1,6 +1,6 @@
 ---
 name: secure-code-guardian
-description: Use when IMPLEMENTING authentication/authorization, securing user input, or preventing OWASP Top 10 vulnerabilities while writing code — custom security implementations such as hashing passwords with bcrypt/argon2, sanitizing SQL queries with parameterized statements, configuring CORS/CSP headers, validating input with Zod, and setting up JWT tokens. Produces secure CODE, not audit reports. Invoke for authentication, authorization, input validation, encryption, OWASP Top 10 prevention, secure session management, and security hardening. For auditing/scanning EXISTING code or infrastructure for vulnerabilities (SAST, penetration testing, compliance checks) instead of writing new secure code, use `security-reviewer`.
+description: Use when IMPLEMENTING authentication/authorization, securing user input, or preventing OWASP Top 10 vulnerabilities while writing code - custom security implementations such as hashing passwords with bcrypt/argon2, sanitizing SQL queries with parameterized statements, configuring CORS/CSP headers, validating input with Zod, and setting up JWT tokens. Produces secure CODE, not audit reports. Invoke for authentication, authorization, input validation, encryption, OWASP Top 10 prevention, secure session management, and security hardening. For auditing/scanning EXISTING code or infrastructure for vulnerabilities (SAST, penetration testing, compliance checks) instead of writing new secure code, use `security-reviewer`.
 metadata:
   domain: security
   triggers: security, authentication, authorization, encryption, OWASP, vulnerability, secure coding, password, JWT, OAuth
@@ -14,11 +14,11 @@ metadata:
 
 ## Core Workflow
 
-1. **Threat model** — Identify attack surface and threats
-2. **Design** — Plan security controls
-3. **Implement** — Write secure code with defense in depth; see code examples below
-4. **Validate** — Test security controls with explicit checkpoints (see below)
-5. **Document** — Record security decisions
+1. **Threat model** - Identify attack surface and threats
+2. **Design** - Plan security controls
+3. **Implement** - Write secure code with defense in depth; see code examples below
+4. **Validate** - Test security controls with explicit checkpoints (see below)
+5. **Document** - Record security decisions
 
 ### Validation Checkpoints
 
@@ -88,7 +88,7 @@ const pool = new Pool();
 export async function getUserByEmail(email: string) {
   const { rows } = await pool.query(
     'SELECT id, email, role FROM users WHERE email = $1',
-    [email]  // value passed separately — never interpolated
+    [email]  // value passed separately - never interpolated
   );
   return rows[0] ?? null;
 }
@@ -107,7 +107,7 @@ const LoginSchema = z.object({
 export function validateLoginInput(raw: unknown) {
   const result = LoginSchema.safeParse(raw);
   if (!result.success) {
-    // Return generic error — never echo raw input back
+    // Return generic error - never echo raw input back
     throw new Error('Invalid credentials format');
   }
   return result.data;
@@ -133,7 +133,7 @@ export function verifyToken(token: string): jwt.JwtPayload {
 }
 ```
 
-### Securing an Endpoint — Full Flow
+### Securing an Endpoint - Full Flow
 
 ```typescript
 import express from 'express';
@@ -155,21 +155,21 @@ app.post('/api/login', authLimiter, async (req, res) => {
   // 1. Validate input
   const { email, password } = validateLoginInput(req.body);
 
-  // 2. Authenticate — parameterized query, constant-time compare
+  // 2. Authenticate - parameterized query, constant-time compare
   const user = await getUserByEmail(email);
   if (!user || !(await verifyPassword(password, user.passwordHash))) {
-    // Generic message — do not reveal whether email exists
+    // Generic message - do not reveal whether email exists
     return res.status(401).json({ error: 'Invalid credentials' });
   }
 
-  // 3. Authorize — issue scoped, short-lived token
+  // 3. Authorize - issue scoped, short-lived token
   const token = jwt.sign(
     { sub: user.id, role: user.role },
     JWT_SECRET,
     { algorithm: 'HS256', expiresIn: '15m', issuer: 'your-app', audience: 'your-app' }
   );
 
-  // 4. Secure response — token in httpOnly cookie, not body
+  // 4. Secure response - token in httpOnly cookie, not body
   res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'strict' });
   return res.json({ message: 'Authenticated' });
 });

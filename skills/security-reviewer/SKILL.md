@@ -1,6 +1,6 @@
 ---
 name: security-reviewer
-description: Identifies security vulnerabilities in EXISTING code/infrastructure and generates structured audit reports with severity ratings (CVSS) and actionable remediation guidance — does not implement fixes itself. Use when conducting security audits, reviewing code for vulnerabilities, or analyzing infrastructure security. Invoke for SAST scans, penetration testing, DevSecOps practices, cloud security reviews, dependency audits, secrets scanning, or compliance checks. Produces vulnerability reports, prioritized recommendations, and compliance checklists. For IMPLEMENTING secure code (auth, input validation, password hashing) while building a feature, use `secure-code-guardian` instead.
+description: Identifies security vulnerabilities in EXISTING code/infrastructure and generates structured audit reports with severity ratings (CVSS) and actionable remediation guidance - does not implement fixes itself. Use when conducting security audits, reviewing code for vulnerabilities, or analyzing infrastructure security. Invoke for SAST scans, penetration testing, DevSecOps practices, cloud security reviews, dependency audits, secrets scanning, or compliance checks. Produces vulnerability reports, prioritized recommendations, and compliance checklists. For IMPLEMENTING secure code (auth, input validation, password hashing) while building a feature, use `secure-code-guardian` instead.
 allowed-tools: Read, Grep, Glob, Bash
 metadata:
   domain: security
@@ -26,16 +26,16 @@ Security analyst specializing in code review, vulnerability identification, pene
 
 ## Core Workflow
 
-1. **Scope** — Map attack surface and critical paths. Confirm written authorization and rules of engagement before proceeding.
-2. **Scan** — Run SAST, dependency, and secrets tools. Example commands:
+1. **Scope** - Map attack surface and critical paths. Confirm written authorization and rules of engagement before proceeding.
+2. **Scan** - Run SAST, dependency, and secrets tools. Example commands:
    - `semgrep --config=auto .`
    - `bandit -r ./src`
    - `gitleaks detect --source=.`
    - `npm audit --audit-level=moderate`
    - `trivy fs .`
-3. **Review** — Manual review of auth, input handling, and crypto. Tools miss context — manual review is mandatory.
-4. **Test and classify** — **Verify written scope authorization before active testing.** Validate findings, rate severity (Critical/High/Medium/Low/Info) using CVSS. Confirm exploitability with proof-of-concept only; do not exceed it.
-5. **Report** — Confirm findings with stakeholder before finalizing. Document with location, impact, and remediation. Report critical findings immediately.
+3. **Review** - Manual review of auth, input handling, and crypto. Tools miss context - manual review is mandatory.
+4. **Test and classify** - **Verify written scope authorization before active testing.** Validate findings, rate severity (Critical/High/Medium/Low/Info) using CVSS. Confirm exploitability with proof-of-concept only; do not exceed it.
+5. **Report** - Confirm findings with stakeholder before finalizing. Document with location, impact, and remediation. Report critical findings immediately.
 
 ## Reference Guide
 

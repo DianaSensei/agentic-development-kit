@@ -11,14 +11,14 @@
 ## Architecture Summary
 
 ### Technology Stack
-- **Language/Runtime**: [exact version found in the manifest — e.g. Java 21, Rust 1.7x, Node 20.x, Python 3.12]
+- **Language/Runtime**: [exact version found in the manifest - e.g. Java 21, Rust 1.7x, Node 20.x, Python 3.12]
 - **Framework**: [e.g. Spring Boot 3.x, Tauri 2.x, NestJS 10.x, FastAPI]
-- **Database**: [exact DB + version found — see `database-skill` for deeper analysis if needed]
-- **ORM/Data Access**: [e.g. Spring Data JPA, Prisma, SQLAlchemy — if applicable]
+- **Database**: [exact DB + version found - see `database-skill` for deeper analysis if needed]
+- **ORM/Data Access**: [e.g. Spring Data JPA, Prisma, SQLAlchemy - if applicable]
 
 ### Module Structure
 ```
-[Actual directory tree of the project — taken from the Glob results in Step 1, do not copy the example]
+[Actual directory tree of the project - taken from the Glob results in Step 1, do not copy the example]
 ```
 
 ### Data Flow

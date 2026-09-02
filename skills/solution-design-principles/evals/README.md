@@ -1,4 +1,4 @@
-# Trigger evals — `solution-design-principles`
+# Trigger evals - `solution-design-principles`
 
 `trigger-eval.json` checks whether Claude Code selects this skill for the right requests. Claude Code
 matches on a skill's `name` + `description` only (the `metadata.triggers` field is a convention of this
@@ -6,7 +6,7 @@ repo, not something the matcher reads), so this eval set is what verifies a desc
 break selection.
 
 20 queries, 10 positive / 10 negative. The negatives are deliberate near-misses aimed at the skills this
-one competes with most directly — `architecture-designer` (service decomposition, deployment topology),
+one competes with most directly - `architecture-designer` (service decomposition, deployment topology),
 `java-spring-skill` (JPA, package structure), `refactor`, `security-reviewer`, `monitoring-expert`,
 `legacy-modernizer`, `database-skill`. They share vocabulary with this skill ("coupling", "principles",
 "boundaries", "lock-in") but each belongs elsewhere, so they test the description's negative-scoping
@@ -27,7 +27,7 @@ the queries it tuned against.
 
 ## Measured baseline
 
-First run (3 iterations, holdout 0.4): **precision 100%, test recall 0%** — every negative was correctly
+First run (3 iterations, holdout 0.4): **precision 100%, test recall 0%** - every negative was correctly
 rejected, and no positive ever triggered. Three LLM-generated description rewrites left test recall at
 zero, which is what ruled out wording as the cause.
 
@@ -42,7 +42,7 @@ Two things to carry into a future run:
   never triggers still scores 50% on a balanced set, because it gets all ten negatives right for the
   wrong reason. Read recall first.
 - **A failing eval is not automatically a description problem.** If rewrites don't move test recall,
-  check reachability before continuing to tune wording — and bear in mind this skill's content is
+  check reachability before continuing to tune wording - and bear in mind this skill's content is
   general engineering knowledge a model will often answer from directly, which raises the bar for
   autonomous triggering no matter how the description is phrased.
 

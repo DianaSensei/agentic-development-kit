@@ -1,7 +1,7 @@
 # Postmortem Template (Step 6.3)
 
 ```markdown
-# Postmortem: <bug name> — <discovery date>
+# Postmortem: <bug name> - <discovery date>
 
 ## Time Discovered
 

@@ -1,7 +1,7 @@
 # Unit Testing
 
 For Java/JUnit5 + Mockito patterns (mocking, `@ExtendWith(MockitoExtension.class)`, AssertJ), see
-`java-spring-skill/references/testing.md` — that file already covers the JVM stack in depth, this file
+`java-spring-skill/references/testing.md` - that file already covers the JVM stack in depth, this file
 focuses on Jest/Vitest (Node) and pytest (Python) instead of duplicating it.
 
 ## Jest/Vitest Pattern

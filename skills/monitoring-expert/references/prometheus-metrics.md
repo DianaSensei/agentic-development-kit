@@ -122,7 +122,7 @@ def metrics():
 
 ## Java (Spring Boot / Micrometer)
 
-Spring Boot's metrics facade is Micrometer, not `prom-client` — Micrometer publishes to whichever
+Spring Boot's metrics facade is Micrometer, not `prom-client` - Micrometer publishes to whichever
 backend is configured (Prometheus, Datadog, etc.) through the same API. The `/actuator/prometheus`
 scrape endpoint itself (dependency, `management.endpoints` config) is covered in
 `java-spring-skill/references/cloud-resilience.md`; this section is the metric-registration code that
@@ -139,7 +139,7 @@ public class OrderMetrics {
     private final Counter ordersCreated;
     private final Timer orderProcessingTime;
 
-    // MeterRegistry is auto-configured by Spring Boot Actuator — inject it, don't construct a registry.
+    // MeterRegistry is auto-configured by Spring Boot Actuator - inject it, don't construct a registry.
     public OrderMetrics(MeterRegistry registry) {
         this.ordersCreated = Counter.builder("orders_created_total")
             .description("Total orders created")
@@ -163,7 +163,7 @@ public class OrderMetrics {
 ```
 
 ```java
-// Gauge — bind to a live value (e.g. a collection size) instead of setting it manually each time.
+// Gauge - bind to a live value (e.g. a collection size) instead of setting it manually each time.
 import io.micrometer.core.instrument.Gauge;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -174,7 +174,7 @@ Gauge.builder("active_connections", connections, ConcurrentHashMap::size)
 
 Naming convention differs slightly by ecosystem: Micrometer names use dots (`orders.created`) by
 Java/Spring convention, but its Prometheus registry auto-converts dots to underscores and appends the
-base unit on export — the PromQL side (`orders_created_total`) ends up matching the same `_total`/
+base unit on export - the PromQL side (`orders_created_total`) ends up matching the same `_total`/
 `_seconds` suffix convention as the Node.js examples above.
 
 ## Quick Reference

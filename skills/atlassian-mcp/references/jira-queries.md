@@ -293,7 +293,7 @@ const report = await client.callTool({
 ### Worklog Operations
 
 Log time spent working on an issue. Use this to record actual elapsed time from a local work
-session — not estimates, and not story points (`customfield_10001` in the examples above is a
+session - not estimates, and not story points (`customfield_10001` in the examples above is a
 separate, planning-time concept).
 
 ```typescript
@@ -317,7 +317,7 @@ const worklogs = await client.callTool({
 
 #### Logging Time From a Local Session
 
-Track the session's own wall-clock start/end rather than guessing — round only for display,
+Track the session's own wall-clock start/end rather than guessing - round only for display,
 never fabricate a duration:
 
 ```typescript
@@ -334,7 +334,7 @@ async function logSessionWork(
   const elapsedMs = Date.now() - sessionStart.getTime();
   const timeSpent = formatJiraDuration(elapsedMs);
 
-  // Jira records at 1-minute granularity — skip logging sub-minute sessions
+  // Jira records at 1-minute granularity - skip logging sub-minute sessions
   if (elapsedMs < 60_000) return;
 
   await client.callTool({
@@ -359,7 +359,7 @@ function formatJiraDuration(ms: number): string {
 ```
 
 > **Known Cloud API gotcha:** worklog comments are sometimes silently dropped on Jira Cloud
-> when the comment body isn't in the format the v2 API expects — pass a plain string (as above),
+> when the comment body isn't in the format the v2 API expects - pass a plain string (as above),
 > and verify with `jira_get_worklogs` after logging significant time rather than assuming the
 > comment landed. ([sooperset/mcp-atlassian#1045](https://github.com/sooperset/mcp-atlassian/issues/1045))
 
@@ -376,7 +376,7 @@ Use `jira_create_issue_link` to create dependency relationships between issues.
 | `inward_issue_key` | **Blocker** | This issue blocks the other |
 | `outward_issue_key` | **Blocked** | This issue is blocked by the other |
 
-**Memory aid:** `inward_issue_key` = the issue receiving the inward description ("is blocked by") — but it is the *blocker*. Think: "the inward key is where the arrow points FROM."
+**Memory aid:** `inward_issue_key` = the issue receiving the inward description ("is blocked by") - but it is the *blocker*. Think: "the inward key is where the arrow points FROM."
 
 #### Single Blocks Link
 
@@ -445,7 +445,7 @@ await client.callTool({
 #### Anti-Pattern: Reversed Parameters
 
 ```typescript
-// WRONG — This makes AUTH-2 block AUTH-1 (backwards!)
+// WRONG - This makes AUTH-2 block AUTH-1 (backwards!)
 await client.callTool({
   name: "jira_create_issue_link",
   arguments: {

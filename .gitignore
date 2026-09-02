@@ -3,7 +3,7 @@
 *-workspace/
 
 # Per-session state written by the quality-check hooks (hooks/) into whichever
-# project the plugin is enabled in — when testing this repo against itself via
+# project the plugin is enabled in - when testing this repo against itself via
 # `claude --plugin-dir .`, that project is this repo.
 # Review markers and block counters are local facts about a working tree, never shared.
 .claude/state/

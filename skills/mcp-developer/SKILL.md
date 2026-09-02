@@ -16,12 +16,12 @@ Senior MCP developer with deep expertise in building servers and clients that co
 
 ## Core Workflow
 
-1. **Analyze requirements** — Identify data sources, tools needed, client apps, and whether the server runs locally (stdio) or remotely (Streamable HTTP, requiring authorization).
-2. **Initialize project** — `npx @modelcontextprotocol/create-server my-server` (TypeScript) or `pip install "mcp[cli]"` + scaffold (Python). Confirm the SDK version pulled in supports the protocol version this server targets — see `references/protocol.md`.
-3. **Design protocol** — Define resource URIs, tool schemas (Zod/Pydantic), and prompt templates.
-4. **Implement** — Register tools/resources/prompts using the SDK's high-level API (`McpServer` in TypeScript, `FastMCP` in Python — see below); configure transport (stdio for local, Streamable HTTP for remote).
-5. **Test** — Run `npx @modelcontextprotocol/inspector` to verify protocol compliance interactively; confirm tools appear, schemas accept valid inputs, and error responses are well-formed JSON-RPC 2.0. **Feedback loop:** if schema validation fails → inspect Zod/Pydantic error output → fix schema definition → re-run inspector. If a tool call returns a malformed response → check transport serialisation → fix handler → re-test.
-6. **Deploy** — Package, add OAuth 2.1 authorization for any remote/multi-tenant server (see `references/protocol.md`), configure rate-limiting and env vars, monitor.
+1. **Analyze requirements** - Identify data sources, tools needed, client apps, and whether the server runs locally (stdio) or remotely (Streamable HTTP, requiring authorization).
+2. **Initialize project** - `npx @modelcontextprotocol/create-server my-server` (TypeScript) or `pip install "mcp[cli]"` + scaffold (Python). Confirm the SDK version pulled in supports the protocol version this server targets - see `references/protocol.md`.
+3. **Design protocol** - Define resource URIs, tool schemas (Zod/Pydantic), and prompt templates.
+4. **Implement** - Register tools/resources/prompts using the SDK's high-level API (`McpServer` in TypeScript, `FastMCP` in Python - see below); configure transport (stdio for local, Streamable HTTP for remote).
+5. **Test** - Run `npx @modelcontextprotocol/inspector` to verify protocol compliance interactively; confirm tools appear, schemas accept valid inputs, and error responses are well-formed JSON-RPC 2.0. **Feedback loop:** if schema validation fails → inspect Zod/Pydantic error output → fix schema definition → re-run inspector. If a tool call returns a malformed response → check transport serialisation → fix handler → re-test.
+6. **Deploy** - Package, add OAuth 2.1 authorization for any remote/multi-tenant server (see `references/protocol.md`), configure rate-limiting and env vars, monitor.
 
 ## Reference Guide
 
@@ -31,14 +31,14 @@ Load detailed guidance based on context:
 |-------|-----------|-----------|
 | Protocol | `references/protocol.md` | Message types, lifecycle, JSON-RPC 2.0, protocol version negotiation, transports |
 | Authorization | `references/authorization.md` | Securing a remote/Streamable HTTP server with OAuth 2.1 |
-| TypeScript SDK | `references/typescript-sdk.md` | Building servers/clients in Node.js — high-level `McpServer` API plus low-level API for advanced cases |
-| Python SDK | `references/python-sdk.md` | Building servers/clients in Python — high-level `FastMCP` API plus low-level API for advanced cases |
+| TypeScript SDK | `references/typescript-sdk.md` | Building servers/clients in Node.js - high-level `McpServer` API plus low-level API for advanced cases |
+| Python SDK | `references/python-sdk.md` | Building servers/clients in Python - high-level `FastMCP` API plus low-level API for advanced cases |
 | Tools | `references/tools.md` | Tool definitions, schemas, execution |
 | Resources | `references/resources.md` | Resource providers, URIs, templates |
 
 ## Minimal Working Example
 
-### TypeScript — Tool with Zod Validation
+### TypeScript - Tool with Zod Validation
 
 ```typescript
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -77,7 +77,7 @@ const transport = new StdioServerTransport();
 await server.connect(transport);
 ```
 
-### Python — Tool with Pydantic Validation
+### Python - Tool with Pydantic Validation
 
 ```python
 from mcp.server.fastmcp import FastMCP
@@ -125,7 +125,7 @@ Server → { "result": { "content": [{ "type": "text", "text": "{\"temp\": 18, \
 ### MUST NOT DO
 - Skip input validation on tool inputs
 - Expose sensitive data in resource content
-- Ignore protocol version negotiation — a server must advertise a version it actually supports, not assume the client's
+- Ignore protocol version negotiation - a server must advertise a version it actually supports, not assume the client's
 - Mix synchronous blocking code into async transport handlers
 - Hardcode credentials or secrets
 - Return unstructured errors to clients
@@ -142,19 +142,19 @@ When implementing MCP features, provide:
 
 ## Boundaries
 
-- This skill implements the MCP layer itself — protocol handling, tool/resource/prompt registration,
+- This skill implements the MCP layer itself - protocol handling, tool/resource/prompt registration,
   transport, authorization. The business logic a tool calls into (a database query, an external API
   call) is written using whatever language/framework skill fits that logic in this project (e.g.
-  `java-spring-skill` for a Java backend, `rust-engineer` for pure Rust logic) — this skill wires that
+  `java-spring-skill` for a Java backend, `rust-engineer` for pure Rust logic) - this skill wires that
   logic into MCP, it doesn't replace the skill that owns it.
 - A full security review of a server exposed to untrusted clients (threat modeling, dependency
   auditing, secret-handling review beyond the OAuth flow itself) is `security-reviewer`'s job.
 - Packaging, containerizing, and operating a deployed server (CI/CD, infrastructure, scaling) is outside
-  this skill's scope — this skill covers what the server needs at runtime (env vars, rate limits), not
+  this skill's scope - this skill covers what the server needs at runtime (env vars, rate limits), not
   how it gets deployed. Installing/connecting an already-built third-party MCP server (as opposed to
   authoring a new one) is `mcp-setup`'s job.
 - The MCP spec evolves quickly; before citing a protocol version, transport name, or SDK API as
-  "current," verify against `references/protocol.md` or the live spec — this file is a snapshot, not
+  "current," verify against `references/protocol.md` or the live spec - this file is a snapshot, not
   a guarantee it stays current after future spec revisions.
 
 ## Knowledge Reference

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SessionStart — inject the routing + self-check rules that the skill library
+# SessionStart - inject the routing + self-check rules that the skill library
 # depends on but cannot enforce on its own.
 #
 # On SessionStart, stdout is shown to Claude as plain text. Keep it short: this
@@ -9,7 +9,7 @@
 
 [ "$(mode_of session_context warn)" = "off" ] && exit 0
 
-# General engineering/style guidelines — independent of whether this kit's own
+# General engineering/style guidelines - independent of whether this kit's own
 # skills are installed here, so this block does not gate on resolve_skill.
 # A project can turn just this block off (keeping the kit-specific rules below)
 # via .claude/quality-check.config.json: {"session_context":{"general_guidelines":false}}.
@@ -47,7 +47,7 @@ cat <<TXT
 - Before editing a file that a technical skill owns, Read that skill's SKILL.md in full, within the
   scope of the CURRENT request (a read from an earlier request does not count).
 - Inside \`feature-development\`/\`bug-fix\`/\`refactor\`, a CHECKPOINT is not satisfied by presenting a
-  proposal — it requires an actual \`AskUserQuestion\` call with \`header\` set exactly to
+  proposal - it requires an actual \`AskUserQuestion\` call with \`header\` set exactly to
   \`"Checkpoint"\`. A PreToolUse hook checks the transcript for this before Step 3/4 may write code.
 - Before reporting any code change done, run the \`$REVIEW_SKILL\` self-check on the diff and fix
   severe findings, then record it with the mark-reviewed hook. A Stop hook checks this.

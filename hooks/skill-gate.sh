@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# PreToolUse (Edit|Write|MultiEdit|NotebookEdit) — enforce feature-development
+# PreToolUse (Edit|Write|MultiEdit|NotebookEdit) - enforce feature-development
 # Step 3.1: the technical SKILL.md that owns a file must have been read, within
 # the scope of the current request, before that file is edited.
 #
@@ -30,10 +30,10 @@ done < <(jq -r '.skill_map[]? | .match, .skill' "$CONFIG_FILE" 2>/dev/null)
 [ -n "$SKILL" ] || exit 0
 
 SKILL_MD="$(resolve_skill "$SKILL")"
-[ -n "$SKILL_MD" ] || exit 0   # skill not installed here — nothing to enforce
+[ -n "$SKILL_MD" ] || exit 0   # skill not installed here - nothing to enforce
 
 TRANSCRIPT="$(jq_in '.transcript_path')"
-[ -f "$TRANSCRIPT" ] || exit 0  # cannot verify — fail open
+[ -f "$TRANSCRIPT" ] || exit 0  # cannot verify - fail open
 
 # Start of the current request = the last genuine user message (see common.sh).
 START="$(last_user_message_line "$TRANSCRIPT")"
@@ -45,7 +45,7 @@ if transcript_tail_from "$TRANSCRIPT" "$START" \
   exit 0
 fi
 
-MSG="[skill-gate] \`$REL\` is owned by the \`$SKILL\` skill, which has not been read in this request. Read \`${SKILL_MD#"$PROJECT_DIR"/}\` in full, then make the edit (feature-development Step 3.1 — a read from an earlier request does not carry over)."
+MSG="[skill-gate] \`$REL\` is owned by the \`$SKILL\` skill, which has not been read in this request. Read \`${SKILL_MD#"$PROJECT_DIR"/}\` in full, then make the edit (feature-development Step 3.1 - a read from an earlier request does not carry over)."
 
 if [ "$MODE" = "block" ]; then
   jq -nc --arg r "$MSG" '{

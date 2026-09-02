@@ -2,7 +2,7 @@
 # Docs: https://mcp-toolbox.dev/documentation/
 #
 # All secrets/connection info below are pulled from environment variables
-# (see ../.env). Toolbox does NOT read .env files itself — export them into
+# (see ../.env). Toolbox does NOT read .env files itself - export them into
 # the process environment before starting toolbox, e.g.:
 #   set -a && source .env && set +a && ./toolbox --config tools.yaml
 
@@ -77,18 +77,18 @@ uri: ${MONGODB_URI}
 #   - *_query_data:  free-form SELECT. Its description tells the agent which
 #     system catalogs to query for introspection (tables/columns, indexes,
 #     sequences, stored procedures), so we don't need a dedicated tool per
-#     catalog — the agent writes the SQL based on context.
+#     catalog - the agent writes the SQL based on context.
 #   - *_list_tables: kept separately because it returns richer, pre-formatted
 #     table schema info (constraints/triggers/owner) than a raw catalog
 #     query would conveniently give you.
 #
-# No UPDATE/DELETE/DROP or any other write/DDL capability is exposed here —
+# No UPDATE/DELETE/DROP or any other write/DDL capability is exposed here -
 # none of the tools below can execute a write statement. That said,
 # postgres-execute-sql (used by *_query_data) forwards whatever SQL text
 # it's given, with no parser to reject a write statement at the Toolbox
-# layer — this config alone is not a hard guarantee. For a real guarantee,
+# layer - this config alone is not a hard guarantee. For a real guarantee,
 # POSTGRES_*_USER in .env must itself be a SELECT-only DB role. This repo
-# does not create or modify that role — provisioning it is the database
+# does not create or modify that role - provisioning it is the database
 # owner/DBA's responsibility, outside of MCP setup.
 
 ---
@@ -98,8 +98,8 @@ type: postgres-execute-sql
 source: postgres-primary-source
 description: >-
   Run any read-only SQL query (SELECT) against the primary PostgreSQL
-  database — general data queries as well as ad hoc schema introspection.
-  Do not INSERT/UPDATE/DELETE/DROP/TRUNCATE/ALTER — this connection is
+  database - general data queries as well as ad hoc schema introspection.
+  Do not INSERT/UPDATE/DELETE/DROP/TRUNCATE/ALTER - this connection is
   expected to use a SELECT-only DB role, but always write queries as if
   writes were possible and avoid them. For introspection, query the system
   catalogs directly: information_schema.tables / information_schema.columns
@@ -131,8 +131,8 @@ type: postgres-execute-sql
 source: postgres-analytics-source
 description: >-
   Run any read-only SQL query (SELECT) against the analytics PostgreSQL
-  database — general data queries as well as ad hoc schema introspection.
-  Do not INSERT/UPDATE/DELETE/DROP/TRUNCATE/ALTER — this connection is
+  database - general data queries as well as ad hoc schema introspection.
+  Do not INSERT/UPDATE/DELETE/DROP/TRUNCATE/ALTER - this connection is
   expected to use a SELECT-only DB role, but always write queries as if
   writes were possible and avoid them. For introspection, query the system
   catalogs directly: information_schema.tables / information_schema.columns
@@ -166,13 +166,13 @@ annotations:
 #   - mysql_list_tables: richer, pre-formatted schema info than a raw
 #     catalog query would give you.
 #
-# No UPDATE/DELETE/DROP or any other write/DDL capability is exposed here —
+# No UPDATE/DELETE/DROP or any other write/DDL capability is exposed here -
 # none of the tools below can execute a write statement. That said,
 # mysql-execute-sql (used by mysql_query_data) forwards whatever SQL text
 # it's given, with no parser to reject a write statement at the Toolbox
-# layer — this config alone is not a hard guarantee. For a real guarantee,
+# layer - this config alone is not a hard guarantee. For a real guarantee,
 # MYSQL_USER in .env must itself be a SELECT-only DB account. This repo
-# does not create or modify that account — provisioning it is the database
+# does not create or modify that account - provisioning it is the database
 # owner/DBA's responsibility, outside of MCP setup.
 
 ---
@@ -181,9 +181,9 @@ name: mysql_query_data
 type: mysql-execute-sql
 source: mysql-source
 description: >-
-  Run any read-only SQL query (SELECT) against the MySQL database —
+  Run any read-only SQL query (SELECT) against the MySQL database -
   general data queries as well as ad hoc schema introspection. Do not
-  INSERT/UPDATE/DELETE/DROP/TRUNCATE/ALTER — this connection is expected to
+  INSERT/UPDATE/DELETE/DROP/TRUNCATE/ALTER - this connection is expected to
   use a SELECT-only DB account, but always write queries as if writes were
   possible and avoid them. For introspection, query information_schema
   directly: information_schema.tables / information_schema.columns for
@@ -214,13 +214,13 @@ annotations:
 # source/tool kind (`tidb`, default port 4000) rather than reusing `mysql`.
 # Same two-tool, read-only-by-account pattern as above.
 #
-# No UPDATE/DELETE/DROP or any other write/DDL capability is exposed here —
+# No UPDATE/DELETE/DROP or any other write/DDL capability is exposed here -
 # none of the tools below can execute a write statement. That said,
 # tidb-execute-sql (used by tidb_query_data) forwards whatever SQL text
 # it's given, with no parser to reject a write statement at the Toolbox
-# layer — this config alone is not a hard guarantee. For a real guarantee,
+# layer - this config alone is not a hard guarantee. For a real guarantee,
 # TIDB_USER in .env must itself be a SELECT-only DB account. This repo
-# does not create or modify that account — provisioning it is the database
+# does not create or modify that account - provisioning it is the database
 # owner/DBA's responsibility, outside of MCP setup.
 
 ---
@@ -229,9 +229,9 @@ name: tidb_query_data
 type: tidb-execute-sql
 source: tidb-source
 description: >-
-  Run any read-only SQL query (SELECT) against the TiDB database — general
+  Run any read-only SQL query (SELECT) against the TiDB database - general
   data queries as well as ad hoc schema introspection. Do not
-  INSERT/UPDATE/DELETE/DROP/TRUNCATE/ALTER — this connection is expected to
+  INSERT/UPDATE/DELETE/DROP/TRUNCATE/ALTER - this connection is expected to
   use a SELECT-only DB account, but always write queries as if writes were
   possible and avoid them. For introspection, query information_schema
   directly: information_schema.tables / information_schema.columns for
@@ -308,7 +308,7 @@ type: redis
 source: redis-source
 description: >-
   List Redis keys matching a glob-style pattern (e.g. "user:*"). Caution:
-  KEYS scans the whole keyspace — use sparingly on large/production instances.
+  KEYS scans the whole keyspace - use sparingly on large/production instances.
 commands:
   - [KEYS, $pattern]
 parameters:

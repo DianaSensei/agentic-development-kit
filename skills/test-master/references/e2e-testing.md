@@ -1,9 +1,9 @@
 # E2E Testing
 
 Patterns below assume a standard web app driven by Playwright in a browser. For a Tauri desktop app,
-Playwright cannot drive the native webview directly — use `tauri-driver` (WebDriver-based, works with
+Playwright cannot drive the native webview directly - use `tauri-driver` (WebDriver-based, works with
 `webdriverio`/Selenium clients) against the compiled app binary instead, and drop the cross-browser matrix
-below (a Tauri app renders in one native webview per OS, not multiple browser engines) — coordinate with
+below (a Tauri app renders in one native webview per OS, not multiple browser engines) - coordinate with
 `tauri-react-skill` for what's already testable at the component level before reaching for full E2E.
 
 ## E2E Test Strategy
