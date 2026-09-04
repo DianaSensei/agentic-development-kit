@@ -23,10 +23,16 @@ every session. It only ever recognizes a file as safe to auto-update when its on
 still matches exactly what the hook itself last wrote there - never merely because a file
 "looks unchanged" on first sight:
 
-- **New file** → copied in.
-- **Matches what the hook last wrote, unchanged** → updated to the latest shipped version. A
-  plugin update that improves one of the six defaults (a better tool description, a new
-  parameter, a bug fix in a statement) reaches you automatically.
+- **New file, and every required field for it is filled in via this plugin's settings** →
+  copied in. Not yet fully configured → not copied in at all (see the note above this
+  section on why an incomplete connection can't just sit there unused).
+- **Matches what the hook last wrote, unchanged, and still fully configured** → updated to
+  the latest shipped version. A plugin update that improves one of the six defaults (a
+  better tool description, a new parameter, a bug fix in a statement) reaches you
+  automatically.
+- **Matches what the hook last wrote, but no longer fully configured** (you cleared a
+  field you'd filled in before) → removed, so `toolbox` doesn't fail to start over a
+  connection it can no longer fill in. Filling the field back in re-adds it next session.
 - **Doesn't match what the hook last wrote** → never overwritten, whether that's because you
   edited it, or because it's from an install predating this tracking (no recorded baseline to
   compare against - treated the same as a customization out of caution). The new shipped
@@ -132,9 +138,14 @@ Configure - and fill in whichever connections you're using:
 | Redis | `redis.yaml` |
 | MongoDB | `mongodb.yaml` |
 
-Leave every field of a connection blank to skip it entirely - Toolbox simply won't connect
-that one, without affecting the others. Password/token/URI fields are marked sensitive and
-stored securely (Keychain on macOS), never written to a plain settings file.
+Leave every field of a connection blank to skip it entirely, without affecting the others -
+the `SessionStart` hook (see below) only puts a connection's file where `toolbox` can see it
+once every one of its required fields is filled in, since `toolbox` itself has no
+per-connection "skip if unconfigured" behavior: an incomplete connection anywhere in its
+config folder fails the *entire* server, not just that one connection. Port fields default
+sensibly if left blank (5432/3306/4000); everything else needs a real value to use that
+connection at all. Password/token/URI fields are marked sensitive and stored securely
+(Keychain on macOS), never written to a plain settings file.
 
 You don't have to use this UI - `claude mcp get toolbox` also shows the underlying config if
 you'd rather inspect or script it.

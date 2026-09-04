@@ -37,12 +37,20 @@ review invalidates it - the next review covers the new state. Documentation-only
 nothing to do with the review gates above. It syncs the bundled `toolbox` MCP's six default database
 connections into `${CLAUDE_PLUGIN_DATA}/connections/`, since a marketplace-installed plugin has no local
 repo clone for the user to copy config from. See [`mcp/toolbox/README.md`](../mcp/toolbox/README.md).
-Runs every session but is a no-op once everything is already in sync; per file, tracked by a manifest
-recording the content this hook itself last wrote, so a plugin update can still reach a default you never
-touched (auto-updated) without ever overwriting one that doesn't match what it wrote - whether that's a
-real customization or a pre-existing install this tracking has no history for, both are treated the same:
-left alone, with the new version saved alongside as `<name>.upstream` to compare/merge by hand (reported
-once per upstream version, not every session). Deleting a file it previously wrote is respected as
+Also gates each of the six on having every required value actually configured (checked via the
+`CLAUDE_PLUGIN_OPTION_<KEY>` env vars Claude Code exports to hooks) before letting it into that
+directory at all: `toolbox` treats an incomplete connection's fields as required, so one left half-filled
+fails the entire server, not just that connection - a bug found the hard way (see the commit history for
+this file) when a real install with only 3 of the 6 defaults configured got "Failed to reconnect" with no
+useful detail surfaced in `/mcp`, traced by capturing the exact command and environment Claude Code
+actually spawned `toolbox` with. Runs every session but is a no-op once everything is already in sync; per
+file, tracked by a manifest recording the content this hook itself last wrote, so a plugin update can
+still reach a default you never touched (auto-updated) without ever overwriting one that doesn't match
+what it wrote - whether that's a real customization or a pre-existing install this tracking has no history
+for, both are treated the same: left alone, with the new version saved alongside as `<name>.upstream` to
+compare/merge by hand (reported once per upstream version, not every session). Clearing a previously-filled
+required field removes that connection's file (not a destructive edit - it only ever touches files it still
+recognizes as unedited). Deleting a file it previously wrote is respected as
 intentional and never recreated; deleting one it never trusted (still unresolved) reseeds it fresh from
 the current default instead. Fails open the same as every other hook here.
 
