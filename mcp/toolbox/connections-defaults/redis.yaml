@@ -1,7 +1,11 @@
 # Connection: Redis.
-# Env vars: REDIS_ADDRESS/USERNAME/PASSWORD/DATABASE - see ../.env.example.
-# Self-contained: delete this file to drop the connection, nothing else in this
-# directory references it. See ../examples/ to add a different connection.
+# Values (REDIS_ADDRESS/USERNAME/PASSWORD/DATABASE) are configured via this plugin's
+# settings (/plugin), which fill in the ${VAR} placeholders below.
+# This is the SHIPPED DEFAULT, seeded once into the writable
+# ${CLAUDE_PLUGIN_DATA}/connections/ on first run (see ../../hooks/toolbox-seed.sh)
+# - edit/delete the SEEDED COPY there, not this file; changes here only
+# affect future fresh installs. Self-contained: nothing else references it.
+# See ../examples/ to add a different connection.
 
 kind: source
 name: redis-source

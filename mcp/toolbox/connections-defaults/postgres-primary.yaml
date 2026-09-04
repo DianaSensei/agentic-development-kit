@@ -1,7 +1,11 @@
 # Connection: PostgreSQL "primary" (read-only).
-# Env vars: POSTGRES_PRIMARY_HOST/PORT/DATABASE/USER/PASSWORD - see ../.env.example.
-# Self-contained: delete this file to drop the connection, nothing else in this
-# directory references it. See ../examples/ to add a different connection.
+# Values (POSTGRES_PRIMARY_HOST/PORT/DATABASE/USER/PASSWORD) are configured via this plugin's
+# settings (/plugin), which fill in the ${VAR} placeholders below.
+# This is the SHIPPED DEFAULT, seeded once into the writable
+# ${CLAUDE_PLUGIN_DATA}/connections/ on first run (see ../../hooks/toolbox-seed.sh)
+# - edit/delete the SEEDED COPY there, not this file; changes here only
+# affect future fresh installs. Self-contained: nothing else references it.
+# See ../examples/ to add a different connection.
 
 kind: source
 name: postgres-primary-source
@@ -21,8 +25,8 @@ password: ${POSTGRES_PRIMARY_PASSWORD}
 # No UPDATE/DELETE/DROP/DDL tool is defined here. postgres-execute-sql
 # forwards whatever SQL text it's given though, with no parser to reject a
 # write statement - this config alone is not a hard guarantee. For a real
-# guarantee, POSTGRES_PRIMARY_USER in .env must itself be a SELECT-only DB
-# role, provisioned by the database owner/DBA.
+# guarantee, the user configured for postgres_primary_user must itself be a
+# SELECT-only DB role, provisioned by the database owner/DBA.
 
 ---
 kind: tool

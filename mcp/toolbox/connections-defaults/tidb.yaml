@@ -1,10 +1,14 @@
 # Connection: TiDB (read-only).
-# Env vars: TIDB_HOST/PORT/DATABASE/USER/PASSWORD - see ../.env.example.
+# Values (TIDB_HOST/PORT/DATABASE/USER/PASSWORD) are configured via this plugin's
+# settings (/plugin), which fill in the ${VAR} placeholders below.
 # For TiDB Cloud, Toolbox auto-enables TLS when TIDB_HOST matches the
 # *.tidbcloud.com pattern. For a self-hosted cluster that requires TLS, add
 # `ssl: true` to the source block below.
-# Self-contained: delete this file to drop the connection, nothing else in this
-# directory references it. See ../examples/ to add a different connection.
+# This is the SHIPPED DEFAULT, seeded once into the writable
+# ${CLAUDE_PLUGIN_DATA}/connections/ on first run (see ../../hooks/toolbox-seed.sh)
+# - edit/delete the SEEDED COPY there, not this file; changes here only
+# affect future fresh installs. Self-contained: nothing else references it.
+# See ../examples/ to add a different connection.
 
 kind: source
 name: tidb-source

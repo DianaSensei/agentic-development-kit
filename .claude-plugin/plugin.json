@@ -1,11 +1,159 @@
 {
   "name": "agentic-development-kit",
-  "description": "Skill library (workflow orchestration + per-technology knowledge), a tiered subagent pipeline, and quality-check hooks for AI-assisted software development. Technology-agnostic core; stack-specific knowledge lives in its own skills.",
+  "description": "Skill library (workflow orchestration + per-technology knowledge), a tiered subagent pipeline, quality-check hooks, and a bundled database MCP for AI-assisted software development. Technology-agnostic core; stack-specific knowledge lives in its own skills.",
   "version": "0.1.0",
   "author": {
     "name": "DianaSensei"
   },
   "homepage": "https://github.com/DianaSensei/agentic-development-kit",
   "repository": "https://github.com/DianaSensei/agentic-development-kit",
-  "license": "MIT"
+  "license": "MIT",
+  "userConfig": {
+    "postgres_primary_host": {
+      "type": "string",
+      "title": "PostgreSQL (primary) host",
+      "description": "Leave every field of a connection empty to skip it entirely - toolbox connects only to what's filled in."
+    },
+    "postgres_primary_port": {
+      "type": "string",
+      "title": "PostgreSQL (primary) port",
+      "description": "Defaults to 5432 if left empty.",
+      "default": "5432"
+    },
+    "postgres_primary_database": {
+      "type": "string",
+      "title": "PostgreSQL (primary) database",
+      "description": "Database name to connect to."
+    },
+    "postgres_primary_user": {
+      "type": "string",
+      "title": "PostgreSQL (primary) user",
+      "description": "Must be a read-only (SELECT-only) DB role - see mcp/toolbox/README.md."
+    },
+    "postgres_primary_password": {
+      "type": "string",
+      "title": "PostgreSQL (primary) password",
+      "description": "Stored securely, never written to a plain settings file.",
+      "sensitive": true
+    },
+    "postgres_analytics_host": {
+      "type": "string",
+      "title": "PostgreSQL (analytics) host",
+      "description": "Leave every field of this connection empty to skip it entirely."
+    },
+    "postgres_analytics_port": {
+      "type": "string",
+      "title": "PostgreSQL (analytics) port",
+      "description": "Defaults to 5432 if left empty.",
+      "default": "5432"
+    },
+    "postgres_analytics_database": {
+      "type": "string",
+      "title": "PostgreSQL (analytics) database",
+      "description": "Database name to connect to."
+    },
+    "postgres_analytics_user": {
+      "type": "string",
+      "title": "PostgreSQL (analytics) user",
+      "description": "Must be a read-only (SELECT-only) DB role."
+    },
+    "postgres_analytics_password": {
+      "type": "string",
+      "title": "PostgreSQL (analytics) password",
+      "description": "Stored securely, never written to a plain settings file.",
+      "sensitive": true
+    },
+    "mysql_host": {
+      "type": "string",
+      "title": "MySQL host",
+      "description": "Leave every field of this connection empty to skip it entirely."
+    },
+    "mysql_port": {
+      "type": "string",
+      "title": "MySQL port",
+      "description": "Defaults to 3306 if left empty.",
+      "default": "3306"
+    },
+    "mysql_database": {
+      "type": "string",
+      "title": "MySQL database",
+      "description": "Database name to connect to."
+    },
+    "mysql_user": {
+      "type": "string",
+      "title": "MySQL user",
+      "description": "Must be a read-only (SELECT-only) DB account."
+    },
+    "mysql_password": {
+      "type": "string",
+      "title": "MySQL password",
+      "description": "Stored securely, never written to a plain settings file.",
+      "sensitive": true
+    },
+    "tidb_host": {
+      "type": "string",
+      "title": "TiDB host",
+      "description": "Leave every field of this connection empty to skip it entirely."
+    },
+    "tidb_port": {
+      "type": "string",
+      "title": "TiDB port",
+      "description": "Defaults to 4000 if left empty.",
+      "default": "4000"
+    },
+    "tidb_database": {
+      "type": "string",
+      "title": "TiDB database",
+      "description": "Database name to connect to."
+    },
+    "tidb_user": {
+      "type": "string",
+      "title": "TiDB user",
+      "description": "Must be a read-only (SELECT-only) DB account."
+    },
+    "tidb_password": {
+      "type": "string",
+      "title": "TiDB password",
+      "description": "Stored securely, never written to a plain settings file.",
+      "sensitive": true
+    },
+    "redis_address": {
+      "type": "string",
+      "title": "Redis address",
+      "description": "host:port. Leave empty to skip the Redis connection entirely."
+    },
+    "redis_username": {
+      "type": "string",
+      "title": "Redis username",
+      "description": "Leave empty if no auth is used."
+    },
+    "redis_password": {
+      "type": "string",
+      "title": "Redis password",
+      "description": "Leave empty if no auth is used. Stored securely, never written to a plain settings file.",
+      "sensitive": true
+    },
+    "redis_database": {
+      "type": "string",
+      "title": "Redis database index",
+      "description": "Defaults to 0 if left empty.",
+      "default": "0"
+    },
+    "mongodb_uri": {
+      "type": "string",
+      "title": "MongoDB connection URI",
+      "description": "Full connection string, e.g. mongodb://user:pass@host:27017. Leave empty to skip the MongoDB connection entirely.",
+      "sensitive": true
+    },
+    "mongodb_database": {
+      "type": "string",
+      "title": "MongoDB database",
+      "description": "Default database used by the bundled mongodb_* tools."
+    },
+    "mongodb_collection": {
+      "type": "string",
+      "title": "MongoDB collection",
+      "description": "Default collection used by the bundled mongodb_* tools."
+    }
+  }
 }

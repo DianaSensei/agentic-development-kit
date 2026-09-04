@@ -6,11 +6,17 @@
 # free-form query_data on that source.
 #
 # HOW TO USE:
-#   1. Copy this file into ../connections/ (can live in its own file, or
-#      appended into an existing connection's file - Toolbox merges every
-#      *.yaml/*.yml under ../connections/ into one config either way).
-#   2. Point `source:` at an existing source name from one of the files in
-#      ../connections/ (e.g. `postgres-primary-source`).
+#   The easiest way is to just ask Claude Code, e.g. "add a toolbox tool
+#   that counts active users in the primary Postgres DB" - it can write
+#   this straight into the right place. To do it by hand:
+#   1. Copy this file into ${CLAUDE_PLUGIN_DATA}/connections/ (the
+#      writable, persistent directory the bundled toolbox MCP reads from;
+#      run `claude mcp get toolbox` to see the exact path) - it can live in
+#      its own file, or appended into an existing connection's file,
+#      Toolbox merges every *.yaml/*.yml in that directory into one config
+#      either way.
+#   2. Point `source:` at an existing source name from one of the files
+#      already there (e.g. `postgres-primary-source`).
 #   3. Rename the tool and rewrite `statement`/`parameters` for your case.
 #   4. Add it to that connection's toolset (or a new one) if you want it
 #      grouped there - grouping is informational only for stdio, every
@@ -19,7 +25,7 @@
 kind: tool
 name: postgres_primary_active_users_last_n_days
 type: postgres-execute-sql
-source: postgres-primary-source  # must match a source defined elsewhere in ../connections/
+source: postgres-primary-source  # must match a source already defined in that directory
 description: >-
   Count users in the primary PostgreSQL database who logged in within the
   last N days. Use this instead of query_data when you specifically need

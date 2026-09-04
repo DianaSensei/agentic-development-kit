@@ -4,30 +4,39 @@
 # the full list and each type's own source fields).
 #
 # HOW TO USE:
-#   1. Copy this file into ../connections/, renamed to something unique,
-#      e.g. `orders-db.yaml`.
+#   The easiest way is to just ask Claude Code, e.g. "add a toolbox
+#   connection for my orders Postgres database" - it can read this file
+#   and write the result straight into the right place. To do it by hand:
+#   1. Copy this file into ${CLAUDE_PLUGIN_DATA}/connections/ (the
+#      writable, persistent directory the bundled toolbox MCP reads from -
+#      run `claude mcp get toolbox` to see the exact path, or ask Claude
+#      Code "what's my CLAUDE_PLUGIN_DATA path?"), renamed to something
+#      unique, e.g. `orders-db.yaml`.
 #   2. Replace CONN_NAME everywhere below with a short, unique identifier
 #      for this connection (e.g. `orders`) - it must not collide with any
-#      other file's source/tool/toolset names in ../connections/.
-#   3. Add the matching CONN_NAME_HOST/PORT/DATABASE/USER/PASSWORD
-#      variables to ../.env (and ../.env.example if you want them
-#      documented for teammates too).
-#   4. Delete this comment block, drop the .example extension is not
-#      needed - Toolbox only loads *.yaml/*.yml from ../connections/, so
-#      leaving this file here as .example is safe and it's ignored.
+#      other file's source/tool/toolset name already in that directory.
+#   3. Fill in host/port/database/user/password with the real values,
+#      directly (no need for env vars or a .env file) - this directory is
+#      private to your machine, not committed to git or shared, so a
+#      literal value here is safe, the same way a personal-scope MCP
+#      entry in ~/.claude.json is.
+#   4. Drop the .example extension isn't required for the file you
+#      copied elsewhere, but leaving a copy of this template itself here
+#      is safe - Toolbox only loads *.yaml/*.yml, so a .example file is
+#      always ignored.
 #
 # The read-only guarantee (if you want one) comes from the DB account
-# itself - point CONN_NAME_USER at a SELECT-only role/account. Toolbox
+# itself - point the user field at a SELECT-only role/account. Toolbox
 # does not enforce this by inspecting SQL text.
 
 kind: source
 name: CONN_NAME-source
 type: postgres  # change to mysql / tidb / mssql / sqlite / spanner / etc.
-host: ${CONN_NAME_HOST}
-port: ${CONN_NAME_PORT}
-database: ${CONN_NAME_DATABASE}
-user: ${CONN_NAME_USER}
-password: ${CONN_NAME_PASSWORD}
+host: your-db-host
+port: 5432
+database: your-db-name
+user: your-read-only-user
+password: your-password
 
 ---
 kind: tool

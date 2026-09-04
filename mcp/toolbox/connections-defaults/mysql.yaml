@@ -1,7 +1,11 @@
 # Connection: MySQL (read-only).
-# Env vars: MYSQL_HOST/PORT/DATABASE/USER/PASSWORD - see ../.env.example.
-# Self-contained: delete this file to drop the connection, nothing else in this
-# directory references it. See ../examples/ to add a different connection.
+# Values (MYSQL_HOST/PORT/DATABASE/USER/PASSWORD) are configured via this plugin's
+# settings (/plugin), which fill in the ${VAR} placeholders below.
+# This is the SHIPPED DEFAULT, seeded once into the writable
+# ${CLAUDE_PLUGIN_DATA}/connections/ on first run (see ../../hooks/toolbox-seed.sh)
+# - edit/delete the SEEDED COPY there, not this file; changes here only
+# affect future fresh installs. Self-contained: nothing else references it.
+# See ../examples/ to add a different connection.
 
 kind: source
 name: mysql-source

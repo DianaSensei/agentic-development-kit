@@ -1,10 +1,14 @@
 # Connection: MongoDB.
-# Env vars: MONGODB_URI/DATABASE/COLLECTION - see ../.env.example.
+# Values (MONGODB_URI/DATABASE/COLLECTION) are configured via this plugin's
+# settings (/plugin), which fill in the ${VAR} placeholders below.
 # Bound to one database/collection at config time (Toolbox has no dynamic
 # collection param). Duplicate the tool blocks below with a different
 # `collection:` to expose another collection.
-# Self-contained: delete this file to drop the connection, nothing else in this
-# directory references it. See ../examples/ to add a different connection.
+# This is the SHIPPED DEFAULT, seeded once into the writable
+# ${CLAUDE_PLUGIN_DATA}/connections/ on first run (see ../../hooks/toolbox-seed.sh)
+# - edit/delete the SEEDED COPY there, not this file; changes here only
+# affect future fresh installs. Self-contained: nothing else references it.
+# See ../examples/ to add a different connection.
 
 kind: source
 name: mongodb-source

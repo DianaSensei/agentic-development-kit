@@ -2,7 +2,36 @@
   "mcpServers": {
     "toolbox": {
       "command": "toolbox",
-      "args": ["--stdio", "--config-folder", "${CLAUDE_PLUGIN_ROOT}/mcp/toolbox/connections"]
+      "args": ["--stdio", "--config-folder", "${CLAUDE_PLUGIN_DATA}/connections"],
+      "env": {
+        "POSTGRES_PRIMARY_HOST": "${user_config.postgres_primary_host}",
+        "POSTGRES_PRIMARY_PORT": "${user_config.postgres_primary_port}",
+        "POSTGRES_PRIMARY_DATABASE": "${user_config.postgres_primary_database}",
+        "POSTGRES_PRIMARY_USER": "${user_config.postgres_primary_user}",
+        "POSTGRES_PRIMARY_PASSWORD": "${user_config.postgres_primary_password}",
+        "POSTGRES_ANALYTICS_HOST": "${user_config.postgres_analytics_host}",
+        "POSTGRES_ANALYTICS_PORT": "${user_config.postgres_analytics_port}",
+        "POSTGRES_ANALYTICS_DATABASE": "${user_config.postgres_analytics_database}",
+        "POSTGRES_ANALYTICS_USER": "${user_config.postgres_analytics_user}",
+        "POSTGRES_ANALYTICS_PASSWORD": "${user_config.postgres_analytics_password}",
+        "MYSQL_HOST": "${user_config.mysql_host}",
+        "MYSQL_PORT": "${user_config.mysql_port}",
+        "MYSQL_DATABASE": "${user_config.mysql_database}",
+        "MYSQL_USER": "${user_config.mysql_user}",
+        "MYSQL_PASSWORD": "${user_config.mysql_password}",
+        "TIDB_HOST": "${user_config.tidb_host}",
+        "TIDB_PORT": "${user_config.tidb_port}",
+        "TIDB_DATABASE": "${user_config.tidb_database}",
+        "TIDB_USER": "${user_config.tidb_user}",
+        "TIDB_PASSWORD": "${user_config.tidb_password}",
+        "REDIS_ADDRESS": "${user_config.redis_address}",
+        "REDIS_USERNAME": "${user_config.redis_username}",
+        "REDIS_PASSWORD": "${user_config.redis_password}",
+        "REDIS_DATABASE": "${user_config.redis_database}",
+        "MONGODB_URI": "${user_config.mongodb_uri}",
+        "MONGODB_DATABASE": "${user_config.mongodb_database}",
+        "MONGODB_COLLECTION": "${user_config.mongodb_collection}"
+      }
     }
   }
 }

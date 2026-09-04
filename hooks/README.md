@@ -31,6 +31,15 @@ owns that judgement actually runs.
 `quality-gate.sh` fingerprints the changed code rather than setting a boolean, so editing code after a
 review invalidates it - the next review covers the new state. Documentation-only turns never trip it.
 
+### Not a quality-check hook: `toolbox-seed.sh`
+
+`hooks.json` also registers `toolbox-seed.sh` on `SessionStart`, alongside `session-context.sh` - it has
+nothing to do with the review gates above. It seeds the bundled `toolbox` MCP's default database
+connections into `${CLAUDE_PLUGIN_DATA}/connections/` the first time this plugin runs, since a
+marketplace-installed plugin has no local repo clone for the user to copy config from. See
+[`mcp/toolbox/README.md`](../mcp/toolbox/README.md). Runs once (no-ops forever after the destination
+exists) and fails open the same as every other hook here.
+
 ### About the defaults
 
 Every gate ships as `warn`, so installing this kit changes what you are *told*, not what you are
