@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "toolbox": {
+      "command": "toolbox",
+      "args": ["--stdio", "--config", "${CLAUDE_PLUGIN_ROOT}/mcp/toolbox/tools.yaml"]
+    }
+  }
+}

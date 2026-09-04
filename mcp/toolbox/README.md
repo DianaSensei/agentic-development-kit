@@ -55,39 +55,34 @@ cp .env.example .env
 
 Any source you're not using can keep its sample value.
 
-## Try it out
-
-In this directory (use `toolbox` if installed via Homebrew, or `./toolbox` if you
-downloaded the binary directly into this directory):
-
-```bash
-set -a && source .env && set +a
-toolbox --config tools.yaml
-```
-
-Seeing `Server ready to serve!` means it started successfully. Keep this process running,
-don't close the terminal.
-
-If you run into an error, it's usually caused by an incorrect value in `.env` - the error
-message typically points out which field is invalid.
-
 ## Register with Claude Code
 
-Open a different terminal (don't close the running toolbox process):
+This plugin ships a `.mcp.json` at its root that declares `toolbox` in stdio mode, so
+Claude Code starts and connects it automatically whenever this plugin is enabled - there's
+no `claude mcp add` step, and no separate process to keep running in another terminal.
+Toolbox itself does the `${VAR}` substitution in `tools.yaml`, reading straight from the
+process environment it inherits, so the variables from `.env` need to be exported into your
+shell **before** you start `claude`:
 
 ```bash
-claude mcp add toolbox --scope user --transport http http://127.0.0.1:5000/mcp
+set -a && source mcp/toolbox/.env && set +a
+claude
 ```
 
-Confirm:
+Any source whose variables aren't set is simply skipped by `toolbox`, without affecting the
+others - so this is safe to run even if you've only filled in some of the six sources.
+
+Confirm it connected:
 
 ```bash
 claude mcp list
 ```
 
-A `✔ Connected` status next to `toolbox` means it's done. If you see
-`✘ Failed to connect`, check whether the toolbox process from the previous step is still
-running.
+A `✔ Connected` status next to `toolbox` means it's done. If you see `✘ Failed to connect`,
+double check that the `toolbox` binary is on `PATH` (`toolbox --version`) and that `.env`
+was sourced into the shell Claude Code was started from - it's usually a missing or
+incorrect value in `.env`, or `claude` having been started from a different shell than the
+one `.env` was sourced into.
 
 ## Verify after connecting
 
@@ -108,55 +103,33 @@ request, Claude Code will pick the right tool accordingly.
 
 ## Advanced configuration
 
-**Running as stdio instead of keeping an HTTP process alive** - Claude Code will start
-toolbox itself when needed, no need to keep a terminal running continuously:
+**Running it as a standalone HTTP server instead** - useful if you want to keep toolbox
+running independently of any single Claude Code session (e.g. sharing one instance across
+machines), instead of relying on the plugin's bundled stdio config:
 
 ```bash
-claude mcp add toolbox --scope user -- toolbox --stdio --config /absolute-path/tools.yaml
+set -a && source .env && set +a
+toolbox --config tools.yaml
 ```
 
-This approach requires the variables in `.env` to be loaded into the environment before
-Claude Code starts the process - more complex than HTTP, so only use it if you have a
-specific reason.
+Seeing `Server ready to serve!` means it started successfully; keep the process running.
+Then, in a different terminal, register it as its own server (this runs alongside, not
+instead of, the plugin's bundled `toolbox` entry - give it a different name):
 
-**Limiting connection scope, e.g. only exposing Redis** - add the toolset name to the end
-of the URL:
+```bash
+claude mcp add toolbox-http --scope user --transport http http://127.0.0.1:5000/mcp
+```
+
+**Limiting connection scope, e.g. only exposing Redis** - only relevant to the HTTP mode
+above; add the toolset name to the end of the URL:
 
 ```bash
 claude mcp add redis-only --scope user --transport http http://127.0.0.1:5000/mcp/redis-toolset
 ```
 
 Available toolsets: `postgres-primary-toolset`, `postgres-analytics-toolset`,
-`mysql-toolset`, `tidb-toolset`, `redis-toolset`, `mongodb-toolset`, `all` (default).
-
-**Registering via a config file instead of the CLI command** - `claude mcp add`
-essentially just writes to a config file, which can be edited directly. Personal scope,
-edit `~/.claude.json`:
-
-```json
-{
-  "mcpServers": {
-    "toolbox": { "type": "http", "url": "http://127.0.0.1:5000/mcp" }
-  }
-}
-```
-
-To share with the team, create `.mcp.json` at the project root and commit it to git (each
-team member still runs toolbox on their own machine):
-
-```json
-{
-  "mcpServers": {
-    "toolbox": {
-      "type": "stdio",
-      "command": "toolbox",
-      "args": ["--stdio", "--config", "${CLAUDE_PROJECT_DIR}/mcp/toolbox/tools.yaml"]
-    }
-  }
-}
-```
-
-Claude Code only re-reads `.mcp.json` when a new session is opened.
+`mysql-toolset`, `tidb-toolset`, `redis-toolset`, `mongodb-toolset`, `all` (default, and
+what the plugin's bundled stdio config uses).
 
 **Adding a third PostgreSQL data source** - copy a `kind: source` block in `tools.yaml`
 (e.g. `postgres-analytics-source`), rename it, point it to a new set of environment
