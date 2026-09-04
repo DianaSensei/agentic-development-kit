@@ -34,11 +34,13 @@ review invalidates it - the next review covers the new state. Documentation-only
 ### Not a quality-check hook: `toolbox-seed.sh`
 
 `hooks.json` also registers `toolbox-seed.sh` on `SessionStart`, alongside `session-context.sh` - it has
-nothing to do with the review gates above. It seeds the bundled `toolbox` MCP's default database
-connections into `${CLAUDE_PLUGIN_DATA}/connections/` the first time this plugin runs, since a
-marketplace-installed plugin has no local repo clone for the user to copy config from. See
-[`mcp/toolbox/README.md`](../mcp/toolbox/README.md). Runs once (no-ops forever after the destination
-exists) and fails open the same as every other hook here.
+nothing to do with the review gates above. It syncs the bundled `toolbox` MCP's six default database
+connections into `${CLAUDE_PLUGIN_DATA}/connections/`, since a marketplace-installed plugin has no local
+repo clone for the user to copy config from. See [`mcp/toolbox/README.md`](../mcp/toolbox/README.md).
+Runs every session but is a no-op once everything is already in sync; per file, tracked by a content-hash
+manifest, so a plugin update can still reach a default you never touched (auto-updated) without ever
+overwriting one you customized (left alone, with the new version saved alongside as `<name>.upstream` to
+compare/merge by hand). Fails open the same as every other hook here.
 
 ### About the defaults
 

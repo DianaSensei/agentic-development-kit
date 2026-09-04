@@ -13,14 +13,30 @@ instead, both of which persist across plugin updates:
   password-style values.
 - **`${CLAUDE_PLUGIN_DATA}/connections/`** - a private, writable directory Claude Code
   creates for this plugin (survives updates, deleted only if you uninstall the plugin) -
-  for the connection files themselves, seeded automatically the first time this plugin runs,
-  and where you add/edit/remove connections and custom tools afterward.
+  for the connection files themselves, kept in sync with the six shipped defaults
+  automatically, and where you add/edit/remove connections and custom tools yourself.
+
+### How the six defaults stay in sync across plugin updates
+
+A `SessionStart` hook syncs `connections-defaults/` into `${CLAUDE_PLUGIN_DATA}/connections/`
+every session, tracked per file by content hash:
+
+- **New file, or unchanged since last sync** → copied/updated to the latest shipped version.
+  A plugin update that improves one of the six defaults (a better tool description, a new
+  parameter, a bug fix in a statement) reaches you automatically.
+- **You edited the file yourself** → never overwritten. The new shipped version is saved
+  alongside as `<name>.upstream` so you can compare and merge by hand if you want the update,
+  or just delete the `.upstream` file to keep your version as-is.
+
+This only applies to the six files under `connections-defaults/` by that exact name -
+anything else you add to `${CLAUDE_PLUGIN_DATA}/connections/` yourself (a custom connection,
+a hand-written tool) is entirely yours and is never touched by this sync.
 
 ## Structure
 
 ```
 mcp/toolbox/                          (inside the plugin's own install - read-only to you)
-├── connections-defaults/             seeded once into ${CLAUDE_PLUGIN_DATA}/connections/
+├── connections-defaults/             synced into ${CLAUDE_PLUGIN_DATA}/connections/ every session
 │   ├── postgres-primary.yaml
 │   ├── postgres-analytics.yaml
 │   ├── mysql.yaml
@@ -32,8 +48,11 @@ mcp/toolbox/                          (inside the plugin's own install - read-on
     └── custom-tool.yaml.example
 
 ${CLAUDE_PLUGIN_DATA}/connections/    (your actual, writable, live config - not in the repo)
-├── postgres-primary.yaml             ← seeded copy, edit/delete freely
+├── postgres-primary.yaml             ← synced copy, edit/delete freely (see below)
 ├── ...
+├── redis.yaml.upstream               ← only appears if you edited redis.yaml AND the
+│                                        shipped default later changed - compare/merge by hand
+└── .seed-manifest.json               ← internal bookkeeping for the sync above, ignore it
 ```
 
 Every file Toolbox loads is independent - Toolbox merges all `*.yaml`/`*.yml` files in
@@ -114,9 +133,10 @@ you'd rather inspect or script it.
 
 This plugin ships a `.mcp.json` at its root declaring `toolbox` in stdio mode, so Claude Code
 starts and connects it automatically whenever the plugin is enabled - no `claude mcp add`
-step. A `SessionStart` hook also seeds `${CLAUDE_PLUGIN_DATA}/connections/` with the six
-pre-built connection files the first time you use this plugin, so there's no file to copy by
-hand. After filling in the settings above, just start (or restart) a session:
+step. A `SessionStart` hook also keeps `${CLAUDE_PLUGIN_DATA}/connections/` synced with the
+six pre-built connection files (see "How the six defaults stay in sync" above), so there's no
+file to copy by hand, on first use or after an update. After filling in the settings above,
+just start (or restart) a session:
 
 ```bash
 claude
