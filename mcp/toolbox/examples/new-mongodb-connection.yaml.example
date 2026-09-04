@@ -1,0 +1,160 @@
+# Template: add a MongoDB-shaped connection (a second MongoDB deployment,
+# or the first one if you removed the pre-built default). Toolbox binds a
+# MongoDB tool to one database/collection at config time - there's no
+# dynamic collection param, so a second collection needs its own copy of
+# the relevant tool blocks (see step 5 below).
+#
+# HOW TO USE:
+#   The easiest way is to just ask Claude Code, e.g. "add a MongoDB
+#   connection for my events collection" - it will follow ../validate.sh's
+#   snapshot/check/restore flow (see the "Adding or editing a connection
+#   safely" section of ../README.md). To do it by hand:
+#   1. Find the live directory: `claude mcp list | grep
+#      '^plugin:agentic-development-kit:toolbox'` shows the exact
+#      --config-folder path.
+#   2. `../validate.sh snapshot <that path>` - saves the current working
+#      state so a mistake below is recoverable.
+#   3. Copy this file into that directory, renamed to something unique,
+#      e.g. `events-mongo.yaml`.
+#   4. Replace CONN_NAME everywhere below with a short, unique identifier
+#      (e.g. `events`) - it must not collide with any other file's
+#      source/tool/toolset name already in that directory.
+#   5. Fill in the real connection URI/database/collection, directly (no
+#      env vars needed - this directory is private to your machine, not
+#      committed to git or shared, so a literal value here is safe). Need
+#      a second collection from the same deployment? Duplicate the tool
+#      blocks below with a different `collection:` value and a new name.
+#   6. `../validate.sh check <that path>` - confirms toolbox can actually
+#      start with the new file. If it FAILS, run `../validate.sh restore
+#      <that path>` to undo, fix the error it printed, and try again from
+#      step 3.
+#
+# Delete the write tools below (insert_many/update_many/delete_many) if you
+# only want read access - keep find/find_one/aggregate.
+
+kind: source
+name: CONN_NAME-source
+type: mongodb
+uri: mongodb://user:password@your-mongo-host:27017
+
+---
+kind: tool
+name: CONN_NAME_find
+type: mongodb-find
+source: CONN_NAME-source
+description: Find documents in the CONN_NAME collection matching a filter.
+database: your-database
+collection: your-collection
+limit: 20
+filterPayload: |
+  { {{if .field}}{{json .field}}: {{json .value}}{{else}}{{end}} }
+filterParams:
+  - name: field
+    type: string
+    description: 'Field name to filter on (e.g. "status"). Leave empty to match all documents.'
+  - name: value
+    type: string
+    description: Value to match for the given field.
+
+---
+kind: tool
+name: CONN_NAME_find_one
+type: mongodb-find-one
+source: CONN_NAME-source
+description: Find a single document in the CONN_NAME collection matching a filter.
+database: your-database
+collection: your-collection
+filterPayload: |
+  { {{json .field}}: {{json .value}} }
+filterParams:
+  - name: field
+    type: string
+    description: Field name to filter on.
+  - name: value
+    type: string
+    description: Value to match for the given field.
+
+---
+kind: tool
+name: CONN_NAME_aggregate
+type: mongodb-aggregate
+source: CONN_NAME-source
+description: Run an aggregation pipeline against the CONN_NAME collection.
+database: your-database
+collection: your-collection
+readOnly: true
+pipelinePayload: |
+  {{.pipeline}}
+pipelineParams:
+  - name: pipeline
+    type: string
+    description: >-
+      A raw JSON array of aggregation pipeline stage documents,
+      e.g. [{"$match": {"status": "active"}}, {"$count": "total"}].
+
+---
+kind: tool
+name: CONN_NAME_insert_many
+type: mongodb-insert-many
+source: CONN_NAME-source
+description: >-
+  Insert a batch of documents into the CONN_NAME collection. Call with a
+  `data` parameter containing a JSON array of document objects.
+database: your-database
+collection: your-collection
+
+---
+kind: tool
+name: CONN_NAME_update_many
+type: mongodb-update-many
+source: CONN_NAME-source
+description: Update all documents in the CONN_NAME collection matching a filter.
+database: your-database
+collection: your-collection
+filterPayload: |
+  { {{json .field}}: {{json .value}} }
+filterParams:
+  - name: field
+    type: string
+    description: Field name to filter on.
+  - name: value
+    type: string
+    description: Value to match for the given field.
+updatePayload: |
+  { "$set": { {{json .set_field}}: {{json .set_value}} } }
+updateParams:
+  - name: set_field
+    type: string
+    description: Field name to update.
+  - name: set_value
+    type: string
+    description: New value to set.
+
+---
+kind: tool
+name: CONN_NAME_delete_many
+type: mongodb-delete-many
+source: CONN_NAME-source
+description: Delete all documents in the CONN_NAME collection matching a filter.
+database: your-database
+collection: your-collection
+filterPayload: |
+  { {{json .field}}: {{json .value}} }
+filterParams:
+  - name: field
+    type: string
+    description: Field name to filter on.
+  - name: value
+    type: string
+    description: Value to match for the given field.
+
+---
+kind: toolset
+name: CONN_NAME-toolset
+tools:
+  - CONN_NAME_find
+  - CONN_NAME_find_one
+  - CONN_NAME_aggregate
+  - CONN_NAME_insert_many
+  - CONN_NAME_update_many
+  - CONN_NAME_delete_many

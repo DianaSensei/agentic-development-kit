@@ -61,6 +61,8 @@ mcp/toolbox/                          (inside the plugin's own install - read-on
 │   └── mongodb.yaml
 └── examples/                         reference templates, never loaded by Toolbox
     ├── new-sql-connection.yaml.example
+    ├── new-redis-connection.yaml.example
+    ├── new-mongodb-connection.yaml.example
     └── custom-tool.yaml.example
 
 ${CLAUDE_PLUGIN_DATA}/connections/    (your actual, writable, live config - not in the repo)
@@ -81,8 +83,8 @@ Every file Toolbox loads is independent - Toolbox merges all `*.yaml`/`*.yml` fi
   `examples/new-sql-connection.yaml.example` into `${CLAUDE_PLUGIN_DATA}/connections/`
   yourself, rename it, and fill in the placeholders - works for any SQL type Toolbox
   supports (postgres, mysql, tidb, mssql, sqlite, spanner, bigquery, ...), not just the six
-  pre-built here. For a second Redis/MongoDB-shaped connection, duplicate the seeded
-  `redis.yaml` / `mongodb.yaml` and rename every identifier inside.
+  pre-built here. For a second Redis or MongoDB connection, same idea with
+  `examples/new-redis-connection.yaml.example` / `examples/new-mongodb-connection.yaml.example`.
 - **Want a specific, hand-written tool** (a fixed query/aggregation with named parameters)
   instead of - or alongside - the generic `query_data`/`list_tables` pair? Copy
   `examples/custom-tool.yaml.example`, point it at an existing `source:` name, and write the

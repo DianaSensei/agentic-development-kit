@@ -71,8 +71,12 @@ Then go to Step 5.
 
 ## Step 3b - Add a connection outside the six
 
-Follow `../../mcp/toolbox/examples/new-sql-connection.yaml.example` (SQL) or duplicate an
-existing `redis.yaml`/`mongodb.yaml`-shaped file and rename every identifier (NoSQL):
+Follow the matching template in `../../mcp/toolbox/examples/`:
+`new-sql-connection.yaml.example` (any SQL type - postgres, mysql, tidb, mssql, sqlite,
+spanner, bigquery, ...), `new-redis-connection.yaml.example` (Redis - one named tool per
+command exposed, no generic "run any command" tool), or
+`new-mongodb-connection.yaml.example` (MongoDB - bound to one database/collection per tool,
+delete the write tools if only read access is wanted).
 
 1. Ask for the type, and its connection values - same read-only confirmation as Step 3a.
 2. Pick a short, unique name not already used by another source/tool/toolset in the live
