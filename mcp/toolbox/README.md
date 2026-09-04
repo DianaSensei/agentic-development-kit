@@ -2,63 +2,20 @@
 
 Configuration for Google's [MCP Toolbox](https://github.com/googleapis/mcp-toolbox) - a
 locally-run binary that sits between Claude Code and your database(s). Once connected, you
-can ask Claude Code directly: "list the tables in the primary database", "get the value of
-key user:123 in Redis", instead of opening each database's own client.
+can ask Claude Code directly: "list the tables in the users database", "get the value of key
+user:123 in Redis", instead of opening each database's own client.
 
-This plugin is installed via the marketplace (`/plugin install`), not a repo clone - so
-nothing here assumes you have a local checkout to edit. Configuration lives in two places
-instead, both of which persist across plugin updates:
-
-- **This plugin's settings** (`/plugin`) - for the 6 pre-built connections' host/port/user/
-  password-style values.
-- **`${CLAUDE_PLUGIN_DATA}/connections/`** - a private, writable directory Claude Code
-  creates for this plugin (survives updates, deleted only if you uninstall the plugin) -
-  for the connection files themselves, kept in sync with the six shipped defaults
-  automatically, and where you add/edit/remove connections and custom tools yourself.
-
-### How the six defaults stay in sync across plugin updates
-
-A `SessionStart` hook syncs `connections-defaults/` into `${CLAUDE_PLUGIN_DATA}/connections/`
-every session. It only ever recognizes a file as safe to auto-update when its on-disk content
-still matches exactly what the hook itself last wrote there - never merely because a file
-"looks unchanged" on first sight:
-
-- **New file, and every required field for it is filled in via this plugin's settings** →
-  copied in. Not yet fully configured → not copied in at all (see the note above this
-  section on why an incomplete connection can't just sit there unused).
-- **Matches what the hook last wrote, unchanged, and still fully configured** → updated to
-  the latest shipped version. A plugin update that improves one of the six defaults (a
-  better tool description, a new parameter, a bug fix in a statement) reaches you
-  automatically.
-- **Matches what the hook last wrote, but no longer fully configured** (you cleared a
-  field you'd filled in before) → removed, so `toolbox` doesn't fail to start over a
-  connection it can no longer fill in. Filling the field back in re-adds it next session.
-- **Doesn't match what the hook last wrote** → never overwritten, whether that's because you
-  edited it, or because it's from an install predating this tracking (no recorded baseline to
-  compare against - treated the same as a customization out of caution). The new shipped
-  version is saved alongside as `<name>.upstream` (once per upstream change, not nagged every
-  session) so you can compare and merge by hand. Delete the `.upstream` file to keep your
-  version as-is, or replace the connection file with it to accept the update and make it
-  eligible for automatic updates again going forward.
-- **You delete a file the hook had previously trusted as unedited** → respected, never
-  recreated. Deleting one it never trusted (still unresolved from the point above) instead
-  reseeds it fresh from the current shipped default.
-
-This only applies to the six files under `connections-defaults/` by that exact name -
-anything else you add to `${CLAUDE_PLUGIN_DATA}/connections/` yourself (a custom connection,
-a hand-written tool) is entirely yours and is never touched by this sync.
+This plugin ships no pre-built connections - you add exactly the ones you actually have,
+nothing more. See [`../../skills/toolbox-connections/SKILL.md`](../../skills/toolbox-connections/SKILL.md)
+for the skill that does this for you when you ask ("add a toolbox connection for my orders
+Postgres database"); the rest of this document is the manual version of the same flow, and
+background on how it all fits together.
 
 ## Structure
 
 ```
-mcp/toolbox/                          (inside the plugin's own install - read-only to you)
-├── connections-defaults/             synced into ${CLAUDE_PLUGIN_DATA}/connections/ every session
-│   ├── postgres-primary.yaml
-│   ├── postgres-analytics.yaml
-│   ├── mysql.yaml
-│   ├── tidb.yaml
-│   ├── redis.yaml
-│   └── mongodb.yaml
+mcp/toolbox/
+├── validate.sh                       snapshot/check/restore helper - see below
 └── examples/                         reference templates, never loaded by Toolbox
     ├── new-sql-connection.yaml.example
     ├── new-redis-connection.yaml.example
@@ -66,67 +23,45 @@ mcp/toolbox/                          (inside the plugin's own install - read-on
     └── custom-tool.yaml.example
 
 ${CLAUDE_PLUGIN_DATA}/connections/    (your actual, writable, live config - not in the repo)
-├── postgres-primary.yaml             ← synced copy, edit/delete freely (see below)
+├── orders-db.yaml                    ← whatever you've added, entirely yours
 ├── ...
-├── redis.yaml.upstream               ← only appears if you edited redis.yaml AND the
-│                                        shipped default later changed - compare/merge by hand
-└── .seed-manifest.json               ← internal bookkeeping for the sync above, ignore it
+└── (empty until you add a connection - toolbox refuses to start with none)
 ```
 
-Every file Toolbox loads is independent - Toolbox merges all `*.yaml`/`*.yml` files in
+Every file Toolbox loads is independent - it merges all `*.yaml`/`*.yml` files in
 `${CLAUDE_PLUGIN_DATA}/connections/` (`--config-folder`), but each connection's
-`source`/`tool`/`toolset` blocks only reference names within its own file. This means:
+`source`/`tool`/`toolset` blocks only reference names within its own file. This is a private,
+writable directory Claude Code creates for this plugin (persists across plugin updates,
+deleted only if you uninstall the plugin) - nothing here comes from a repo clone, and nothing
+is pre-seeded into it.
 
-- **Don't need a connection?** Delete its file (or ask Claude Code to). Nothing else breaks.
-- **Have a database not listed here?** Ask Claude Code to add it (e.g. "add a toolbox
-  connection for my orders Postgres database"), or copy
-  `examples/new-sql-connection.yaml.example` into `${CLAUDE_PLUGIN_DATA}/connections/`
-  yourself, rename it, and fill in the placeholders - works for any SQL type Toolbox
-  supports (postgres, mysql, tidb, mssql, sqlite, spanner, bigquery, ...), not just the six
-  pre-built here. For a second Redis or MongoDB connection, same idea with
-  `examples/new-redis-connection.yaml.example` / `examples/new-mongodb-connection.yaml.example`.
-- **Want a specific, hand-written tool** (a fixed query/aggregation with named parameters)
-  instead of - or alongside - the generic `query_data`/`list_tables` pair? Copy
-  `examples/custom-tool.yaml.example`, point it at an existing `source:` name, and write the
-  exact statement/parameters you want. It becomes just another tool Claude Code can call, no
-  different from the built-in ones.
+Since it's private to your machine (not committed to git, not shared with a team), it's fine
+to write real connection values directly into a file there - no `${VAR}`/`.env`/settings-UI
+indirection. This is the only way connections work here: unlike an earlier version of this
+plugin, there's no separate "pre-built connection configured through `/plugin` settings" path
+- one mechanism for everything, so adding your fifth connection works exactly like your
+first.
 
-Since `${CLAUDE_PLUGIN_DATA}/connections/` is private to your machine (not committed to git,
-not shared with a team), it's fine to write real connection values directly into a file
-there - no `${VAR}`/`.env` indirection needed for a connection you add yourself. The
-pre-built six use `${VAR}` placeholders instead because their real values come from this
-plugin's settings (below), not from editing the file.
+**Have a database to connect?** Ask Claude Code (e.g. "add a toolbox connection for my orders
+Postgres database"), or copy the matching template into
+`${CLAUDE_PLUGIN_DATA}/connections/` yourself:
 
-The six pre-built connections are a starting point, not a fixed set - use as many, as few,
-or as different a set of connections as you actually have.
+- `examples/new-sql-connection.yaml.example` - any SQL type Toolbox supports (postgres,
+  mysql, tidb, mssql, sqlite, spanner, bigquery, ...)
+- `examples/new-redis-connection.yaml.example` - Redis
+- `examples/new-mongodb-connection.yaml.example` - MongoDB
 
-### Adding or editing a connection safely
+Rename the file and every `CONN_NAME` placeholder inside to something unique, fill in the
+real values, and follow the "Adding a connection safely" flow below before it's live.
 
-The easiest way is to just ask Claude Code ("add a toolbox connection for my orders Postgres
-database", "add a toolbox tool that counts active users") - the
-[`toolbox-connections`](../../skills/toolbox-connections/SKILL.md) skill picks this up
-automatically and follows the flow below on your behalf, including asking about read-only
-permissions and reporting back with `/mcp` reconnect as the one remaining manual step.
+**Want a specific, hand-written tool** (a fixed query/aggregation with named parameters)
+instead of - or alongside - the generic `query_data`/`list_tables` pair? Copy
+`examples/custom-tool.yaml.example`, point it at an existing `source:` name, and write the
+exact statement/parameters you want.
 
-Doing it by hand, always go through `validate.sh` rather than writing directly:
-
-```bash
-DIR="$(claude mcp list | grep '^plugin:agentic-development-kit:toolbox' \
-  | grep -oE -- '--config-folder [^ ]+' | awk '{print $2}')"
-./validate.sh snapshot "$DIR"   # before making any change
-# ... write/edit/delete the file(s) ...
-./validate.sh check "$DIR"      # confirms toolbox can actually start with the change
-```
-
-If `check` fails, `./validate.sh restore "$DIR"` undoes it, then fix the printed error and
-try again. This matters because `--config-folder` is validated as one unit - a single mistake
-in a new or edited file fails the *entire* server, taking every other working connection down
-with it, not just the one being changed.
-
-Important note: the PostgreSQL, MySQL, and TiDB connections shipped here are read-only, with
-no tool that writes/deletes/modifies tables. The reasoning and how this is enforced are
-described at the end of this document - the same reasoning applies to any SQL connection you
-add yourself.
+Important note: the SQL templates here default to read-only, with no tool that
+writes/deletes/modifies tables. The reasoning and how this is enforced are described at the
+end of this document.
 
 ## Install the binary
 
@@ -149,44 +84,32 @@ above, choosing the right build for your OS.
 You'll also need database connection info - request it from your system administrator.
 For any SQL connection, request an account with read-only permissions, not an admin account.
 
-## Configure the pre-built connections
+## Adding a connection safely
 
-Open this plugin's settings - `/plugin` in Claude Code, select `agentic-development-kit`,
-Configure - and fill in whichever connections you're using:
+Always go through `validate.sh` rather than writing a connection/tool file directly:
 
-| Setting group | Applies to |
-|---|---|
-| PostgreSQL (primary) | `postgres-primary.yaml` |
-| PostgreSQL (analytics) | `postgres-analytics.yaml` |
-| MySQL | `mysql.yaml` |
-| TiDB | `tidb.yaml` (default port `4000`) |
-| Redis | `redis.yaml` |
-| MongoDB | `mongodb.yaml` |
+```bash
+DIR="$(claude mcp list | grep '^plugin:agentic-development-kit:toolbox' \
+  | grep -oE -- '--config-folder [^ ]+' | awk '{print $2}')"
+./validate.sh snapshot "$DIR"   # before making any change
+# ... write/edit/delete the file(s) ...
+./validate.sh check "$DIR"      # confirms toolbox can actually start with the change
+```
 
-Leave every field of a connection blank to skip it entirely, without affecting the others -
-the `SessionStart` hook (see below) only puts a connection's file where `toolbox` can see it
-once every one of its required fields is filled in, since `toolbox` itself has no
-per-connection "skip if unconfigured" behavior: an incomplete connection anywhere in its
-config folder fails the *entire* server, not just that one connection. Port fields default
-sensibly if left blank (5432/3306/4000); everything else needs a real value to use that
-connection at all. Password/token/URI fields are marked sensitive and stored securely
-(Keychain on macOS), never written to a plain settings file.
+If `check` fails, `./validate.sh restore "$DIR"` undoes it, then fix the printed error and
+try again. This matters because `--config-folder` is validated as one unit - a single mistake
+in a new or edited file fails the *entire* server, taking every other working connection down
+with it, not just the one being changed. The
+[`toolbox-connections`](../../skills/toolbox-connections/SKILL.md) skill does this
+automatically whenever Claude Code adds or edits a connection on your behalf.
 
-You don't have to use this UI - `claude mcp get toolbox` also shows the underlying config if
-you'd rather inspect or script it.
-
-## Automatic setup - nothing else to run
+## Nothing else to run - but nothing connects until you add one
 
 This plugin ships a `.mcp.json` at its root declaring `toolbox` in stdio mode, so Claude Code
 starts and connects it automatically whenever the plugin is enabled - no `claude mcp add`
-step. A `SessionStart` hook also keeps `${CLAUDE_PLUGIN_DATA}/connections/` synced with the
-six pre-built connection files (see "How the six defaults stay in sync" above), so there's no
-file to copy by hand, on first use or after an update. After filling in the settings above,
-just start (or restart) a session:
-
-```bash
-claude
-```
+step. But `toolbox` refuses to start with zero connection files (`"no YAML files found"`), so
+right after installing you'll see `✘ Failed to connect` in `/mcp` - that's expected, not a
+bug, until you add at least one connection per the section above.
 
 Confirm it connected:
 
@@ -194,23 +117,22 @@ Confirm it connected:
 claude mcp list
 ```
 
-A `✔ Connected` status next to `toolbox` means it's done. If you see `✘ Failed to connect`,
-double check that the `toolbox` binary is on `PATH` (`toolbox --version`) - that's the most
-common cause; the settings above only supply values, they don't install the binary.
+A `✔ Connected` status next to `toolbox` means it's done. If you still see `✘ Failed to
+connect` after adding a connection, double check that the `toolbox` binary is on `PATH`
+(`toolbox --version`), and that you reconnected after adding the file - a config change only
+takes effect after you open `/mcp` → `toolbox` → Reconnect (or start a new session); there's
+no automatic hot-reload.
 
 ## Verify after connecting
 
-Try a few requests with Claude Code:
-- "List the tables in the primary database"
-- "Query the first 10 rows of the users table in the analytics database"
-- "List the tables in the MySQL database"
-- "List the tables in the TiDB database"
+Try a few requests with Claude Code, using whatever name you gave a connection:
+- "List the tables in the orders database"
+- "Query the first 10 rows of the users table"
 - "Get the value of key session:abc123 in Redis"
 - "Find documents with status=active in MongoDB"
 
-Mention the connection explicitly (primary/analytics/MySQL/TiDB/Redis/MongoDB, or whatever
-name you gave a connection you added yourself) in your request, Claude Code will pick the
-right tool accordingly.
+Mention the connection explicitly if you have more than one of the same database type,
+Claude Code will pick the right tool accordingly.
 
 ---
 
@@ -239,20 +161,20 @@ above; add the toolset name to the end of the URL:
 claude mcp add redis-only --scope user --transport http http://127.0.0.1:5000/mcp/redis-toolset
 ```
 
-Each connection file defines its own toolset with a matching name (e.g. `redis-toolset`,
-`postgres-primary-toolset`) - check the file for the exact name, or a custom one you added.
+Each connection file defines its own toolset with a matching name - check the file for the
+exact name you gave it.
 
-**TiDB and TLS** - for TiDB Cloud, Toolbox auto-enables TLS when `TIDB_HOST` matches the
+**TiDB and TLS** - for TiDB Cloud, Toolbox auto-enables TLS when the host matches the
 `*.tidbcloud.com` pattern, no extra config needed. For a self-hosted TiDB cluster that
-requires TLS, add `ssl: true` to the `tidb-source` block in your seeded `tidb.yaml`.
+requires TLS, add `ssl: true` to the source block in your connection file.
 
-## Why PostgreSQL, MySQL, and TiDB are read-only
+## Why the SQL templates default to read-only
 
 Toolbox doesn't inspect the content of SQL statements before executing them - whatever is
 passed in gets run verbatim, as long as the connecting account has the permission to
-execute it. The pre-built connection files deliberately don't define any write/delete/modify
-tool, but this is only a protection layer at the configuration level, not a hard technical
-limit. The same is true of any custom SQL tool you add via
+execute it. `examples/new-sql-connection.yaml.example` deliberately doesn't define any
+write/delete/modify tool, but this is only a protection layer at the configuration level, not
+a hard technical limit. The same is true of any custom SQL tool you add via
 `examples/custom-tool.yaml.example` - write the statement as read-only, but don't rely on it
 alone.
 

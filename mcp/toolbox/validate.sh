@@ -41,7 +41,10 @@ cmd="$1"
 dir="$2"
 snapshot_dir="$dir/.validate-snapshot"
 
-[ -d "$dir" ] || { echo "No such directory: $dir" >&2; exit 2; }
+# The connections directory may not exist yet (e.g. adding the very first
+# connection on a fresh install) - create it rather than requiring it
+# pre-exist, so `snapshot` also works as the bootstrap step.
+mkdir -p "$dir" 2>/dev/null || { echo "Cannot create or access directory: $dir" >&2; exit 2; }
 
 command -v toolbox >/dev/null 2>&1 || {
   echo "toolbox binary not found on PATH - install it first (see mcp/toolbox/README.md)." >&2

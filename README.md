@@ -26,7 +26,7 @@ Each directory sits at the plugin root, where Claude Code's
 | [`skills/`](./skills/README.md) | 31 skills. Claude Code picks the right one from its `description`, so there is nothing to invoke by hand (a few are manual-only). Also reachable as `/agentic-development-kit:<skill-name>`. |
 | [`agents/`](./agents-guide.md) | Tiered Task subagents. Tier 1 clarifies requirements and proposes solutions, Tier 2 implements. They pass a fixed JSON contract between steps. |
 | [`hooks/`](./hooks/README.md) | Gates for the rules a model cannot self-police: the owning `SKILL.md` was read before an edit, and `code-review-skill` ran before "done". Warn by default, blocking per gate. |
-| [`mcp/`](./mcp/README.md) | Toolbox config for databases - 6 pre-built connections (PostgreSQL/MySQL/TiDB/Redis/MongoDB, read-only), freely add/remove/customize your own. Declared in the root `.mcp.json`, connected automatically; connection values are configured through this plugin's own settings (`/plugin`), no repo clone or `.env` needed. |
+| [`mcp/`](./mcp/README.md) | Toolbox config for databases - PostgreSQL, MySQL, TiDB, Redis, MongoDB, or any other type Toolbox supports. Ships with no pre-built connections; add exactly what you have. Declared in the root `.mcp.json`, connected automatically once a connection exists - no repo clone needed. |
 
 ## Using it
 
@@ -36,11 +36,11 @@ Each directory sits at the plugin root, where Claude Code's
   [`agents-guide.md`](./agents-guide.md).
 - **Hooks** need no setup. They register wherever the plugin is enabled. To tune them for a project,
   drop a `.claude/quality-check.config.json` in that project's root.
-- **MCP** auto-connects once set up: the plugin's root `.mcp.json` declares `toolbox`, so Claude Code
-  starts and connects it whenever the plugin is enabled, and a hook seeds its default connections into a
-  persistent, writable directory on first run. You still need to install the `toolbox` binary and fill in
-  connection values via this plugin's settings (`/plugin`) - follow [`mcp/README.md`](./mcp/README.md), or
-  just ask ("set up the toolbox MCP for me").
+- **MCP** auto-connects once you've added a connection: the plugin's root `.mcp.json` declares `toolbox`,
+  so Claude Code starts and connects it whenever the plugin is enabled - but it ships with none pre-built,
+  so `✘ Failed to connect` right after installing is expected until you add one. Install the `toolbox`
+  binary, then follow [`mcp/README.md`](./mcp/README.md) or just ask ("add a toolbox connection for my
+  orders Postgres database") - the `toolbox-connections` skill handles the rest.
 
 ## skills/ vs agents/
 
