@@ -19,14 +19,24 @@ instead, both of which persist across plugin updates:
 ### How the six defaults stay in sync across plugin updates
 
 A `SessionStart` hook syncs `connections-defaults/` into `${CLAUDE_PLUGIN_DATA}/connections/`
-every session, tracked per file by content hash:
+every session. It only ever recognizes a file as safe to auto-update when its on-disk content
+still matches exactly what the hook itself last wrote there - never merely because a file
+"looks unchanged" on first sight:
 
-- **New file, or unchanged since last sync** → copied/updated to the latest shipped version.
-  A plugin update that improves one of the six defaults (a better tool description, a new
+- **New file** → copied in.
+- **Matches what the hook last wrote, unchanged** → updated to the latest shipped version. A
+  plugin update that improves one of the six defaults (a better tool description, a new
   parameter, a bug fix in a statement) reaches you automatically.
-- **You edited the file yourself** → never overwritten. The new shipped version is saved
-  alongside as `<name>.upstream` so you can compare and merge by hand if you want the update,
-  or just delete the `.upstream` file to keep your version as-is.
+- **Doesn't match what the hook last wrote** → never overwritten, whether that's because you
+  edited it, or because it's from an install predating this tracking (no recorded baseline to
+  compare against - treated the same as a customization out of caution). The new shipped
+  version is saved alongside as `<name>.upstream` (once per upstream change, not nagged every
+  session) so you can compare and merge by hand. Delete the `.upstream` file to keep your
+  version as-is, or replace the connection file with it to accept the update and make it
+  eligible for automatic updates again going forward.
+- **You delete a file the hook had previously trusted as unedited** → respected, never
+  recreated. Deleting one it never trusted (still unresolved from the point above) instead
+  reseeds it fresh from the current shipped default.
 
 This only applies to the six files under `connections-defaults/` by that exact name -
 anything else you add to `${CLAUDE_PLUGIN_DATA}/connections/` yourself (a custom connection,
