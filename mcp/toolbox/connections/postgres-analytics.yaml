@@ -1,0 +1,53 @@
+# Connection: PostgreSQL "analytics" (read-only).
+# Env vars: POSTGRES_ANALYTICS_HOST/PORT/DATABASE/USER/PASSWORD - see ../.env.example.
+# Self-contained: delete this file to drop the connection, nothing else in this
+# directory references it. See ../examples/ to add a different connection.
+
+kind: source
+name: postgres-analytics-source
+type: postgres
+host: ${POSTGRES_ANALYTICS_HOST}
+port: ${POSTGRES_ANALYTICS_PORT}
+database: ${POSTGRES_ANALYTICS_DATABASE}
+user: ${POSTGRES_ANALYTICS_USER}
+password: ${POSTGRES_ANALYTICS_PASSWORD}
+
+---
+kind: tool
+name: postgres_analytics_query_data
+type: postgres-execute-sql
+source: postgres-analytics-source
+description: >-
+  Run any read-only SQL query (SELECT) against the analytics PostgreSQL
+  database - general data queries as well as ad hoc schema introspection.
+  Do not INSERT/UPDATE/DELETE/DROP/TRUNCATE/ALTER - this connection is
+  expected to use a SELECT-only DB role, but always write queries as if
+  writes were possible and avoid them. For introspection, query the system
+  catalogs directly: information_schema.tables / information_schema.columns
+  for tables & columns, pg_indexes for indexes, pg_sequences (or
+  information_schema.sequences) for sequences, and pg_proc joined to
+  pg_namespace (filter prokind = 'p') and pg_language for stored procedures.
+annotations:
+  readOnlyHint: true
+  destructiveHint: false
+
+---
+kind: tool
+name: postgres_analytics_list_tables
+type: postgres-list-tables
+source: postgres-analytics-source
+description: >-
+  List schema information (columns, constraints, indexes, triggers, owner)
+  for all or specified tables in the analytics PostgreSQL database. Optional
+  params: table_names (comma-separated), output_format (simple|detailed).
+  Prefer this over query_data when you need full, nicely structured table
+  schema details.
+annotations:
+  readOnlyHint: true
+
+---
+kind: toolset
+name: postgres-analytics-toolset
+tools:
+  - postgres_analytics_query_data
+  - postgres_analytics_list_tables

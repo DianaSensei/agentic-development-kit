@@ -1,0 +1,38 @@
+# Template: add a bespoke tool - beyond the generic query_data/list_tables
+# pair - bound to an existing connection, when the agent needs a
+# specific, named, parameterized operation rather than free-form SQL.
+# Good for: a query you want the agent to run consistently the same way
+# (fixed joins/filters), or one you want to expose without also exposing
+# free-form query_data on that source.
+#
+# HOW TO USE:
+#   1. Copy this file into ../connections/ (can live in its own file, or
+#      appended into an existing connection's file - Toolbox merges every
+#      *.yaml/*.yml under ../connections/ into one config either way).
+#   2. Point `source:` at an existing source name from one of the files in
+#      ../connections/ (e.g. `postgres-primary-source`).
+#   3. Rename the tool and rewrite `statement`/`parameters` for your case.
+#   4. Add it to that connection's toolset (or a new one) if you want it
+#      grouped there - grouping is informational only for stdio, every
+#      `kind: tool` block is exposed to Claude Code regardless of toolset.
+
+kind: tool
+name: postgres_primary_active_users_last_n_days
+type: postgres-execute-sql
+source: postgres-primary-source  # must match a source defined elsewhere in ../connections/
+description: >-
+  Count users in the primary PostgreSQL database who logged in within the
+  last N days. Use this instead of query_data when you specifically need
+  this metric - it's faster to reach for and always uses the same
+  definition of "active".
+statement: |
+  SELECT count(*) AS active_users
+  FROM users
+  WHERE last_login_at >= now() - ($1 || ' days')::interval;
+parameters:
+  - name: days
+    type: integer
+    description: How many days back to count logins from (e.g. 7, 30).
+annotations:
+  readOnlyHint: true
+  destructiveHint: false

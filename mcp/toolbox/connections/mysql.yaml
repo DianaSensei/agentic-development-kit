@@ -1,0 +1,52 @@
+# Connection: MySQL (read-only).
+# Env vars: MYSQL_HOST/PORT/DATABASE/USER/PASSWORD - see ../.env.example.
+# Self-contained: delete this file to drop the connection, nothing else in this
+# directory references it. See ../examples/ to add a different connection.
+
+kind: source
+name: mysql-source
+type: mysql
+host: ${MYSQL_HOST}
+port: ${MYSQL_PORT}
+database: ${MYSQL_DATABASE}
+user: ${MYSQL_USER}
+password: ${MYSQL_PASSWORD}
+
+---
+kind: tool
+name: mysql_query_data
+type: mysql-execute-sql
+source: mysql-source
+description: >-
+  Run any read-only SQL query (SELECT) against the MySQL database -
+  general data queries as well as ad hoc schema introspection. Do not
+  INSERT/UPDATE/DELETE/DROP/TRUNCATE/ALTER - this connection is expected to
+  use a SELECT-only DB account, but always write queries as if writes were
+  possible and avoid them. For introspection, query information_schema
+  directly: information_schema.tables / information_schema.columns for
+  tables & columns, information_schema.statistics for indexes, and
+  information_schema.routines for stored procedures/functions.
+annotations:
+  readOnlyHint: true
+  destructiveHint: false
+
+---
+kind: tool
+name: mysql_list_tables
+type: mysql-list-tables
+source: mysql-source
+description: >-
+  List schema information (columns, constraints, indexes, triggers, owner)
+  for all or specified tables in the MySQL database. Optional params:
+  table_names (comma-separated), output_format (simple|detailed). Prefer
+  this over query_data when you need full, nicely structured table schema
+  details.
+annotations:
+  readOnlyHint: true
+
+---
+kind: toolset
+name: mysql-toolset
+tools:
+  - mysql_query_data
+  - mysql_list_tables

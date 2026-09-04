@@ -1,17 +1,51 @@
-# Database MCP (PostgreSQL, MySQL, TiDB, Redis, MongoDB)
+# Database MCP (arbitrary connections)
 
 Configuration for Google's [MCP Toolbox](https://github.com/googleapis/mcp-toolbox) - a
-locally-run binary that sits between Claude Code and your database. Once connected, you can
-ask Claude Code directly: "list the tables in the primary database", "get the value of key
-user:123 in Redis", instead of opening each database's own client.
+locally-run binary that sits between Claude Code and your database(s). Once connected, you
+can ask Claude Code directly: "list the tables in the primary database", "get the value of
+key user:123 in Redis", instead of opening each database's own client.
 
-Pre-configured for two PostgreSQL sources (`primary`, `analytics`), one MySQL, one TiDB, one
-Redis, and one MongoDB. You don't have to use all six - any source without connection info
-is simply skipped, without affecting the others.
+## Structure
 
-Important note: the PostgreSQL, MySQL, and TiDB portions of this configuration are
-read-only, with no tool that writes/deletes/modifies tables. The reasoning and how this is
-enforced are described at the end of this document.
+```
+mcp/toolbox/
+├── connections/   # loaded by Toolbox - one file per connection, each self-contained
+│   ├── postgres-primary.yaml
+│   ├── postgres-analytics.yaml
+│   ├── mysql.yaml
+│   ├── tidb.yaml
+│   ├── redis.yaml
+│   └── mongodb.yaml
+├── examples/      # NOT loaded (kept as .yaml.example) - copy from here to add your own
+│   ├── new-sql-connection.yaml.example
+│   └── custom-tool.yaml.example
+└── .env.example
+```
+
+Every file in `connections/` is independent - Toolbox merges all `*.yaml`/`*.yml` files in
+that directory (`--config-folder`), but each connection's `source`/`tool`/`toolset` blocks
+only reference names within its own file. This means:
+
+- **Don't need a connection?** Delete its file, or move it out of `connections/`. Nothing
+  else breaks.
+- **Have a database not listed here?** Copy `examples/new-sql-connection.yaml.example` into
+  `connections/`, rename it, and fill in the placeholders - works for any SQL type Toolbox
+  supports (postgres, mysql, tidb, mssql, sqlite, spanner, bigquery, ...), not just the six
+  pre-built here. For a second Redis/MongoDB-shaped connection, duplicate `redis.yaml` /
+  `mongodb.yaml` and rename every identifier inside.
+- **Want a specific, hand-written tool** (a fixed query/aggregation with named parameters)
+  instead of - or alongside - the generic `query_data`/`list_tables` pair? Copy
+  `examples/custom-tool.yaml.example` into `connections/`, point it at an existing
+  `source:` name, and write the exact statement/parameters you want. It becomes just
+  another tool Claude Code can call, no different from the built-in ones.
+
+The six pre-built connections are a starting point, not a fixed set - use as many, as few,
+or as different a set of connections as you actually have.
+
+Important note: the PostgreSQL, MySQL, and TiDB connections shipped here are read-only, with
+no tool that writes/deletes/modifies tables. The reasoning and how this is enforced are
+described at the end of this document - the same reasoning applies to any SQL connection you
+add yourself.
 
 ## Install the binary
 
@@ -32,8 +66,7 @@ using Homebrew, or on Linux/Windows, download the binary directly from the Relea
 above, choosing the right build for your OS.
 
 You'll also need database connection info - request it from your system administrator.
-For PostgreSQL, MySQL, and TiDB specifically, request an account with read-only
-permissions, not an admin account.
+For any SQL connection, request an account with read-only permissions, not an admin account.
 
 ## Configure `.env`
 
@@ -43,34 +76,36 @@ cp .env.example .env
 
 | Variable | Applies to | Note |
 |---|---|---|
-| `POSTGRES_PRIMARY_*` | PostgreSQL #1 | host/port/database/user/password - the user must be a read-only account |
-| `POSTGRES_ANALYTICS_*` | PostgreSQL #2 | same, if there's a second source |
-| `MYSQL_*` | MySQL | host/port/database/user/password - the user must be a read-only account |
-| `TIDB_*` | TiDB | host/port/database/user/password - the user must be a read-only account; default port `4000` |
-| `REDIS_ADDRESS` | Redis | in the form `host:port` |
-| `REDIS_USERNAME` / `REDIS_PASSWORD` | Redis | leave blank if no auth is used |
-| `REDIS_DATABASE` | Redis | database index, defaults to `0` |
-| `MONGODB_URI` | MongoDB | the full connection string |
-| `MONGODB_DATABASE` / `MONGODB_COLLECTION` | MongoDB | default database/collection |
+| `POSTGRES_PRIMARY_*` | `connections/postgres-primary.yaml` | host/port/database/user/password - read-only account |
+| `POSTGRES_ANALYTICS_*` | `connections/postgres-analytics.yaml` | same, if there's a second source |
+| `MYSQL_*` | `connections/mysql.yaml` | host/port/database/user/password - read-only account |
+| `TIDB_*` | `connections/tidb.yaml` | host/port/database/user/password - read-only account; default port `4000` |
+| `REDIS_ADDRESS` | `connections/redis.yaml` | in the form `host:port` |
+| `REDIS_USERNAME` / `REDIS_PASSWORD` | `connections/redis.yaml` | leave blank if no auth is used |
+| `REDIS_DATABASE` | `connections/redis.yaml` | database index, defaults to `0` |
+| `MONGODB_URI` | `connections/mongodb.yaml` | the full connection string |
+| `MONGODB_DATABASE` / `MONGODB_COLLECTION` | `connections/mongodb.yaml` | default database/collection |
 
-Any source you're not using can keep its sample value.
+Any connection you're not using can keep its sample value, or have its file removed
+entirely (see "Structure" above). Add your own connection's variables here too, following
+`examples/new-sql-connection.yaml.example`'s naming convention.
 
 ## Register with Claude Code
 
-This plugin ships a `.mcp.json` at its root that declares `toolbox` in stdio mode, so
-Claude Code starts and connects it automatically whenever this plugin is enabled - there's
-no `claude mcp add` step, and no separate process to keep running in another terminal.
-Toolbox itself does the `${VAR}` substitution in `tools.yaml`, reading straight from the
-process environment it inherits, so the variables from `.env` need to be exported into your
-shell **before** you start `claude`:
+This plugin ships a `.mcp.json` at its root that declares `toolbox` in stdio mode, pointed
+at `connections/`, so Claude Code starts and connects it automatically whenever this plugin
+is enabled - there's no `claude mcp add` step, and no separate process to keep running in
+another terminal. Toolbox itself does the `${VAR}` substitution inside each connection file,
+reading straight from the process environment it inherits, so the variables from `.env`
+need to be exported into your shell **before** you start `claude`:
 
 ```bash
 set -a && source mcp/toolbox/.env && set +a
 claude
 ```
 
-Any source whose variables aren't set is simply skipped by `toolbox`, without affecting the
-others - so this is safe to run even if you've only filled in some of the six sources.
+Any connection whose variables aren't set is simply skipped by `toolbox`, without affecting
+the others - so this is safe to run even if you've only filled in some connections.
 
 Confirm it connected:
 
@@ -90,14 +125,13 @@ Try a few requests with Claude Code:
 - "List the tables in the primary database"
 - "Query the first 10 rows of the users table in the analytics database"
 - "List the tables in the MySQL database"
-- "Query the first 10 rows of the users table in MySQL"
 - "List the tables in the TiDB database"
-- "Query the first 10 rows of the users table in TiDB"
 - "Get the value of key session:abc123 in Redis"
 - "Find documents with status=active in MongoDB"
 
-Mention the data source explicitly (primary/analytics/MySQL/TiDB/Redis/MongoDB) in your
-request, Claude Code will pick the right tool accordingly.
+Mention the connection explicitly (primary/analytics/MySQL/TiDB/Redis/MongoDB, or whatever
+name you gave a connection you added yourself) in your request, Claude Code will pick the
+right tool accordingly.
 
 ---
 
@@ -109,7 +143,7 @@ machines), instead of relying on the plugin's bundled stdio config:
 
 ```bash
 set -a && source .env && set +a
-toolbox --config tools.yaml
+toolbox --config-folder connections
 ```
 
 Seeing `Server ready to serve!` means it started successfully; keep the process running.
@@ -127,33 +161,29 @@ above; add the toolset name to the end of the URL:
 claude mcp add redis-only --scope user --transport http http://127.0.0.1:5000/mcp/redis-toolset
 ```
 
-Available toolsets: `postgres-primary-toolset`, `postgres-analytics-toolset`,
-`mysql-toolset`, `tidb-toolset`, `redis-toolset`, `mongodb-toolset`, `all` (default, and
-what the plugin's bundled stdio config uses).
-
-**Adding a third PostgreSQL data source** - copy a `kind: source` block in `tools.yaml`
-(e.g. `postgres-analytics-source`), rename it, point it to a new set of environment
-variables (e.g. `POSTGRES_REPORTING_*`), and add those variables to `.env` and
-`.env.example`. Also copy the accompanying `*_query_data` and `*_list_tables` tools and add
-them to a toolset.
+Each connection file in `connections/` defines its own toolset with a matching name (e.g.
+`redis-toolset`, `postgres-primary-toolset`) - check the file for the exact name, or a
+custom one you added.
 
 **TiDB and TLS** - for TiDB Cloud, Toolbox auto-enables TLS when `TIDB_HOST` matches the
 `*.tidbcloud.com` pattern, no extra config needed. For a self-hosted TiDB cluster that
-requires TLS, add `ssl: true` to the `tidb-source` block in `tools.yaml`.
+requires TLS, add `ssl: true` to the `tidb-source` block in `connections/tidb.yaml`.
 
 ## Why PostgreSQL, MySQL, and TiDB are read-only
 
 Toolbox doesn't inspect the content of SQL statements before executing them - whatever is
 passed in gets run verbatim, as long as the connecting account has the permission to
-execute it. `tools.yaml` deliberately doesn't define any write/delete/modify tool, but this
-is only a protection layer at the configuration level, not a hard technical limit.
+execute it. The `connections/*.yaml` files deliberately don't define any write/delete/modify
+tool, but this is only a protection layer at the configuration level, not a hard technical
+limit. The same is true of any custom SQL tool you add via
+`examples/custom-tool.yaml.example` - write the statement as read-only, but don't rely on it
+alone.
 
-The real protection layer is the PostgreSQL/MySQL/TiDB account declared in `.env`. This
-account should only have SELECT permission - no INSERT/UPDATE/DELETE, doesn't own any
-tables, has no DDL permission. In that case, even if a write statement is requested, the
-database will reject it with a permission-denied error, regardless of `tools.yaml`'s
-content.
+The real protection layer is the database account declared in `.env`. This account should
+only have SELECT permission - no INSERT/UPDATE/DELETE, doesn't own any tables, has no DDL
+permission. In that case, even if a write statement is requested, the database will reject
+it with a permission-denied error, regardless of the YAML config's content.
 
-This repo doesn't create or modify that account's permissions - request a read-only
-account from your database administrator, the same as the process for granting access to
-any other read-only reporting tool.
+This repo doesn't create or modify that account's permissions - request a read-only account
+from your database administrator, the same as the process for granting access to any other
+read-only reporting tool.

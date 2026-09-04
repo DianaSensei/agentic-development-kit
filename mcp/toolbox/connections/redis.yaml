@@ -1,0 +1,110 @@
+# Connection: Redis.
+# Env vars: REDIS_ADDRESS/USERNAME/PASSWORD/DATABASE - see ../.env.example.
+# Self-contained: delete this file to drop the connection, nothing else in this
+# directory references it. See ../examples/ to add a different connection.
+
+kind: source
+name: redis-source
+type: redis
+address:
+  - ${REDIS_ADDRESS}
+username: ${REDIS_USERNAME}
+password: ${REDIS_PASSWORD}
+database: ${REDIS_DATABASE}
+
+---
+kind: tool
+name: redis_get
+type: redis
+source: redis-source
+description: Get the string value stored at a given Redis key.
+commands:
+  - [GET, $key]
+parameters:
+  - name: key
+    type: string
+    description: The Redis key to read.
+
+---
+kind: tool
+name: redis_set
+type: redis
+source: redis-source
+description: Set a string value for a given Redis key.
+commands:
+  - [SET, $key, $value]
+parameters:
+  - name: key
+    type: string
+    description: The Redis key to write.
+  - name: value
+    type: string
+    description: The value to store.
+
+---
+kind: tool
+name: redis_del
+type: redis
+source: redis-source
+description: Delete a Redis key.
+commands:
+  - [DEL, $key]
+parameters:
+  - name: key
+    type: string
+    description: The Redis key to delete.
+
+---
+kind: tool
+name: redis_keys
+type: redis
+source: redis-source
+description: >-
+  List Redis keys matching a glob-style pattern (e.g. "user:*"). Caution:
+  KEYS scans the whole keyspace - use sparingly on large/production instances.
+commands:
+  - [KEYS, $pattern]
+parameters:
+  - name: pattern
+    type: string
+    description: Glob-style pattern to match keys against.
+
+---
+kind: tool
+name: redis_hgetall
+type: redis
+source: redis-source
+description: Get all fields and values of a Redis hash.
+commands:
+  - [HGETALL, $key]
+parameters:
+  - name: key
+    type: string
+    description: The Redis hash key.
+
+---
+kind: tool
+name: redis_expire
+type: redis
+source: redis-source
+description: Set a TTL (in seconds) on a Redis key.
+commands:
+  - [EXPIRE, $key, $seconds]
+parameters:
+  - name: key
+    type: string
+    description: The Redis key to set an expiry on.
+  - name: seconds
+    type: integer
+    description: Time to live in seconds.
+
+---
+kind: toolset
+name: redis-toolset
+tools:
+  - redis_get
+  - redis_set
+  - redis_del
+  - redis_keys
+  - redis_hgetall
+  - redis_expire

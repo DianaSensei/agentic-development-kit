@@ -1,0 +1,63 @@
+# Template: add a new SQL connection (any of Toolbox's supported SQL
+# `type`s - postgres, mysql, tidb, mssql, sqlite, spanner, bigquery, etc;
+# see https://mcp-toolbox.dev/documentation/reference/prebuilt-tools for
+# the full list and each type's own source fields).
+#
+# HOW TO USE:
+#   1. Copy this file into ../connections/, renamed to something unique,
+#      e.g. `orders-db.yaml`.
+#   2. Replace CONN_NAME everywhere below with a short, unique identifier
+#      for this connection (e.g. `orders`) - it must not collide with any
+#      other file's source/tool/toolset names in ../connections/.
+#   3. Add the matching CONN_NAME_HOST/PORT/DATABASE/USER/PASSWORD
+#      variables to ../.env (and ../.env.example if you want them
+#      documented for teammates too).
+#   4. Delete this comment block, drop the .example extension is not
+#      needed - Toolbox only loads *.yaml/*.yml from ../connections/, so
+#      leaving this file here as .example is safe and it's ignored.
+#
+# The read-only guarantee (if you want one) comes from the DB account
+# itself - point CONN_NAME_USER at a SELECT-only role/account. Toolbox
+# does not enforce this by inspecting SQL text.
+
+kind: source
+name: CONN_NAME-source
+type: postgres  # change to mysql / tidb / mssql / sqlite / spanner / etc.
+host: ${CONN_NAME_HOST}
+port: ${CONN_NAME_PORT}
+database: ${CONN_NAME_DATABASE}
+user: ${CONN_NAME_USER}
+password: ${CONN_NAME_PASSWORD}
+
+---
+kind: tool
+name: CONN_NAME_query_data
+type: postgres-execute-sql  # match the source type, e.g. mysql-execute-sql
+source: CONN_NAME-source
+description: >-
+  Run a read-only SQL query (SELECT) against the CONN_NAME database.
+  Describe here what this database is for, so the agent knows when to use
+  it - and any query patterns/system catalogs worth pointing out for
+  introspection.
+annotations:
+  readOnlyHint: true
+  destructiveHint: false
+
+---
+kind: tool
+name: CONN_NAME_list_tables
+type: postgres-list-tables  # match the source type, e.g. mysql-list-tables
+source: CONN_NAME-source
+description: >-
+  List schema information for all or specified tables in the CONN_NAME
+  database. Optional params: table_names (comma-separated), output_format
+  (simple|detailed).
+annotations:
+  readOnlyHint: true
+
+---
+kind: toolset
+name: CONN_NAME-toolset
+tools:
+  - CONN_NAME_query_data
+  - CONN_NAME_list_tables
