@@ -98,6 +98,29 @@ plugin's settings (below), not from editing the file.
 The six pre-built connections are a starting point, not a fixed set - use as many, as few,
 or as different a set of connections as you actually have.
 
+### Adding or editing a connection safely
+
+The easiest way is to just ask Claude Code ("add a toolbox connection for my orders Postgres
+database", "add a toolbox tool that counts active users") - the
+[`toolbox-connections`](../../skills/toolbox-connections/SKILL.md) skill picks this up
+automatically and follows the flow below on your behalf, including asking about read-only
+permissions and reporting back with `/mcp` reconnect as the one remaining manual step.
+
+Doing it by hand, always go through `validate.sh` rather than writing directly:
+
+```bash
+DIR="$(claude mcp list | grep '^plugin:agentic-development-kit:toolbox' \
+  | grep -oE -- '--config-folder [^ ]+' | awk '{print $2}')"
+./validate.sh snapshot "$DIR"   # before making any change
+# ... write/edit/delete the file(s) ...
+./validate.sh check "$DIR"      # confirms toolbox can actually start with the change
+```
+
+If `check` fails, `./validate.sh restore "$DIR"` undoes it, then fix the printed error and
+try again. This matters because `--config-folder` is validated as one unit - a single mistake
+in a new or edited file fails the *entire* server, taking every other working connection down
+with it, not just the one being changed.
+
 Important note: the PostgreSQL, MySQL, and TiDB connections shipped here are read-only, with
 no tool that writes/deletes/modifies tables. The reasoning and how this is enforced are
 described at the end of this document - the same reasoning applies to any SQL connection you

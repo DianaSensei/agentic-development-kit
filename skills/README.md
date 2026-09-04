@@ -84,6 +84,7 @@ off to the right orchestrator, so in practice you rarely need to name a workflow
 | [`mcp-developer`](./mcp-developer/SKILL.md) | Building a new MCP server/client (protocol, SDKs, authorization) |
 | [`mcp-setup`](./mcp-setup/SKILL.md) | **Manual-only** - connecting an existing third-party MCP server to Claude Code, given a link |
 | [`atlassian-mcp`](./atlassian-mcp/SKILL.md) | Jira/Confluence via MCP - JQL/CQL queries, tickets, sprints, docs |
+| [`toolbox-connections`](./toolbox-connections/SKILL.md) | Configure this plugin's own bundled toolbox MCP - add/remove a database connection or a custom query/tool |
 
 ## Conventions Used Across These Skills
 

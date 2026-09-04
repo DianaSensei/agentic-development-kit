@@ -7,20 +7,29 @@
 #
 # HOW TO USE:
 #   The easiest way is to just ask Claude Code, e.g. "add a toolbox tool
-#   that counts active users in the primary Postgres DB" - it can write
-#   this straight into the right place. To do it by hand:
-#   1. Copy this file into ${CLAUDE_PLUGIN_DATA}/connections/ (the
-#      writable, persistent directory the bundled toolbox MCP reads from;
-#      run `claude mcp get toolbox` to see the exact path) - it can live in
-#      its own file, or appended into an existing connection's file,
-#      Toolbox merges every *.yaml/*.yml in that directory into one config
-#      either way.
-#   2. Point `source:` at an existing source name from one of the files
+#   that counts active users in the primary Postgres DB" - it will follow
+#   ../validate.sh's snapshot/check/restore flow (see that script and the
+#   "Adding or editing a connection safely" section of ../README.md), so a
+#   mistake here can't take down every other connection along with it. To
+#   do it by hand:
+#   1. Find the live directory: `claude mcp list | grep
+#      '^plugin:agentic-development-kit:toolbox'` shows the exact
+#      --config-folder path.
+#   2. `../validate.sh snapshot <that path>` - saves the current working
+#      state so a mistake below is recoverable.
+#   3. Copy this file into that directory (its own file, or appended into
+#      an existing connection's file - Toolbox merges every *.yaml/*.yml in
+#      that directory into one config either way).
+#   4. Point `source:` at an existing source name from one of the files
 #      already there (e.g. `postgres-primary-source`).
-#   3. Rename the tool and rewrite `statement`/`parameters` for your case.
-#   4. Add it to that connection's toolset (or a new one) if you want it
+#   5. Rename the tool and rewrite `statement`/`parameters` for your case.
+#   6. Add it to that connection's toolset (or a new one) if you want it
 #      grouped there - grouping is informational only for stdio, every
 #      `kind: tool` block is exposed to Claude Code regardless of toolset.
+#   7. `../validate.sh check <that path>` - confirms toolbox can actually
+#      start with the new tool. If it FAILS, run `../validate.sh restore
+#      <that path>` to undo, fix the error it printed, and try again from
+#      step 3.
 
 kind: tool
 name: postgres_primary_active_users_last_n_days

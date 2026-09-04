@@ -5,25 +5,33 @@
 #
 # HOW TO USE:
 #   The easiest way is to just ask Claude Code, e.g. "add a toolbox
-#   connection for my orders Postgres database" - it can read this file
-#   and write the result straight into the right place. To do it by hand:
-#   1. Copy this file into ${CLAUDE_PLUGIN_DATA}/connections/ (the
-#      writable, persistent directory the bundled toolbox MCP reads from -
-#      run `claude mcp get toolbox` to see the exact path, or ask Claude
-#      Code "what's my CLAUDE_PLUGIN_DATA path?"), renamed to something
-#      unique, e.g. `orders-db.yaml`.
-#   2. Replace CONN_NAME everywhere below with a short, unique identifier
+#   connection for my orders Postgres database" - it will follow
+#   ../validate.sh's snapshot/check/restore flow (see that script and the
+#   "Adding or editing a connection safely" section of ../README.md), so a
+#   mistake here can't take down the other connections. To do it by hand:
+#   1. Find the live directory: `claude mcp list | grep
+#      '^plugin:agentic-development-kit:toolbox'` shows the exact
+#      --config-folder path.
+#   2. `../validate.sh snapshot <that path>` - saves the current working
+#      state so a mistake below is recoverable.
+#   3. Copy this file into that directory, renamed to something unique,
+#      e.g. `orders-db.yaml`.
+#   4. Replace CONN_NAME everywhere below with a short, unique identifier
 #      for this connection (e.g. `orders`) - it must not collide with any
 #      other file's source/tool/toolset name already in that directory.
-#   3. Fill in host/port/database/user/password with the real values,
+#   5. Fill in host/port/database/user/password with the real values,
 #      directly (no need for env vars or a .env file) - this directory is
 #      private to your machine, not committed to git or shared, so a
 #      literal value here is safe, the same way a personal-scope MCP
 #      entry in ~/.claude.json is.
-#   4. Drop the .example extension isn't required for the file you
-#      copied elsewhere, but leaving a copy of this template itself here
-#      is safe - Toolbox only loads *.yaml/*.yml, so a .example file is
-#      always ignored.
+#   6. `../validate.sh check <that path>` - confirms toolbox can actually
+#      start with the new file. If it FAILS, run `../validate.sh restore
+#      <that path>` to undo, fix the error it printed, and try again from
+#      step 3.
+#   Dropping the .example extension isn't required for the file you
+#   copied elsewhere, but leaving a copy of this template itself here is
+#   safe - Toolbox only loads *.yaml/*.yml, so a .example file is always
+#   ignored.
 #
 # The read-only guarantee (if you want one) comes from the DB account
 # itself - point the user field at a SELECT-only role/account. Toolbox
