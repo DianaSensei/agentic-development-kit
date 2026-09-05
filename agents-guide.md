@@ -46,6 +46,24 @@ assigning work. This means adding a new Tier-2 agent to this directory doesn't r
 Every implementing (Tier 2) agent writes AND runs its own tests for the part it did before reporting
 done, leaving no verification work for a later step.
 
+## Locating this plugin's own files from inside an agent
+
+A subagent's working directory is the **user's project**, not the plugin. Once installed from a
+marketplace the plugin's files live somewhere like
+`~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/`, so a project-relative path such as
+`agents/*.md` or `skills/<name>/SKILL.md` resolves to nothing. It only appears to work when this repo
+is itself the project being worked on, which is exactly the case an author dogfooding the plugin sees.
+
+The subagents here therefore never hardcode a plugin-relative path. Instead:
+
+1. **The caller passes the path.** `feature-development` runs in the main thread, already knows where
+   it read its own `SKILL.md` from, and passes the resolved `plugin_root` (plus, for
+   `solution-architect`, the discovered Tier-2 agent list) into the Task prompt.
+2. **Failing that, the agent searches.** `.claude/skills/<name>/SKILL.md` and `.claude/agents/*.md`
+   for a project that vendored them, then a `Glob` for `**/skills/<name>/SKILL.md`.
+3. **Failing that, it says so** in `open_questions` rather than proceeding on guessed knowledge -
+   silently continuing is what turns a path bug into a wrong design.
+
 ## General conventions
 
 - **Structured JSON output** - each agent returns a JSON object following a fixed schema defined in its

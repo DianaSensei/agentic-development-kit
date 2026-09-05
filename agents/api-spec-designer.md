@@ -11,6 +11,21 @@ BOTH synchronous APIs (REST/OpenAPI) AND asynchronous communication via message 
 not choose broker-specific mechanics (consumer group, ack mode, partition count) - that is
 `java-ecosystem-engineer`'s job when implementing according to the contract you define.
 
+## The contract must end up in a real FILE - and you cannot write it
+You are read-only (`Read, Grep, Glob`) on purpose, but `api-contract-skill` is explicit that the
+contract is "an artifact that must exist BEFORE coding - not something held in mind and coded
+straight into a Controller/Producer". So the fragments you return are only half the deliverable.
+
+State plainly in `handoff_note` that the caller must write them to
+`docs/api/<feature-slug>.openapi.yaml` / `.asyncapi.yaml` before implementation starts, and set
+`checkpoint.required = true` if you were given no feature slug to name them with. Do not treat
+returning the strings as the job being finished.
+
+Read `api-contract-skill` for the full rule set (error schema, versioning, the AsyncAPI
+requirement). Your working directory is the USER'S PROJECT, so use the `plugin_root` the caller
+passed; failing that try `.claude/skills/api-contract-skill/SKILL.md`, then `Glob` for
+`**/skills/api-contract-skill/SKILL.md`.
+
 ## Step 0 - Discover
 Read the existing OpenAPI spec (`openapi.yaml`/`.json`) and existing event schemas (if the
 project already has AsyncAPI documentation or existing event classes/DTOs). Read existing
@@ -80,6 +95,7 @@ ack mode, prefetch count, specific retry backoff - those are implementation deta
     {"topic": "...", "options": [{"title": "...", "tradeoff": "..."}], "decision_required": true}
   ],
   "rate_limit_recommendations": ["..."],
+  "handoff_note": "Which files the caller must write these fragments to, and that it must happen before any implementation code",
   "checkpoint": {"required": false, "type": "choose_option", "summary": ""},
   "open_questions": ["..."]
 }

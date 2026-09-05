@@ -74,6 +74,12 @@ here in the main thread:
    diagrams, trade-off analysis, architecture decisions, finalized AC/edge cases/DoD, and a
    `task_breakdown` assigning work to Tier-2 agents where one exists (contract:
    `agents/solution-architect.md`).
+
+   **Pass it the available Tier-2 agents** - name and description of each - in the prompt. A subagent's
+   working directory is the user's project, so it cannot find this plugin's `agents/` directory on its
+   own; you can, because you already resolved where this `SKILL.md` was read from. Without this the
+   agent finds nothing and returns a `task_breakdown` with no assignments, which looks exactly like a
+   feature that needed none.
 2. Bring each proposal up to this workflow's documentation bar - `solution-architect`'s contract doesn't
    require these, so add them where they actually apply:
    - Acceptance criteria restated as EARS functional requirements (`references/ears-syntax.md`), checked
@@ -116,6 +122,17 @@ exists (`java-ecosystem-engineer`, `tauri-react-engineer`, `data-storage-archite
 it may go through the Task tool instead of being implemented inline - those agents write and run their own
 tests for the piece they own. Not required: anything without a matching Tier-2 agent is implemented
 directly under the read-the-`SKILL.md` rule above.
+
+Two things the dispatch does not do for you:
+
+- **Pass the resolved plugin root in the prompt.** Tier-2 agents are told to read the technical skill
+  that owns the code before writing it - the same rule as above - and they cannot locate this plugin's
+  `skills/` directory from the user's project on their own.
+- **Materialise `api-spec-designer`'s output.** It is read-only by design and returns
+  `openapi_spec_fragment` / `asyncapi_spec_fragment` as strings. `api-contract-skill` requires the
+  contract to exist as a real file before any code is written, so write them to
+  `docs/api/<feature-slug>.openapi.yaml` / `.asyncapi.yaml` yourself, exactly as Step 2 writes
+  `docs/plans/<feature-slug>.md`, before implementation starts.
 
 ### 3.2 Test
 

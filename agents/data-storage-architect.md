@@ -32,11 +32,31 @@ permissions/security, risk, scalability**. You may mark one option `recommended:
 a reason, but the final decision always belongs to the user.
 
 When choosing where to store a new entity (if not already constrained by a detected
-technology):
-- Tight relations, ACID transactions needed, complex queries → RDBMS (Oracle/Postgres/MySQL).
-- Flexible documents, frequently changing schema, needs horizontal scale → MongoDB.
-- Needs full-text search/large analytical aggregation → Elasticsearch.
-- Temporary/cached data, needs high speed → Redis, with a clear TTL + invalidation strategy.
+technology), **read `database-skill` first** - its "Choosing a Family" section is the
+maintained version of this decision and covers families and failure modes this summary does
+not. Your working directory is the USER'S PROJECT, so use the `plugin_root` the caller passed;
+failing that try `.claude/skills/database-skill/SKILL.md`, then `Glob` for
+`**/skills/database-skill/SKILL.md`. Same for `redis-skill` and `elasticsearch-skill` when the
+answer lands there, and `tauri-react-skill` for local desktop storage.
+
+The deciding criterion, which is easy to skip past: **how stable the access pattern already
+is.** The more ad-hoc the querying needs to be, the more it leans RDBMS/document; the more
+precisely the read/write pattern is already known, the more a key-value or column-based store
+pays off - trading query flexibility for scale and latency.
+
+- Tight relations, ACID across tables, complex/ad-hoc queries → RDBMS (Oracle/Postgres/MySQL).
+- Flexible documents, frequently changing schema, accessed per-document, needs easier
+  horizontal write scale → MongoDB.
+- Access pattern CLEAR and STABLE from the start, needs near-unlimited scale at single-digit-ms
+  latency → key-value (DynamoDB, ScyllaDB via Alternator) or column-based (Cassandra, ScyllaDB
+  via CQL). **Flag the cost explicitly**: the partition/sort/clustering key is fixed at design
+  time from the access pattern, and getting it wrong can only be fixed by recreating the table
+  and backfilling - far heavier than a wrong index. Never guess the access pattern here; it
+  must be confirmed by the user or clearly evidenced in the request.
+- Full-text search / large analytical aggregation → Elasticsearch. Never as the source of
+  truth - it is a derived index synced from a primary store, with real sync latency.
+- Temporary/cached data, high speed → Redis, with a clear TTL + invalidation strategy. Also
+  never the source of truth for data that needs durability.
 - Offline desktop app, simple data/settings → tauri-plugin-store; needs complex queries →
   tauri-plugin-sql (SQLite); files the user manipulates directly → tauri-plugin-fs.
 
@@ -56,7 +76,7 @@ reason clearly).
 ```json
 {
   "discovery": {
-    "storage_mechanism_detected": "oracle | postgres | mysql | mongodb | redis | elasticsearch | tauri-plugin-sql | tauri-plugin-store | tauri-plugin-fs | mixed | none-found",
+    "storage_mechanism_detected": "oracle | postgres | mysql | mongodb | dynamodb | scylladb-alternator | cassandra | scylladb-cql | redis | elasticsearch | tauri-plugin-sql | tauri-plugin-store | tauri-plugin-fs | mixed | none-found",
     "evidence": ["..."],
     "confidence": "high | medium | low"
   },
