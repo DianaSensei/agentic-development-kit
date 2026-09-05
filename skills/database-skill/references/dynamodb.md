@@ -150,7 +150,7 @@ optimized, not as a first response to seeing slowness.
 ## Testcontainers / Local Testing
 
 Use the `amazon/dynamodb-local` image (real DynamoDB) or `scylladb/scylla` with the Alternator flag enabled
-(ScyllaDB) via `testcontainers-skill` for integration tests - Query/GSI/conditional-write behavior
+(ScyllaDB) via `test-master/references/testcontainers.md` for integration tests - Query/GSI/conditional-write behavior
 reproduces production accurately, unlike a pure SDK mock (mocks don't catch key/GSI design mistakes).
 
 ## When to choose DynamoDB vs ScyllaDB Alternator (vs RDBMS/MongoDB/Cassandra - see the main SKILL.md)

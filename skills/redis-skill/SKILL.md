@@ -7,7 +7,7 @@ metadata:
   role: specialist
   scope: implementation
   output-format: code
-  related-skills: database-skill, java-spring-skill, kafka-skill, rabbitmq-skill, testcontainers-skill, monitoring-expert
+  related-skills: database-skill, java-spring-skill, kafka-skill, rabbitmq-skill, test-master, monitoring-expert
 ---
 
 # Redis - Multi-Purpose by Use Case

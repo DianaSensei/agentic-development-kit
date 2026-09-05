@@ -132,7 +132,7 @@ focuses on decisions rather than exploration.
 ```
 1. Identify domains the feature touches
 2. Launch parallel Task subagents, each invoking the relevant skill from the Step 0 skill map
-   (e.g. architecture-designer for system-impact assessment, security-reviewer for auth/data
+   (e.g. architecture-designer for system-impact assessment, security-skill for auth/data
    concerns, Explore for existing codebase patterns)
 3. Collect findings from all subagents
 4. Begin the Step 1 interview with technical context already loaded
@@ -146,7 +146,7 @@ For a "user profile with avatar upload" feature:
 ```
 Subagent 1 (architecture-designer): "Analyze the current user model, storage patterns,
   and image handling in this codebase"
-Subagent 2 (security-reviewer): "What security concerns exist for file upload in this stack?"
+Subagent 2 (security-skill): "What security concerns exist for file upload in this stack?"
 Subagent 3 (Explore): "How does this project currently handle API endpoints and file storage?"
 ```
 

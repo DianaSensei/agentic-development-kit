@@ -7,7 +7,7 @@ metadata:
   role: specialist
   scope: implementation
   output-format: code
-  related-skills: api-contract-skill, rabbitmq-skill, java-spring-skill, testcontainers-skill, monitoring-expert
+  related-skills: api-contract-skill, rabbitmq-skill, java-spring-skill, test-master, monitoring-expert
 ---
 
 # Apache Kafka

@@ -7,7 +7,7 @@ metadata:
   role: engineer
   scope: implementation
   output-format: code
-  related-skills: rust-engineer, ui-ux-design-skill, database-skill, testcontainers-skill, test-master, code-review-skill
+  related-skills: rust-engineer, ui-ux-design-skill, database-skill, test-master, code-review-skill
 ---
 
 # Tauri + React - Implementation & Local Storage

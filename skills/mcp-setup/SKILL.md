@@ -1,6 +1,6 @@
 ---
 name: mcp-setup
-description: Manually-invoked, end-to-end setup for connecting a third-party MCP server to Claude Code - given a GitHub link, package name, or hosted URL, determines the transport/auth it needs, registers it via `claude mcp add` at the right scope, handles secrets safely, and verifies the connection actually works. Only run when the user explicitly invokes `/mcp-setup` or explicitly asks to install/connect/set up a specific MCP server by name or link. Do NOT auto-trigger this for general MCP questions, for authoring a new MCP server (use `mcp-developer`), or for Atlassian specifically (use `atlassian-mcp`, which already covers that server's setup).
+description: End-to-end setup for connecting a third-party MCP server to Claude Code - given a GitHub link, package name, or hosted URL, determines the transport and auth it needs, registers it via `claude mcp add` at the right scope, handles secrets safely, and verifies the connection actually works. Use when asked to install, connect, add, or set up a specific MCP server, or to diagnose one that was added but shows as failed or not connected. Not for authoring a new MCP server (`mcp-developer`), and not for this plugin's own bundled toolbox database MCP (`toolbox-connections`).
 argument-hint: "[MCP server GitHub link, package name, or hosted URL]"
 metadata:
   domain: platform
@@ -8,7 +8,7 @@ metadata:
   role: specialist
   scope: implementation
   output-format: code
-  related-skills: mcp-developer, atlassian-mcp, toolbox-connections, security-reviewer
+  related-skills: mcp-developer, toolbox-connections, security-skill
 ---
 
 # MCP Setup
@@ -136,12 +136,9 @@ documents required local setup).
 
 - This skill connects an EXISTING third-party MCP server to Claude Code. Authoring a new MCP server -
   writing its tool/resource/prompt handlers, choosing its SDK - is `mcp-developer`'s job.
-- For Atlassian (Jira/Confluence) specifically, use `atlassian-mcp` directly - it already documents
-  that server's setup; don't re-derive it here.
 - This skill doesn't audit the third-party server's own security posture (what it does with data once
   granted access, whether its maintainer is trustworthy) - that judgment belongs to the user, and a
-  deeper look coordinates with `security-reviewer` if the server will get broad tool permissions.
-- Manually triggered only: invoke on explicit `/mcp-setup` or an explicit "set up/install/connect
-  MCP server X" request - do not proactively run this workflow for general MCP questions or for
-  troubleshooting a server the user configured outside of this skill, though `references/
-troubleshooting.md`'s diagnostic tree is still fine to use ad hoc in either case.
+  deeper look coordinates with `security-skill` if the server will get broad tool permissions.
+- Runs on a request to set up, connect, or fix one *specific* server. A general question about what MCP
+  is, or which servers exist, doesn't need this whole workflow - answer it directly.
+  `references/troubleshooting.md`'s diagnostic tree is fine to use ad hoc without running the rest.

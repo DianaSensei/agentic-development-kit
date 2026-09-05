@@ -123,5 +123,5 @@ cost implications and belongs on the record like any other significant architect
 This file decides *which topology* a system or component runs on. It does not cover how to design the
 system's code so that a topology decision doesn't lock it in (config abstraction, containerization,
 avoiding proprietary-API coupling in business logic, ports & adapters) - that's
-`solution-design-principles`'s `references/environment-portability.md`. Use both together when a system
+`solution-design-principles/references/environment-portability.md`. Use both together when a system
 must remain portable across VM and cloud, or is expected to migrate between them.

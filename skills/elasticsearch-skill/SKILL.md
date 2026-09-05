@@ -7,7 +7,7 @@ metadata:
   role: specialist
   scope: design-and-optimization
   output-format: analysis-and-code
-  related-skills: database-skill, java-spring-skill, testcontainers-skill, monitoring-expert
+  related-skills: database-skill, java-spring-skill, test-master, monitoring-expert
 ---
 
 # Elasticsearch

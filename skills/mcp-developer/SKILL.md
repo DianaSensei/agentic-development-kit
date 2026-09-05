@@ -7,7 +7,7 @@ metadata:
   role: specialist
   scope: implementation
   output-format: code
-  related-skills: rust-engineer, java-spring-skill, security-reviewer, mcp-setup
+  related-skills: rust-engineer, java-spring-skill, security-skill, mcp-setup
 ---
 
 # MCP Developer
@@ -134,7 +134,7 @@ When implementing MCP features, provide:
   `java-spring-skill` for a Java backend, `rust-engineer` for pure Rust logic) - this skill wires that
   logic into MCP, it doesn't replace the skill that owns it.
 - A full security review of a server exposed to untrusted clients (threat modeling, dependency
-  auditing, secret-handling review beyond the OAuth flow itself) is `security-reviewer`'s job.
+  auditing, secret-handling review beyond the OAuth flow itself) is `security-skill`'s job.
 - Packaging, containerizing, and operating a deployed server (CI/CD, infrastructure, scaling) is outside
   this skill's scope - this skill covers what the server needs at runtime (env vars, rate limits), not
   how it gets deployed. Installing/connecting an already-built third-party MCP server (as opposed to

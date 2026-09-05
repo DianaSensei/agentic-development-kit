@@ -134,7 +134,7 @@ MongoDB has no `ALTER TABLE` DDL, but applications still need to handle older do
 
 ## Testcontainers / Local Testing
 
-Use the `mongo` image via `testcontainers-skill` for integration tests - a replica set (`--replSet`) is
+Use the `mongo` image via `test-master/references/testcontainers.md` for integration tests - a replica set (`--replSet`) is
 required if testing multi-document transactions, since MongoDB transactions require a replica set even when
 running a single node.
 

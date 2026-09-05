@@ -1,15 +1,3 @@
----
-name: testcontainers-skill
-description: In-depth Testcontainers setup/operation knowledge for integration tests - dependencies, container lifecycle (singleton pattern, reuse, cleanup), wait strategies, multi-container networking, CI integration. Does NOT cover infrastructure-specific test scenarios (see `database-skill`/`kafka-skill`/`rabbitmq-skill`/`redis-skill`/`elasticsearch-skill`). Use when an integration test needs real infrastructure via containers instead of a mock.
-metadata:
-  domain: quality
-  triggers: singleton container, container reuse, wait strategy, Ryuk, Docker in tests, real infrastructure test, flaky integration test
-  role: specialist
-  scope: testing
-  output-format: code
-  related-skills: test-master, database-skill, kafka-skill, rabbitmq-skill, redis-skill, elasticsearch-skill, java-spring-skill
----
-
 # Testcontainers - Container Setup & Execution for Integration Tests
 
 ## Discover Before Setting Up
@@ -45,7 +33,7 @@ When a test needs multiple containers to talk to each other (e.g. an app contain
 - **Orphaned containers accumulating on CI/dev machines**: caused by disabling Ryuk, or `kill -9`-ing the test process mid-run so cleanup never finishes - clean up periodically with `docker system prune` if noticed; not a code bug to fix.
 - **Slow/timing-out image pull on first CI run**: consider pre-pulling the image in a dedicated cache step of the CI pipeline if this noticeably affects build time.
 
-## Boundary
-This skill only covers **the mechanics of setting up/running containers** (dependencies, lifecycle, wait strategy, networking, CI). The actual test scenarios per infrastructure type (which SQL dialect to test, which Kafka delivery semantics, how to test Redis TTL, what Elasticsearch mapping to test) → coordinate with the matching skill: `database-skill`, `kafka-skill`, `rabbitmq-skill`, `redis-skill`, `elasticsearch-skill`. Pure unit tests (mocked, no container) → the relevant language/framework skill (e.g. `java-spring-skill`).
+## Scope of this file
+This file only covers **the mechanics of setting up/running containers** (dependencies, lifecycle, wait strategy, networking, CI). The actual test scenarios per infrastructure type (which SQL dialect to test, which Kafka delivery semantics, how to test Redis TTL, what Elasticsearch mapping to test) → coordinate with the matching skill: `database-skill`, `kafka-skill`, `rabbitmq-skill`, `redis-skill`, `elasticsearch-skill`. Pure unit tests (mocked, no container) → the relevant language/framework skill (e.g. `java-spring-skill`).
 
 Containers are slow - reach for one only when the test needs behavior a mock/in-memory substitute (H2, embedded Kafka) can't faithfully reproduce, not for every test case.

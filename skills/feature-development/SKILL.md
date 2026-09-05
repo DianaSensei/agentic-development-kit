@@ -184,5 +184,5 @@ Templates for both files: `references/report-and-logs.md`.
   user wants only a requirements document with no implementation, say so explicitly after the CHECKPOINT
   instead of silently continuing into Step 3.
 - No dedicated security or architecture review beyond reaching the DoD - deeper passes go to
-  `secure-code-guardian`, `architecture-designer`, or `solution-design-principles` (SOLID,
+  `security-skill`, `architecture-designer`, or `solution-design-principles` (SOLID,
   coupling/cohesion, Well-Architected, 12-Factor) before the thing is built.

@@ -7,7 +7,7 @@ metadata:
   role: specialist
   scope: implementation
   output-format: code
-  related-skills: spec-miner, code-review-skill, api-contract-skill
+  related-skills: legacy-modernizer, code-review-skill, api-contract-skill
 ---
 
 # Code Documenter
@@ -66,11 +66,10 @@ Depending on the task, provide:
 - Designing a NEW API contract (endpoints, request/response schemas, as a contract-first exercise before
   implementation) is `api-contract-skill`'s job - this skill documents what an existing implementation
   does, not what a not-yet-built one should do.
-- Overlaps with `spec-miner` on generating API documentation from source - the difference is the
-  starting condition: `spec-miner` is for a legacy/undocumented/inherited system where the spec has to
-  be reverse-engineered from behavior with no prior owner; this skill is for a system with a known
-  owner, documenting code going forward as part of normal development. Once `spec-miner` has produced
-  an initial understanding of a previously undocumented system, ongoing documentation maintenance is
-  this skill's job, not a repeated spec-mining pass.
+- Overlaps with `legacy-modernizer` on generating documentation from source - the difference is the
+  starting condition: that skill reverse-engineers a spec from a legacy/undocumented/inherited system
+  with no prior owner; this skill is for a system with a known owner, documented going forward as part
+  of normal development. Once a previously undocumented system has been reverse-engineered once,
+  ongoing documentation maintenance is this skill's job, not a repeated mining pass.
 - A documentation pass is not a substitute for code review; correctness/security issues found while
   documenting should be raised, but a deeper review is `code-review-skill`'s job.

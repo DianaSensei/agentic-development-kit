@@ -7,7 +7,7 @@ metadata:
   role: specialist
   scope: design-and-optimization
   output-format: analysis-and-code
-  related-skills: java-spring-skill, tauri-react-skill, testcontainers-skill, code-review-skill
+  related-skills: java-spring-skill, elasticsearch-skill, tauri-react-skill, test-master, code-review-skill
 ---
 
 # Database - RDBMS vs. NoSQL (Document / Key-Value / Column-based)
@@ -156,7 +156,7 @@ Testcontainers with the real matching DB
 rolls the transaction back, and that two concurrent writers to one record don't produce a lost update.
 MongoDB multi-document transaction tests need a replica set (`--replSet`). For
 DynamoDB/ScyllaDB/Cassandra, test the key design itself - a Query returns the right rows without silently
-falling back to Scan/ALLOW FILTERING. Container setup/lifecycle → `testcontainers-skill`.
+falling back to Scan/ALLOW FILTERING. Container setup/lifecycle → `test-master/references/testcontainers.md`.
 
 ## Constraints
 

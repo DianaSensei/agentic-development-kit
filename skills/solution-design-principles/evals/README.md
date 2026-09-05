@@ -7,7 +7,7 @@ break selection.
 
 20 queries, 10 positive / 10 negative. The negatives are deliberate near-misses aimed at the skills this
 one competes with most directly - `architecture-designer` (service decomposition, deployment topology),
-`java-spring-skill` (JPA, package structure), `refactor`, `security-reviewer`, `monitoring-expert`,
+`java-spring-skill` (JPA, package structure), `refactor`, `security-skill`, `monitoring-expert`,
 `legacy-modernizer`, `database-skill`. They share vocabulary with this skill ("coupling", "principles",
 "boundaries", "lock-in") but each belongs elsewhere, so they test the description's negative-scoping
 clause rather than being easy throwaways.

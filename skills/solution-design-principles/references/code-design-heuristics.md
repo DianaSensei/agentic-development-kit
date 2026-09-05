@@ -363,7 +363,7 @@ signal at the call site that it's expensive.
 collection getter (`order.getItems()`) is the canonical example - it looks like O(1) field access and
 can be an expensive full fetch. This is why read/filter access should go through an explicit
 repository query returning a projection, not through the aggregate's own collection field - see
-`java-spring-skill`'s `references/data-jpa.md` for the concrete JPA pattern. Reads are exactly where
+`java-spring-skill/references/data-jpa.md` for the concrete JPA pattern. Reads are exactly where
 hiding cost does the most damage: they're the most performance-sensitive path and the one reviewers
 trust the abstraction on most readily.
 

@@ -124,7 +124,7 @@ annotations:
 ```
 
 For the full Prometheus alerting rule syntax and Alertmanager routing setup, see
-`monitoring-expert`'s `references/alerting-rules.md` - the query above is the SLO-specific shape to
+`monitoring-expert/references/alerting-rules.md` - the query above is the SLO-specific shape to
 add on top of that general alerting setup.
 
 ## Dependency Mapping

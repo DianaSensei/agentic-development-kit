@@ -26,7 +26,7 @@ metadata:
   role: orchestrator
   scope: end-to-end
   output-format: code-and-report
-  related-skills: workflow-router, code-review-skill, test-master, monitoring-expert, spec-miner
+  related-skills: workflow-router, code-review-skill, test-master, monitoring-expert, legacy-modernizer
 ---
 
 # Bug Fix Workflow

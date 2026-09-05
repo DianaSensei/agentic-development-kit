@@ -7,7 +7,7 @@ metadata:
   role: expert
   scope: design
   output-format: document
-  related-skills: secure-code-guardian, monitoring-expert, database-skill, legacy-modernizer, java-spring-skill, solution-design-principles
+  related-skills: security-skill, monitoring-expert, database-skill, legacy-modernizer, java-spring-skill, solution-design-principles
 ---
 
 # Architecture Designer
@@ -159,7 +159,7 @@ Consistency and query flexibility are prioritised over unlimited horizontal writ
   abstraction, dual-write) is `legacy-modernizer`'s job - this skill designs the target architecture;
   `legacy-modernizer` designs the safe path to get there from what already exists.
 - Security architecture review (authn/authz design, threat modeling) coordinates with
-  `secure-code-guardian`.
+  `security-skill`.
 - This skill decides *what* architecture to build (pattern, boundaries, communication); checking that
   decision against foundational design principles (SOLID, coupling/cohesion, Well-Architected pillars,
   12-Factor) is `solution-design-principles`'s job - run it after this skill produces a proposal, or on

@@ -1,7 +1,7 @@
 # Security Testing
 
 For Java/Spring Security testing (`@WithMockUser`, MockMvc 401/403 assertions, method-security tests),
-see `java-spring-skill/references/security.md` and `references/testing.md` - this file illustrates the
+see `java-spring-skill/references/security.md` and `java-spring-skill/references/testing.md` - this file illustrates the
 same categories of security tests (auth, authorization, input validation, headers) using Node/Supertest;
 the categories and attack patterns below apply regardless of backend language.
 

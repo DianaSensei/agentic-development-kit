@@ -7,7 +7,7 @@ metadata:
   role: engineer
   scope: implementation
   output-format: code
-  related-skills: database-skill, kafka-skill, rabbitmq-skill, api-contract-skill, testcontainers-skill, code-review-skill, architecture-designer, solution-design-principles
+  related-skills: database-skill, kafka-skill, rabbitmq-skill, api-contract-skill, test-master, code-review-skill, architecture-designer, solution-design-principles
 ---
 
 # Java + Spring Ecosystem
@@ -29,7 +29,7 @@ later. When unsure between a simpler and a more elaborate option, default to the
    - *Safety*: clear transaction boundaries (avoid self-invocation, which silently defeats the `@Transactional`/`@Async`/`@Cacheable` proxy), idempotency for endpoints that can be called twice, thread safety for stateful singleton beans, input validation at the boundary (`@Valid`).
    - *Performance*: avoid N+1 (`@EntityGraph`/`JOIN FETCH`), batch processing for large volumes, connection-pool tuning (HikariCP) based on measured evidence - don't guess without data.
    - *Scalability*: prefer stateless services for horizontal scaling; Resilience4j (circuit breaker/retry/bulkhead) for calls to dependent services if the project already has this convention, or add it for a specific call site that clearly needs it (state this in the report, no need to stop and wait for approval).
-4. **Test** - Write unit tests (JUnit5 + Mockito) for every Acceptance Criterion/edge case, mock every external dependency, test the exception path too. Run the tests for real (`mvn test`/`gradle test`) before reporting done; if they fail, fix within reasonable scope and re-run. For integration tests against real infrastructure (DB/broker) → coordinate with `testcontainers-skill`.
+4. **Test** - Write unit tests (JUnit5 + Mockito) for every Acceptance Criterion/edge case, mock every external dependency, test the exception path too. Run the tests for real (`mvn test`/`gradle test`) before reporting done; if they fail, fix within reasonable scope and re-run. For integration tests against real infrastructure (DB/broker) → coordinate with `test-master/references/testcontainers.md`.
 5. **Handoff** - List every file created/modified clearly in the report, so the lead orchestrator (`feature-development`/`bug-fix`) can add it to the "Files Changed" list.
 
 ## Reference Guide

@@ -7,7 +7,7 @@ metadata:
   role: specialist
   scope: implementation
   output-format: code
-  related-skills: api-contract-skill, kafka-skill, java-spring-skill, testcontainers-skill
+  related-skills: api-contract-skill, kafka-skill, java-spring-skill, test-master
 ---
 
 # RabbitMQ
