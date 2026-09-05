@@ -125,9 +125,11 @@ directly under the read-the-`SKILL.md` rule above.
 
 Two things the dispatch does not do for you:
 
-- **Pass the resolved plugin root in the prompt.** Tier-2 agents are told to read the technical skill
-  that owns the code before writing it - the same rule as above - and they cannot locate this plugin's
-  `skills/` directory from the user's project on their own.
+- **State `plugin_root: <resolved path>` in the Task prompt, using that literal label.** Tier-2 agents
+  are told to read the technical skill that owns the code before writing it - the same rule as above -
+  and to look for a `plugin_root` value from the caller before falling back to searching. They cannot
+  locate this plugin's `skills/` directory from the user's project on their own, and a differently
+  worded prompt gives their search ladder nothing to find.
 - **Materialise `api-spec-designer`'s output.** It is read-only by design and returns
   `openapi_spec_fragment` / `asyncapi_spec_fragment` as strings. `api-contract-skill` requires the
   contract to exist as a real file before any code is written, so write them to

@@ -1,6 +1,6 @@
 ---
 name: security-audit
-description: Finds vulnerabilities in code or infrastructure that already exists and reports them with CVSS severity and remediation - SAST scans, dependency audits, secrets scanning, penetration testing, cloud/DevSecOps and compliance review. Read-only by design: it locates and rates, it does not fix. Use for any request to audit, scan, or review existing code, dependencies, or infrastructure for vulnerabilities. To write secure code while building a feature, use `security-skill`.
+description: "Finds vulnerabilities in code or infrastructure that already exists and reports them with CVSS severity and remediation - SAST scans, dependency audits, secrets scanning, penetration testing, cloud/DevSecOps and compliance review. Read-only by design: it locates and rates, it does not fix. Use for any request to audit, scan, or review existing code, dependencies, or infrastructure for vulnerabilities. To write secure code while building a feature, use `security-skill`."
 allowed-tools: Read, Grep, Glob, Bash
 metadata:
   domain: security
