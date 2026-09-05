@@ -41,7 +41,7 @@ credentials), input validation at trust boundaries, dependency vulnerability sca
 sensitive actions.
 
 **Boundary**: This pillar's design-level check is this skill's job - the actual secure-coding
-implementation and a vulnerability audit of existing code are both `security-skill`'s job.
+implementation is `security-skill`'s job; a vulnerability audit of existing code is `security-audit`'s.
 
 **Common gap**: Authorization checked at the API gateway but not re-checked at the service that actually
 performs a sensitive action, reachable via an internal call that skips the gateway.

@@ -1,7 +1,6 @@
 ---
 name: legacy-modernizer
 description: "Two jobs on aging or inherited codebases. UNDERSTAND - reverse-engineer a specification from a system nobody documented: map structure and dependencies, trace data flows and request paths, recover the business rules from the implementation, write them up as EARS requirements, and flag what's still unclear. MIGRATE - turn that understanding into a safe incremental change: service boundaries, dependency maps, migration roadmaps, API facade designs, strangler fig or branch-by-abstraction rollout. Use for legacy or undocumented systems, inherited projects, onboarding to an unfamiliar codebase, figuring out what existing code actually does, monolith decomposition, framework/language upgrades, or reducing technical debt without disrupting operations."
-allowed-tools: Read, Grep, Glob, Bash, Edit, Write
 metadata:
   domain: specialized
   triggers: legacy modernization, legacy refactoring, system migration, modernize codebase, reverse engineer, no docs, no documentation, figure out how this works, inherited project, legacy analysis, code archaeology, undocumented features, understand codebase, existing system

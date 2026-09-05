@@ -8,7 +8,7 @@ metadata:
   role: specialist
   scope: implementation
   output-format: code
-  related-skills: mcp-developer, toolbox-connections, security-skill
+  related-skills: mcp-developer, toolbox-connections, security-audit
 ---
 
 # MCP Setup
@@ -138,7 +138,7 @@ documents required local setup).
   writing its tool/resource/prompt handlers, choosing its SDK - is `mcp-developer`'s job.
 - This skill doesn't audit the third-party server's own security posture (what it does with data once
   granted access, whether its maintainer is trustworthy) - that judgment belongs to the user, and a
-  deeper look coordinates with `security-skill` if the server will get broad tool permissions.
+  deeper look coordinates with `security-audit` if the server will get broad tool permissions.
 - Runs on a request to set up, connect, or fix one *specific* server. A general question about what MCP
   is, or which servers exist, doesn't need this whole workflow - answer it directly.
   `references/troubleshooting.md`'s diagnostic tree is fine to use ad hoc without running the rest.

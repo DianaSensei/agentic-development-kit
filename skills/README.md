@@ -69,7 +69,8 @@ off to the right orchestrator, so in practice you rarely need to name a workflow
 |-------|---------|
 | [`test-master`](./test-master/SKILL.md) | Test plans, mocking strategy, coverage analysis, performance/security test design, Testcontainers setup |
 | [`code-review-skill`](./code-review-skill/SKILL.md) | The proactive self-check Claude runs before reporting any code change done - checked by the `Stop` gate in [`hooks/`](../hooks/README.md) rather than left to memory |
-| [`security-skill`](./security-skill/SKILL.md) | Two modes - implementing secure code (auth, input validation, hashing, OWASP prevention), and auditing existing code/infrastructure for vulnerabilities into a report |
+| [`security-skill`](./security-skill/SKILL.md) | Implementing secure code - auth, input validation, hashing, OWASP prevention |
+| [`security-audit`](./security-audit/SKILL.md) | Auditing existing code/infrastructure for vulnerabilities into a report - read-only, carries no `Edit`/`Write` tool |
 | [`monitoring-expert`](./monitoring-expert/SKILL.md) | Production observability - logging, metrics, tracing, alerting, capacity forecasting |
 | [`code-documenter`](./code-documenter/SKILL.md) | Docstrings/comments, API docs, doc sites, user guides - any language or framework |
 
@@ -88,7 +89,7 @@ off to the right orchestrator, so in practice you rarely need to name a workflow
 - **`references/` is progressive disclosure** - a skill's `SKILL.md` stays lean; deep detail (code
   patterns, decision tables, troubleshooting trees) lives in `references/*.md`, loaded only when the
   matching step is actually reached, listed in each skill's Reference Guide table.
-- **`metadata:` on every skill** - a fixed block after `description`, present on all 26. Claude Code
+- **`metadata:` on every skill** - a fixed block after `description`, present on all 27. Claude Code
   does not read it; it exists so the library can be audited mechanically. `related-skills` in
   particular is checked both ways: every name must resolve to a directory under `skills/`, and every
   skill must be reachable from at least one other, so a skill cannot silently fall out of the graph.
@@ -103,8 +104,8 @@ off to the right orchestrator, so in practice you rarely need to name a workflow
   skill cannot complete without; the root [`README.md`](../README.md) explains why that hard coupling
   is deliberately avoided.
 - **`## Boundaries`** - most skills state explicitly what they do *not* own, and which sibling skill
-  owns it instead. This is what keeps two skills with adjacent expertise (e.g. `monitoring-expert` vs.
-  `test-master`, `legacy-modernizer` vs. `refactor`) from being ambiguous about which one a
+  owns it instead. This is what keeps two skills with adjacent expertise (e.g. `security-skill` vs.
+  `security-audit`, `legacy-modernizer` vs. `refactor`) from being ambiguous about which one a
   given request should trigger.
 - **Technology-specific vs. technology-agnostic** - a skill that isn't inherently about one language or
   framework (e.g. `architecture-designer`, `code-documenter`) stays free of language-specific code in

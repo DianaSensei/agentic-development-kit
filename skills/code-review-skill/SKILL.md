@@ -7,7 +7,7 @@ metadata:
   role: specialist
   scope: review
   output-format: report
-  related-skills: feature-development, bug-fix, refactor, security-skill, solution-design-principles, test-master
+  related-skills: feature-development, bug-fix, refactor, security-skill, solution-design-principles, test-master, security-audit
 ---
 
 # Code Review Checklist

@@ -1,26 +1,20 @@
 ---
 name: security-skill
-description: Security work in two modes. IMPLEMENT - writing secure code while building a feature: authentication/authorization, input validation and sanitization, password hashing (bcrypt/argon2), parameterized queries, CORS/CSP headers, JWT/session handling, OWASP Top 10 prevention. AUDIT - finding vulnerabilities in code or infrastructure that already exists and reporting them with CVSS severity and remediation: SAST scans, dependency and secrets scanning, penetration testing, cloud/DevSecOps and compliance review. Use for any request to secure code being written, or to review/scan/audit existing code, dependencies, or infrastructure for vulnerabilities.
+description: Writes secure code while a feature is being built - authentication/authorization, input validation and sanitization, password hashing (bcrypt/argon2), parameterized queries, CORS/CSP headers, JWT/session handling, OWASP Top 10 prevention. Produces secure CODE. Use when implementing any of those controls, or hardening code being written. To audit existing code or infrastructure for vulnerabilities instead, use `security-audit`.
 metadata:
   domain: security
-  triggers: vulnerability, secure coding, OAuth, vulnerability scan, code audit, security analysis, compliance audit, pentest, SAST
+  triggers: secure coding, OAuth, JWT, password hashing, input validation, OWASP prevention, CSP, CORS, session management
   role: specialist
-  scope: implementation-and-review
-  output-format: code-or-report
-  related-skills: code-review-skill, architecture-designer, api-contract-skill, mcp-developer
+  scope: implementation
+  output-format: code
+  related-skills: security-audit, code-review-skill, architecture-designer, api-contract-skill
 ---
 
-# Security
+# Secure Code
 
-Two modes. **Implement** produces secure code as a feature is built. **Audit** produces a findings
-report on code or infrastructure that already exists. Pick the mode from the request, and say which one
-you're in - they have different outputs and different rules.
+Produces the security controls as a feature is built.
 
-> **Audit mode does not fix.** It locates, rates, and recommends; the fix is a separate, explicitly
-> requested change (usually Implement mode, or the owning technical skill). Don't quietly edit code
-> during an audit - the report is the deliverable.
-
-## Mode A - Implement
+## Workflow
 
 1. **Threat model** - attack surface and threats for this feature.
 2. **Design** - the security controls that answer them.
@@ -39,52 +33,24 @@ you're in - they have different outputs and different rules.
 - **Headers/CORS**: verified with a scanner (`curl -I`, Mozilla Observatory) - headers present, CORS
   origin allowlist correct.
 
-### Non-negotiables
+## Constraints
 
 - bcrypt/argon2 for passwords. Never MD5/SHA-1/unsalted, never plaintext or reversible encryption.
 - Parameterized queries only. Never string-interpolated SQL.
 - Secrets in environment variables or a secret manager, never in source.
 - Never expose sensitive data in logs or error responses; never use MD5/SHA-1/DES/ECB.
 
-## Mode B - Audit
-
-1. **Scope** - map the attack surface and critical paths. **Confirm written authorization and rules of
-   engagement before going further.**
-2. **Scan** - SAST, dependency, and secrets tooling:
-   `semgrep --config=auto .` · `bandit -r ./src` · `gitleaks detect --source=.` ·
-   `npm audit --audit-level=moderate` · `trivy fs .`
-3. **Review manually** - auth, input handling, crypto. **Tools miss context, so this pass is mandatory
-   even when every scan comes back clean.**
-4. **Test and classify** - **verify written scope authorization before any active testing.** Validate
-   findings, rate severity (Critical/High/Medium/Low/Info) with CVSS. Confirm exploitability with a
-   proof of concept and stop there.
-5. **Report** - confirm findings with the stakeholder before finalizing; document location, impact, and
-   remediation. Report critical findings immediately.
-
-### Non-negotiables
-
-- Rate every finding, Info and Low included - never drop one for being minor.
-- Stop at proof of concept. Never exploit further, disrupt a service, or destroy data.
-- Never test outside the defined scope, and never on production without authorization.
-- Never publish detailed exploits.
-
 ## Reference Guide
 
-| Mode | Topic | Reference | Load When |
-|---|-------|-----------|-----------|
-| Implement | OWASP | `references/owasp-prevention.md` | OWASP Top 10 patterns |
-| Implement | Authentication | `references/authentication.md` | Password hashing, JWT |
-| Implement | Input Validation | `references/input-validation.md` | Zod, SQL injection |
-| Implement | XSS/CSRF | `references/xss-csrf.md` | XSS prevention, CSRF |
-| Implement | Headers | `references/security-headers.md` | Helmet, rate limiting |
-| Audit | SAST Tools | `references/sast-tools.md` | Running automated scans |
-| Audit | Vulnerability Patterns | `references/vulnerability-patterns.md` | SQL injection, XSS, manual review |
-| Audit | Secret Scanning | `references/secret-scanning.md` | Gitleaks, finding hardcoded secrets |
-| Audit | Penetration Testing | `references/penetration-testing.md` | Active testing, reconnaissance, exploitation |
-| Audit | Infrastructure Security | `references/infrastructure-security.md` | DevSecOps, cloud security, compliance |
-| Audit | Report Template | `references/report-template.md` | Writing the security report |
+| Topic | Reference | Load When |
+|-------|-----------|-----------|
+| OWASP | `references/owasp-prevention.md` | OWASP Top 10 patterns |
+| Authentication | `references/authentication.md` | Password hashing, JWT |
+| Input Validation | `references/input-validation.md` | Zod, SQL injection |
+| XSS/CSRF | `references/xss-csrf.md` | XSS prevention, CSRF |
+| Headers | `references/security-headers.md` | Helmet, rate limiting |
 
-## Code Examples (Implement mode)
+## Code Examples
 
 ### Password Hashing (bcrypt)
 
@@ -202,30 +168,14 @@ app.post('/api/login', authLimiter, async (req, res) => {
 
 ## Output
 
-**Implement mode**: the secure implementation code, security considerations noted, configuration
-requirements (env vars, headers), and testing recommendations.
-
-**Audit mode**: executive summary with risk assessment; findings table with severity counts; detailed
-findings; prioritized recommendations. Full template in `references/report-template.md`.
-
-```
-ID: FIND-001
-Severity: High (CVSS 8.1)
-Title: SQL Injection in user search endpoint
-File: src/api/users.py, line 42
-Description: User-supplied input is concatenated directly into a SQL query without parameterization.
-Impact: An attacker can read, modify, or delete database contents.
-Remediation: Use parameterized queries or an ORM. Replace `cursor.execute(f"SELECT * FROM users WHERE name='{name}'")`
-             with `cursor.execute("SELECT * FROM users WHERE name=%s", (name,))`.
-References: CWE-89, OWASP A03:2021
-```
+The secure implementation code, security considerations noted, configuration requirements (env vars,
+headers), and testing recommendations.
 
 ## Boundaries
 
-- Design-level security posture (which pillar matters, where the trust boundaries sit) is
-  `architecture-designer`'s and `solution-design-principles`'s; this skill implements the controls and
-  audits the result.
-- A general correctness/quality review of a diff is `code-review-skill`'s, not an audit - Audit mode is
-  specifically a vulnerability hunt.
+- Auditing code that already exists is `security-audit`'s - deliberately a separate skill, because it
+  runs with no `Edit`/`Write` tool so an audit cannot quietly become a rewrite.
+- Design-level security posture (where the trust boundaries sit, which pillar matters) is
+  `architecture-designer`'s and `solution-design-principles`'s; this skill implements the controls.
 - Authentication schemes as an API *contract* (which scheme, which scopes per endpoint) belong to
   `api-contract-skill`; implementing that scheme is this skill's.

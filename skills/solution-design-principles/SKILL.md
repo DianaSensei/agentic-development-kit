@@ -100,9 +100,9 @@ When reviewing a design or codebase, provide:
   system or component should run on - that's
   `architecture-designer/references/deployment-topology.md`. This skill only designs the code so that decision doesn't lock
   the system in, and so a VM-cloud boundary in a hybrid system doesn't become a hidden source of bugs.
-- It does not perform a line-by-line security/OWASP review - both implementing secure code and
-  auditing existing code/infra for vulnerabilities are `security-skill`'s job. This skill only flags
-  whether the Security pillar has been considered at
+- It does not perform a line-by-line security/OWASP review - implementing secure code is
+  `security-skill`'s job; auditing existing code/infra for vulnerabilities is `security-audit`'s. This
+  skill only flags whether the Security pillar has been considered at
   the design level.
 - It does not write the actual logging/metrics/tracing instrumentation - that's `monitoring-expert`'s
   job. This skill only judges whether the Operational Excellence and Reliability pillars are addressed
