@@ -1,13 +1,13 @@
 ---
 name: toolbox-connections
-description: Manage this plugin's bundled toolbox MCP server (mcp/toolbox/) - full CRUD for database connections (PostgreSQL, MySQL, TiDB, Redis, MongoDB, or any other type Toolbox supports) and their tools. Create a connection/tool (checking for an existing target match first, and a read-only permission check for connections), read/list existing ones (secrets redacted), update values on an existing connection/tool, or delete either. Always applies a write through validate.sh's snapshot/check/restore flow. Use for any add/list/show/edit/update/remove request about a toolbox connection or tool. Do NOT use for a different third-party MCP server (`mcp-setup`) or for authoring toolbox/a new MCP server (`mcp-developer`).
+description: Manage this plugin's bundled toolbox MCP server (mcp/toolbox/) - full CRUD for database connections (PostgreSQL, MySQL, TiDB, Redis, MongoDB, or any other type Toolbox supports) and their tools. Create a connection/tool (checking for an existing target match first, and a read-only permission check for connections), read/list existing ones (secrets redacted), update values on an existing connection/tool, or delete either. Always applies a write through validate.sh's snapshot/check/restore flow. Use for any add/list/show/edit/update/remove request about a toolbox connection or tool. Do NOT use for a different third-party MCP server, or for authoring toolbox/a new MCP server (`mcp-developer`).
 metadata:
   domain: platform
   triggers: list toolbox connections, show connection, update connection, rotate password, edit connection, remove connection, add database connection, connect postgres, connect mysql, connect redis, connect mongodb, connect tidb, toolbox tool, edit toolbox tool, remove toolbox tool, database MCP setup
   role: specialist
   scope: implementation
   output-format: code
-  related-skills: mcp-setup, mcp-developer, database-skill, redis-skill
+  related-skills: mcp-developer, database-skill, redis-skill
 ---
 
 # Toolbox Connections
@@ -36,7 +36,7 @@ and Create must check it for a duplicate.
 3. Compare against Step 1's listing on `host:port`+`database`+`user` (or `address`+db-index
    / `uri`+`database`) - exact match → tell the user it already exists, stop.
 4. Password/URI: plain message, never `AskUserQuestion` (no sensible default, and it's for
-   secrets not choices - same as `mcp-setup`). Never echo it back.
+   secrets not choices). Never echo it back.
 5. Read-only permission: separate `AskUserQuestion` (header `Access`,
    `Read-only (Recommended)` / `Can write too`); if not read-only, explain why
    (`../../mcp/toolbox/README.md`) and get explicit confirmation regardless.
@@ -100,7 +100,7 @@ leave a `check` failure unresolved.
 
 ## Boundaries
 
-Only `mcp/toolbox/`'s own connections/tools. Other MCP servers → `mcp-setup`. Authoring
+Only `mcp/toolbox/`'s own connections/tools. Another MCP server → `claude mcp add`. Authoring
 `toolbox`/a new MCP server → `mcp-developer`. Deep query/schema design → `database-skill`/
 `redis-skill`.
 

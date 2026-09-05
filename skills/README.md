@@ -78,8 +78,7 @@ off to the right orchestrator, so in practice you rarely need to name a workflow
 
 | Skill | Use For |
 |-------|---------|
-| [`mcp-developer`](./mcp-developer/SKILL.md) | Building a new MCP server/client (protocol, SDKs, authorization) |
-| [`mcp-setup`](./mcp-setup/SKILL.md) | Connecting an existing third-party MCP server to Claude Code, given a link |
+| [`mcp-developer`](./mcp-developer/SKILL.md) | Building a new MCP server/client - protocol lifecycle, transports, OAuth 2.1 authorization (SDK APIs come from live docs, not a snapshot here) |
 | [`toolbox-connections`](./toolbox-connections/SKILL.md) | Configure this plugin's own bundled toolbox MCP - add/remove a database connection or a custom query/tool |
 
 ## Conventions Used Across These Skills
@@ -89,7 +88,7 @@ off to the right orchestrator, so in practice you rarely need to name a workflow
 - **`references/` is progressive disclosure** - a skill's `SKILL.md` stays lean; deep detail (code
   patterns, decision tables, troubleshooting trees) lives in `references/*.md`, loaded only when the
   matching step is actually reached, listed in each skill's Reference Guide table.
-- **`metadata:` on every skill** - a fixed block after `description`, present on all 27. Claude Code
+- **`metadata:` on every skill** - a fixed block after `description`, present on all 26. Claude Code
   does not read it; it exists so the library can be audited mechanically. `related-skills` in
   particular is checked both ways: every name must resolve to a directory under `skills/`, and every
   skill must be reachable from at least one other, so a skill cannot silently fall out of the graph.
