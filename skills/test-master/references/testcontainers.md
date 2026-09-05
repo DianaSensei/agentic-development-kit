@@ -34,6 +34,6 @@ When a test needs multiple containers to talk to each other (e.g. an app contain
 - **Slow/timing-out image pull on first CI run**: consider pre-pulling the image in a dedicated cache step of the CI pipeline if this noticeably affects build time.
 
 ## Scope of this file
-This file only covers **the mechanics of setting up/running containers** (dependencies, lifecycle, wait strategy, networking, CI). The actual test scenarios per infrastructure type (which SQL dialect to test, which Kafka delivery semantics, how to test Redis TTL, what Elasticsearch mapping to test) → coordinate with the matching skill: `database-skill`, `kafka-skill`, `rabbitmq-skill`, `redis-skill`, `elasticsearch-skill`. Pure unit tests (mocked, no container) → the relevant language/framework skill (e.g. `java-spring-skill`).
+This file only covers **the mechanics of setting up/running containers** (dependencies, lifecycle, wait strategy, networking, CI). The actual test scenarios per infrastructure type (which SQL dialect to test, which Kafka delivery semantics, how to test Redis TTL, what Elasticsearch mapping to test) → coordinate with the matching skill: `database-skill`, `messaging-skill`, `messaging-skill`, `redis-skill`, `elasticsearch-skill`. Pure unit tests (mocked, no container) → the relevant language/framework skill (e.g. `java-spring-skill`).
 
 Containers are slow - reach for one only when the test needs behavior a mock/in-memory substitute (H2, embedded Kafka) can't faithfully reproduce, not for every test case.

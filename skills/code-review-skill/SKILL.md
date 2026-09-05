@@ -41,8 +41,6 @@ Read `CLAUDE.md`/existing conventions. Determine which technologies are ACTUALLY
 
 **Database (RDBMS/Mongo)**: index on the correct filter/join/sort columns, isolation level fits the business need, migration is backward-compatible, no latent deadlock risk (locks acquired in a consistent order).
 
-**Google Pub/Sub**: ack deadline sufficient for actual processing time, subscriber idempotency, dead-letter topic configured if needed.
-
 **API Contract (REST/RPC/Message)**: response/message matches the finalized contract (`api-contract-skill`), no silent breaking change to a schema/proto field.
 
 **Tauri/React**: correct path-handling API (no path traversal), capabilities declared least-privilege for the commands actually used, standard plugin used for dialogs, `#[cfg(target_os)]` covers all 3 OSes, Rust commands never panic (return `Result`), event listeners cleaned up on unmount, React has loading/error/empty states covered.

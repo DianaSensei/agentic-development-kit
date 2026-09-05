@@ -1,13 +1,13 @@
 ---
 name: redis-skill
-description: In-depth Redis knowledge - caching, distributed locks, lightweight queues, ranking/leaderboards. Use when the feature needs a cache, a distributed lock, a queue that can tolerate minimal loss, or a leaderboard. If strong durability/delivery guarantees are needed (retry, dead-letter, replay), see `kafka-skill`/`rabbitmq-skill` instead of Redis.
+description: In-depth Redis knowledge - caching, distributed locks, lightweight queues, ranking/leaderboards. Use when the feature needs a cache, a distributed lock, a queue that can tolerate minimal loss, or a leaderboard. If strong durability/delivery guarantees are needed (retry, dead-letter, replay), see `messaging-skill` instead of Redis.
 metadata:
   domain: database
   triggers: cache invalidation, cache-aside, TTL, Redlock, sorted set, session store, rate limiting, hot key, eviction policy, Redis Streams
   role: specialist
   scope: implementation
   output-format: code
-  related-skills: database-skill, java-spring-skill, kafka-skill, rabbitmq-skill, test-master, monitoring-expert
+  related-skills: database-skill, java-spring-skill, messaging-skill, test-master, monitoring-expert
 ---
 
 # Redis - Multi-Purpose by Use Case
@@ -37,7 +37,7 @@ Fits: caching, sessions, short-lived distributed locks, lightweight queues that 
 
 ## 3. Lightweight Queue
 - **List** (`LPUSH`/`BRPOP`) for a simple FIFO queue that doesn't need high reliability.
-- **Redis Streams** (`XADD`/`XREADGROUP`) when consumer groups, acks, or replay are needed - closer to Kafka in spirit but lighter weight, useful when new Kafka/RabbitMQ infrastructure isn't worth adding. If the business needs more reliability/durability than Streams provides, consider `kafka-skill`/`rabbitmq-skill` instead of forcing Redis into the role of primary queue.
+- **Redis Streams** (`XADD`/`XREADGROUP`) when consumer groups, acks, or replay are needed - closer to Kafka in spirit but lighter weight, useful when new Kafka/RabbitMQ infrastructure isn't worth adding. If the business needs more reliability/durability than Streams provides, consider `messaging-skill` instead of forcing Redis into the role of primary queue.
 
 ## 4. Ranking / Leaderboard
 - **Sorted Set** (`ZADD`/`ZRANGE`/`ZRANK`) - the standard structure for leaderboards, O(log N) rank lookup.

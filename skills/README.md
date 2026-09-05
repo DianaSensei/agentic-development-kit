@@ -58,8 +58,7 @@ off to the right orchestrator, so in practice you rarely need to name a workflow
 | Skill | Use For |
 |-------|---------|
 | [`database-skill`](./database-skill/SKILL.md) | RDBMS (Oracle/PostgreSQL/MySQL) and NoSQL (MongoDB/DynamoDB/Cassandra/ScyllaDB) design and optimization |
-| [`kafka-skill`](./kafka-skill/SKILL.md) | Apache Kafka topic/partition design, delivery semantics, consumer groups |
-| [`rabbitmq-skill`](./rabbitmq-skill/SKILL.md) | RabbitMQ exchanges, routing, dead-letter, queue durability |
+| [`messaging-skill`](./messaging-skill/SKILL.md) | Broker messaging - Kafka (topics/partitions, consumer groups, delivery semantics) and RabbitMQ (exchanges, routing, dead-letter, durability), and choosing between them |
 | [`redis-skill`](./redis-skill/SKILL.md) | Redis caching, distributed locks, lightweight queues, leaderboards |
 | [`elasticsearch-skill`](./elasticsearch-skill/SKILL.md) | Elasticsearch index/mapping design, Query DSL, aggregations |
 
@@ -88,7 +87,7 @@ off to the right orchestrator, so in practice you rarely need to name a workflow
 - **`references/` is progressive disclosure** - a skill's `SKILL.md` stays lean; deep detail (code
   patterns, decision tables, troubleshooting trees) lives in `references/*.md`, loaded only when the
   matching step is actually reached, listed in each skill's Reference Guide table.
-- **`metadata:` on every skill** - a fixed block after `description`, present on all 26. Claude Code
+- **`metadata:` on every skill** - a fixed block after `description`, present on all 25. Claude Code
   does not read it; it exists so the library can be audited mechanically. `related-skills` in
   particular is checked both ways: every name must resolve to a directory under `skills/`, and every
   skill must be reachable from at least one other, so a skill cannot silently fall out of the graph.
@@ -109,7 +108,7 @@ off to the right orchestrator, so in practice you rarely need to name a workflow
 - **Technology-specific vs. technology-agnostic** - a skill that isn't inherently about one language or
   framework (e.g. `architecture-designer`, `code-documenter`) stays free of language-specific code in
   its core file even if its references illustrate a pattern concretely; a skill that *is* inherently
-  about one technology (e.g. `kafka-skill`) is expected to be technology-specific throughout.
+  about specific technologies (e.g. `messaging-skill`) is expected to be technology-specific throughout.
 - **Orchestrators never guess technical detail** - `feature-development`/`bug-fix`/`refactor` always
   `Read` a technical skill's full content before applying it; they never infer conventions from a name
   or description alone.
