@@ -23,7 +23,12 @@ claude mcp list | grep '^plugin:agentic-development-kit:toolbox'
 
 Its `--config-folder` value is the live connections directory - `ls` it. No such line = not
 enabled here, stop. Empty = expected on a fresh install (`✘ Failed to connect` until a
-connection exists). Check the listing for a match before adding a duplicate.
+connection exists).
+
+**Adding a new connection: always show the user the existing ones first**, name + target
+(`grep -E '^(host|port|database|user|address|uri):' <file>` per file, or the file's leading
+comment), even if the directory is empty (say so). Do this before asking anything else -
+never silently skip straight to collecting new values.
 
 New connection → Step 2. Remove one → Step 3. Custom tool → Step 4.
 
@@ -39,12 +44,17 @@ Template: `examples/new-sql-connection.yaml.example` (any SQL type), `new-redis-
    `(Recommended)` default - `localhost`, the type's standard port, a plausible db/user guess
    - and "Other" for the real value. Keep every `header` to 12 characters or less (it's a
    hard schema limit) - `Host`, `Port`, `Database`, `User`, not "Database name" (14 chars).
-3. Password/URI: a plain message, never `AskUserQuestion` (no sensible default to offer, and
+3. **Uniqueness check**: compare `host:port` + `database` + `user` (SQL), `address` +
+   `database` index (Redis), or `uri` + `database` (Mongo) against every connection listed in
+   Step 1. Exact match on all of them → this connection already exists (name it), stop and
+   tell the user instead of creating a duplicate - don't proceed to the rest of this step.
+4. Password/URI: a plain message, never `AskUserQuestion` (no sensible default to offer, and
    it's for enumerable choices, not secrets - same rule as `mcp-setup`). Never echo it back.
-4. Read-only permission: its own single-question `AskUserQuestion` (header `Access`,
+5. Read-only permission: its own single-question `AskUserQuestion` (header `Access`,
    `Read-only (Recommended)` / `Can write too`). If not read-only, explain why it matters
    (`../../mcp/toolbox/README.md`) and get explicit confirmation either way.
-5. Infer a unique connection name (don't ask unless genuinely ambiguous), write the file with
+6. Pick a unique connection *name* (don't ask unless genuinely ambiguous - this is just the
+   file/identifier, separate from the uniqueness check in step 3), write the file with
    literal values (safe - this directory is private, uncommitted), and derive the generic
    tools from the template rather than inventing a different shape.
 
@@ -78,8 +88,10 @@ No auto-reload, no CLI reconnect command. Tell the user: open `/mcp` → `toolbo
 ## Constraints
 
 **MUST**: confirm read-only before a query-only connection · snapshot/check every change, no
-exceptions · check for an existing match before duplicating · state reconnecting is required
-· discover the connections-dir via `claude mcp list`, never hardcode · batch non-secret
+exceptions · list existing connections before adding a new one, and reject an exact
+host:port+database+user (or type-equivalent) match instead of duplicating it · state
+reconnecting is required · discover the connections-dir via `claude mcp list`, never
+hardcode · batch non-secret
 fields into as few `AskUserQuestion` calls as possible · keep every `AskUserQuestion`
 `header` to ≤12 characters (a hard schema limit - a longer one is an invalid tool call, not
 just a style issue).
