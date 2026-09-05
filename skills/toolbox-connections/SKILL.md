@@ -77,9 +77,12 @@ Any write here → Step 4.
 ../../mcp/toolbox/validate.sh check <dir>
 ```
 
-FAIL → `restore <dir>`, fix the printed error, retry. `toolbox` validates the whole folder as
-one unit - one bad file breaks every connection, not just the one being changed. Read
-operations don't touch this step.
+FAIL → read the printed error first. `check` starts real `toolbox` against the whole folder,
+so it also attempts a live connection to every OTHER existing connection - a FAIL can mean an
+unrelated connection is just slow or briefly unreachable, not that the file just written is
+wrong. Only run `restore <dir>` once the error actually implicates the change just made; fix
+that file's content and retry. `toolbox` validates the whole folder as one unit - one bad file
+breaks every connection, not just the one being changed. Read operations don't touch this step.
 
 ## Step 5 - Reconnect required (after any write)
 
