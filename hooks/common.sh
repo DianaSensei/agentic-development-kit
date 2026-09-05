@@ -129,13 +129,18 @@ code_ext() {
 
 mkdir -p "$STATE_DIR" 2>/dev/null || true
 
-# Session-scoped markers are dead once their session is over and nothing else
-# prunes them, so STATE_DIR grew without bound. `reviewed` and `warned` are
-# deliberately left alone: they track the state of the working tree, not a
-# session, and deleting them would silently demand a re-review.
-find "$STATE_DIR" -maxdepth 1 -type f \
-  \( -name '*.blocks' -o -name '*.skillgate.*' -o -name '*.checkpointgate' \) \
-  -mtime +7 -delete 2>/dev/null || true
+# prune_state - drop session-scoped markers left behind by finished sessions.
+# `reviewed` and `warned` are deliberately untouched: they track the state of the
+# working tree, not a session, and deleting them would silently demand a re-review.
+#
+# Called ONLY from session-context.sh, once per session. It lives here rather than
+# running at source time because common.sh is sourced by every hook - at source
+# time this ran three times per file edit to do work that is worth doing once.
+prune_state() {
+  find "$STATE_DIR" -maxdepth 1 -type f \
+    \( -name '*.blocks' -o -name '*.skillgate.*' -o -name '*.checkpointgate' \) \
+    -mtime +7 -delete 2>/dev/null || true
+}
 
 # code_change_hash - a stable fingerprint of the working tree's uncommitted CODE
 # changes (tracked edits and untracked new files alike), or nothing when there

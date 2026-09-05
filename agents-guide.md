@@ -11,7 +11,7 @@ by its scoped name.
 > and `solution-architect` as Task subagents for Steps 1-2, specifically because they carry no
 > `Edit`/`Write` tool - requirements analysis and solution design happen where code genuinely cannot be
 > touched, not just where the prose says not to. `bug-fix` and `refactor` don't use this pipeline yet;
-> their checkpoints are enforced by `checkpoint-gate.sh` instead (see
+> their checkpoints are enforced by `edit-gates.sh` instead (see
 > [`hooks/README.md`](./hooks/README.md)). Tier-2 specialists remain optional from `feature-development`
 > Step 3 - dispatched only for a task whose `task_breakdown` entry names one that actually exists;
 > everything else is still implemented directly against the matching technical skill.

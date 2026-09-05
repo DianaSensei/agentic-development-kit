@@ -7,6 +7,10 @@
 
 . "${0%/*}/common.sh" || exit 0
 
+# Once per session is the right cadence for this, and SessionStart is the only
+# hook that runs exactly that often.
+prune_state
+
 [ "$(mode_of session_context warn)" = "off" ] && exit 0
 
 # General engineering/style guidelines - independent of whether this kit's own

@@ -50,8 +50,8 @@
       "aws_secret_access_key[[:space:]]*[:=]",
       "gh[pousr]_[A-Za-z0-9]{20,}"
     ],
+    "$comment_placeholder_patterns": "Deliberately just the elision pattern. A TODO/FIXME marker is legitimate in real code and firing on every one of them trains the reader to ignore this hook; an elided block (\"// ... rest of the code unchanged\") is a genuine failure - code that was supposed to be written and was not - and nothing else in this kit checks for it.",
     "placeholder_patterns": [
-      "(^|[^A-Za-z])(TODO|FIXME|XXX)([^A-Za-z]|$)",
       "^[[:space:]]*(//|#)[[:space:]]*\\.\\.\\.[[:space:]]*(rest of|remaining|existing)"
     ]
   }

@@ -22,8 +22,7 @@ owns that judgement actually runs.
 | Hook | Event | Default | What it does |
 |---|---|---|---|
 | `session-context.sh` | `SessionStart` | on | Injects a fixed set of general engineering/style guidelines, plus (if this kit's skills are installed) the routing + self-check rules, once per session. Non-blocking. |
-| `skill-gate.sh` | `PreToolUse` on edits | `warn` | Maps the edited file to its owning skill via `skill_map`, then checks the transcript for a read of that `SKILL.md` **since the last user message**. A read from an earlier request does not count - the file may have changed since. |
-| `checkpoint-gate.sh` | `PreToolUse` on **code** edits | `warn` | Inside `feature-development`/`bug-fix`/`refactor` only: checks the transcript, since that workflow skill was last invoked, for an `AskUserQuestion` call with `header` exactly `"Checkpoint"`. Presenting a proposal and moving on without asking no longer passes silently. Never fires on a documentation write (the plan doc itself is written before the checkpoint, by design). |
+| `edit-gates.sh` | `PreToolUse` on edits | `warn` | Two checks in one process, because they share the event, the stdin and the transcript. **Skill gate** (`mode.skill_gate`, any edit): maps the file to its owning skill via `skill_map`, then checks the transcript for a read of that `SKILL.md` **since the last user message** - a read from an earlier request does not count, the file may have changed since. **Checkpoint gate** (`mode.checkpoint_gate`, **code** edits only): inside `feature-development`/`bug-fix`/`refactor`, checks the transcript since that workflow was last invoked for an `AskUserQuestion` with `header` exactly `"Checkpoint"`, so presenting a proposal and moving on no longer passes silently. Never fires on a documentation write - the plan doc is written before the checkpoint by design. Either half can be `off` while the other blocks. |
 | `write-lint.sh` | `PostToolUse` on edits | `warn` | Scans only the newly written text for hardcoded secrets and leftover placeholders. Advisory by protocol: `PostToolUse` cannot block. |
 | `quality-gate.sh` | `Stop` | `warn` | Flags - or, set to `block`, refuses to end - a turn that leaves uncommitted **code** changes no review has vouched for. |
 | `mark-reviewed.sh` | - | - | Run after the review to record it and satisfy the gate. Takes an optional session id (`mark-reviewed.sh <session>`) so it clears only that session's block counter - `quality-gate` puts the id straight into the command it prints. |
@@ -53,9 +52,10 @@ in particular depends on the workflow skill actually using the literal header `"
 edit the CHECKPOINT wording in `feature-development`/`bug-fix`/`refactor`, keep that exact string (or
 update `checkpoint_gate.header` in config to match).
 
-In `warn`, each gate speaks once per distinct state - per session per skill for `skill-gate`, once per
-session for `checkpoint-gate`, per fingerprint of the change for `quality-gate` - rather than repeating
-on every turn.
+In `warn`, each gate speaks once per distinct state rather than repeating every turn: the skill gate
+once per **request** per skill, the checkpoint gate once per **workflow run**, `quality-gate` once per
+fingerprint of the change. Keying either of the first two to the session instead would cancel the very
+rule it enforces - after one warning, the rest of the session would go unchecked.
 
 ### Why `checkpoint-gate` scopes differently than `skill-gate`
 
@@ -89,7 +89,7 @@ Split deliberately:
 - **`hooks/hooks.json`** (this plugin's own hook manifest) - `session-context` and `write-lint`.
   Global, cheap, never blocks, so they are harmless in a session that is only answering questions.
   Registered automatically wherever the plugin is enabled, no per-project setup.
-- **Frontmatter of `feature-development`, `bug-fix`, `refactor`** - `skill-gate`, `checkpoint-gate`, and
+- **Frontmatter of `feature-development`, `bug-fix`, `refactor`** - `edit-gates` (both halves) and
   `quality-gate`. Frontmatter hooks are registered when the skill is invoked, so the blocking gates apply
   exactly while a code-changing workflow is running, and the rule lives next to the prose it enforces.
 

@@ -7,13 +7,9 @@ hooks:
     - matcher: "Edit|Write|MultiEdit|NotebookEdit"
       hooks:
         - type: command
-          command: "${CLAUDE_PLUGIN_ROOT}/hooks/skill-gate.sh"
+          command: "${CLAUDE_PLUGIN_ROOT}/hooks/edit-gates.sh"
           timeout: 15
-          statusMessage: "Checking the owning skill was read..."
-        - type: command
-          command: "${CLAUDE_PLUGIN_ROOT}/hooks/checkpoint-gate.sh"
-          timeout: 15
-          statusMessage: "Checking the CHECKPOINT was confirmed..."
+          statusMessage: "Checking the owning skill was read and the CHECKPOINT confirmed..."
   Stop:
     - hooks:
         - type: command
