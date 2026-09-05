@@ -1,9 +1,9 @@
 ---
 name: toolbox-connections
-description: Configure database connections and tools for this plugin's own bundled toolbox MCP server (mcp/toolbox/) - PostgreSQL, MySQL, TiDB, Redis, MongoDB, or any other type Toolbox supports. Checks for an existing match before adding a duplicate, writes a new connection from the matching template with a read-only permission check, derives the standard query/list-tables tools, and writes custom parameterized tools on request. Always applies changes through validate.sh's snapshot/check/restore flow. Use for adding/removing a toolbox connection or a custom toolbox tool/query. Do NOT use for a different third-party MCP server (`mcp-setup`) or for authoring toolbox/a new MCP server (`mcp-developer`).
+description: Manage this plugin's bundled toolbox MCP server (mcp/toolbox/) - full CRUD for database connections (PostgreSQL, MySQL, TiDB, Redis, MongoDB, or any other type Toolbox supports) and their tools. Create a connection/tool (checking for an existing target match first, and a read-only permission check for connections), read/list existing ones (secrets redacted), update values on an existing connection/tool, or delete either. Always applies a write through validate.sh's snapshot/check/restore flow. Use for any add/list/show/edit/update/remove request about a toolbox connection or tool. Do NOT use for a different third-party MCP server (`mcp-setup`) or for authoring toolbox/a new MCP server (`mcp-developer`).
 metadata:
   domain: platform
-  triggers: toolbox connection, add database connection, connect postgres, connect mysql, connect redis, connect mongodb, connect tidb, toolbox tool, custom toolbox query, database MCP setup, second mysql connection
+  triggers: toolbox connection, list toolbox connections, show connection, update connection, rotate password, edit connection, remove connection, add database connection, connect postgres, connect mysql, connect redis, connect mongodb, connect tidb, toolbox tool, edit toolbox tool, remove toolbox tool, database MCP setup
   role: specialist
   scope: implementation
   output-format: code
@@ -12,8 +12,7 @@ metadata:
 
 # Toolbox Connections
 
-Manages `mcp/toolbox/`'s connections/tools only (see Boundaries). No pre-built connections -
-every one, including the first, is added the same way.
+Manages `mcp/toolbox/`'s connections/tools only (see Boundaries) - full CRUD on both.
 
 ## Step 1 - Orient
 
@@ -21,54 +20,56 @@ every one, including the first, is added the same way.
 claude mcp list | grep '^plugin:agentic-development-kit:toolbox'
 ```
 
-Its `--config-folder` value is the live connections directory - `ls` it. No such line = not
-enabled here, stop. Empty = expected on a fresh install (`✘ Failed to connect` until a
-connection exists).
+Its `--config-folder` value is the live connections directory. No such line = not enabled
+here, stop. List it (`ls`, then per file `grep -E '^(host|port|database|user|address|uri):'`
+for its target) before any operation below - every one needs to know what already exists,
+and Create must check it for a duplicate.
 
-**Adding a new connection: always show the user the existing ones first**, name + target
-(`grep -E '^(host|port|database|user|address|uri):' <file>` per file, or the file's leading
-comment), even if the directory is empty (say so). Do this before asking anything else -
-never silently skip straight to collecting new values.
+## Step 2 - Connections
 
-New connection → Step 2. Remove one → Step 3. Custom tool → Step 4.
+**Create** (template: `examples/new-{sql,redis,mongodb}-connection.yaml.example`):
+1. Type if not stated: `AskUserQuestion` (header `Type`, Postgres/MySQL/Redis/Mongo, else
+   "Other").
+2. Non-secret fields (host/port/database/user, or `address` for Redis) in ONE batched
+   `AskUserQuestion` (≤4 questions, `(Recommended)` defaults, header ≤12 chars - a hard
+   schema limit).
+3. Compare against Step 1's listing on `host:port`+`database`+`user` (or `address`+db-index
+   / `uri`+`database`) - exact match → tell the user it already exists, stop.
+4. Password/URI: plain message, never `AskUserQuestion` (no sensible default, and it's for
+   secrets not choices - same as `mcp-setup`). Never echo it back.
+5. Read-only permission: separate `AskUserQuestion` (header `Access`,
+   `Read-only (Recommended)` / `Can write too`); if not read-only, explain why
+   (`../../mcp/toolbox/README.md`) and get explicit confirmation regardless.
+6. Unique name (infer, don't ask unless ambiguous) → write with literal values → derive the
+   generic tools from the template.
 
-## Step 2 - Add a connection
+**Read**: `cat` the file - redact any `password:`/credential-bearing `uri:` line, never
+display a secret back.
 
-Template: `examples/new-sql-connection.yaml.example` (any SQL type), `new-redis-connection...`
-(Redis, one tool per command), `new-mongodb-connection...` (per database/collection).
+**Update**: same field-collection pattern as Create (batched `AskUserQuestion` for
+non-secret fields, plain message for password/URI) but edit the existing file. Re-run
+Create.3's duplicate check if host/port/database/user changed.
 
-1. Type, if not already stated: one `AskUserQuestion` (header `Type`,
-   Postgres/MySQL/Redis/Mongo, else "Other").
-2. Non-secret fields (host/port/database/user, or just `address` for Redis) in ONE batched
-   `AskUserQuestion` call (≤4 questions, never one call per field), each with a
-   `(Recommended)` default - `localhost`, the type's standard port, a plausible db/user guess
-   - and "Other" for the real value. Keep every `header` to 12 characters or less (it's a
-     hard schema limit) - `Host`, `Port`, `Database`, `User`.
-3. **Uniqueness check**: compare `host:port` + `database` + `user` (SQL), `address` +
-   `database` index (Redis), or `uri` + `database` (Mongo) against every connection listed in
-   Step 1. Exact match on all of them → this connection already exists (name it), stop and
-   tell the user instead of creating a duplicate - don't proceed to the rest of this step.
-4. Password/URI: a plain message, never `AskUserQuestion` (no sensible default to offer, and
-   it's for enumerable choices, not secrets - same rule as `mcp-setup`). Never echo it back.
-5. Read-only permission: its own single-question `AskUserQuestion` (header `Access`,
-   `Read-only (Recommended)` / `Can write too`). If not read-only, explain why it matters
-   (`../../mcp/toolbox/README.md`) and get explicit confirmation either way.
-6. Pick a unique file/identifier _name_ (don't ask unless genuinely ambiguous), write the
-   file with literal values (safe - this directory is private, uncommitted), and derive the
-   generic tools from the template rather than inventing a different shape.
+**Delete**: remove the file.
 
-Go to Step 5.
+Any write (Create/Update/Delete) → Step 4.
 
-## Step 3 - Remove a connection
+## Step 3 - Tools
 
-Delete its file. Step 5's `check` catches anything else that referenced it.
+**Create**: `examples/custom-tool.yaml.example` - point `source:` at an existing connection,
+write the exact statement/parameters asked for.
 
-## Step 4 - A custom tool
+**Read**: list a connection's tools (`grep -A1 '^kind: tool' <file>`), or show one tool's
+full block.
 
-`examples/custom-tool.yaml.example`: point `source:` at an existing/new connection, write the
-exact statement/parameters asked for. Go to Step 5.
+**Update**: edit an existing tool's `description`/`statement`/`parameters` in place.
 
-## Step 5 - Validate, always
+**Delete**: remove that `kind: tool` document (between its `---` separators) and drop its
+name from any `kind: toolset` list referencing it.
+
+Any write here → Step 4.
+
+## Step 4 - Validate every write
 
 ```bash
 ../../mcp/toolbox/validate.sh snapshot <dir>   # before any change
@@ -77,19 +78,21 @@ exact statement/parameters asked for. Go to Step 5.
 ```
 
 FAIL → `restore <dir>`, fix the printed error, retry. `toolbox` validates the whole folder as
-one unit - one bad file breaks every connection, not just the new one.
+one unit - one bad file breaks every connection, not just the one being changed. Read
+operations don't touch this step.
 
-## Step 6 - Reconnect required
+## Step 5 - Reconnect required (after any write)
 
 No auto-reload, no CLI reconnect command. Tell the user: open `/mcp` → `toolbox` → Reconnect
 (or start a new session) - never claim the change is already live.
 
 ## Constraints
 
-**MUST**: confirm read-only before a query-only connection · snapshot/check every change ·
-list existing connections and reject an exact-target duplicate (step 2.3) before adding a
-new one · state reconnecting is required · discover the connections-dir via `claude mcp
-list`, never hardcode · batch `AskUserQuestion` fields per step 2.2's rules.
+**MUST**: confirm read-only before a query-only connection · snapshot/check every write, no
+exceptions · reject an exact-target duplicate before creating (2.Create.3) · state
+reconnecting is required after any write · discover the connections-dir via `claude mcp
+list`, never hardcode · batch `AskUserQuestion` fields per 2.Create.2's rules · redact
+secrets when reading a connection back.
 
 **MUST NOT**: ask for a password/URI via `AskUserQuestion`, or echo one back · assume write
 access without being asked · write to the live directory without a preceding snapshot ·
