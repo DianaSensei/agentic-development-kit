@@ -32,16 +32,17 @@ New connection → Step 2. Remove one → Step 3. Custom tool → Step 4.
 Template: `examples/new-sql-connection.yaml.example` (any SQL type), `new-redis-connection...`
 (Redis, one tool per command), `new-mongodb-connection...` (per database/collection).
 
-1. Type, if not already stated: one `AskUserQuestion` (Postgres/MySQL/Redis/Mongo, else
-   "Other").
+1. Type, if not already stated: one `AskUserQuestion` (header `Type`,
+   Postgres/MySQL/Redis/Mongo, else "Other").
 2. Non-secret fields (host/port/database/user, or just `address` for Redis) in ONE batched
    `AskUserQuestion` call (≤4 questions, never one call per field), each with a
    `(Recommended)` default - `localhost`, the type's standard port, a plausible db/user guess
-   - and "Other" for the real value.
+   - and "Other" for the real value. Keep every `header` to 12 characters or less (it's a
+   hard schema limit) - `Host`, `Port`, `Database`, `User`, not "Database name" (14 chars).
 3. Password/URI: a plain message, never `AskUserQuestion` (no sensible default to offer, and
    it's for enumerable choices, not secrets - same rule as `mcp-setup`). Never echo it back.
-4. Read-only permission: its own single-question `AskUserQuestion`
-   (`Read-only (Recommended)` / `Can write too`). If not read-only, explain why it matters
+4. Read-only permission: its own single-question `AskUserQuestion` (header `Access`,
+   `Read-only (Recommended)` / `Can write too`). If not read-only, explain why it matters
    (`../../mcp/toolbox/README.md`) and get explicit confirmation either way.
 5. Infer a unique connection name (don't ask unless genuinely ambiguous), write the file with
    literal values (safe - this directory is private, uncommitted), and derive the generic
@@ -79,7 +80,9 @@ No auto-reload, no CLI reconnect command. Tell the user: open `/mcp` → `toolbo
 **MUST**: confirm read-only before a query-only connection · snapshot/check every change, no
 exceptions · check for an existing match before duplicating · state reconnecting is required
 · discover the connections-dir via `claude mcp list`, never hardcode · batch non-secret
-fields into as few `AskUserQuestion` calls as possible.
+fields into as few `AskUserQuestion` calls as possible · keep every `AskUserQuestion`
+`header` to ≤12 characters (a hard schema limit - a longer one is an invalid tool call, not
+just a style issue).
 
 **MUST NOT**: ask for a password/URI via `AskUserQuestion`, or echo one back · assume write
 access without being asked · write to the live directory without a preceding snapshot ·
