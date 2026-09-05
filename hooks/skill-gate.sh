@@ -39,9 +39,10 @@ TRANSCRIPT="$(jq_in '.transcript_path')"
 START="$(last_user_message_line "$TRANSCRIPT")"
 
 # Did anything in the current request actually load this skill? Either a Read of
-# its SKILL.md, or an invocation of it through the Skill tool.
+# its SKILL.md, or an invocation of it through the Skill tool. Merely naming the
+# path is not a read - see skill_ref_pattern in common.sh for why that matters.
 if transcript_tail_from "$TRANSCRIPT" "$START" \
-   | grep -qE "$SKILL/SKILL\.md|\"skill\"[[:space:]]*:[[:space:]]*\"$SKILL\""; then
+   | grep -qE "$(skill_ref_pattern "$SKILL")"; then
   exit 0
 fi
 
@@ -58,9 +59,15 @@ if [ "$MODE" = "block" ]; then
   exit 0
 fi
 
-# warn mode: nag at most once per session per skill, so a long feature does not
-# repeat the same advisory on every file it touches.
+# warn mode: nag at most once per REQUEST per skill, so a long feature does not
+# repeat the same advisory on every file it touches - but a later request that
+# still hasn't read the skill is warned again.
+#
+# Keying this to the session instead (as it did) silently cancelled the rule this
+# gate exists for: after one warning, every following request in that session was
+# free to edit without reading the skill, which is exactly the carried-over read
+# the header comment above says must not count.
 SEEN="$STATE_DIR/$(jq_in '.session_id' unknown).skillgate.$SKILL"
-[ -f "$SEEN" ] && exit 0
-: > "$SEEN" 2>/dev/null || true
+[ "$(cat "$SEEN" 2>/dev/null)" = "req-${START:-0}" ] && exit 0
+printf '%s' "req-${START:-0}" > "$SEEN" 2>/dev/null || true
 warn "$MSG"

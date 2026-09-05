@@ -26,7 +26,7 @@ owns that judgement actually runs.
 | `checkpoint-gate.sh` | `PreToolUse` on **code** edits | `warn` | Inside `feature-development`/`bug-fix`/`refactor` only: checks the transcript, since that workflow skill was last invoked, for an `AskUserQuestion` call with `header` exactly `"Checkpoint"`. Presenting a proposal and moving on without asking no longer passes silently. Never fires on a documentation write (the plan doc itself is written before the checkpoint, by design). |
 | `write-lint.sh` | `PostToolUse` on edits | `warn` | Scans only the newly written text for hardcoded secrets and leftover placeholders. Advisory by protocol: `PostToolUse` cannot block. |
 | `quality-gate.sh` | `Stop` | `warn` | Flags - or, set to `block`, refuses to end - a turn that leaves uncommitted **code** changes no review has vouched for. |
-| `mark-reviewed.sh` | - | - | Run after the review to record it and satisfy the gate. |
+| `mark-reviewed.sh` | - | - | Run after the review to record it and satisfy the gate. Takes an optional session id (`mark-reviewed.sh <session>`) so it clears only that session's block counter - `quality-gate` puts the id straight into the command it prints. |
 
 `quality-gate.sh` fingerprints the changed code rather than setting a boolean, so editing code after a
 review invalidates it - the next review covers the new state. Documentation-only turns never trip it.

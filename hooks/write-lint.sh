@@ -29,13 +29,13 @@ add() { FINDINGS="${FINDINGS}
 while IFS= read -r pat; do
   [ -n "$pat" ] || continue
   hit="$(printf '%s' "$CONTENT" | grep -Ein "$pat" 2>/dev/null | head -n 1)"
-  [ -n "$hit" ] && add "possible hardcoded secret (line ${hit%%:*}) - move it to configuration/env, never commit it"
+  [ -n "$hit" ] && add "possible hardcoded secret (line ${hit%%:*} of the text just written, not of the file) - move it to configuration/env, never commit it"
 done < <(jq -r '.write_lint.secret_patterns[]?' "$CONFIG_FILE" 2>/dev/null)
 
 while IFS= read -r pat; do
   [ -n "$pat" ] || continue
   hit="$(printf '%s' "$CONTENT" | grep -Ein "$pat" 2>/dev/null | head -n 1)"
-  [ -n "$hit" ] && add "placeholder or unfinished marker left in the written content (line ${hit%%:*}) - finish it or remove it before reporting done"
+  [ -n "$hit" ] && add "placeholder or unfinished marker left in the written content (line ${hit%%:*} of the text just written, not of the file) - finish it or remove it before reporting done"
 done < <(jq -r '.write_lint.placeholder_patterns[]?' "$CONFIG_FILE" 2>/dev/null)
 
 [ -n "$FINDINGS" ] || exit 0

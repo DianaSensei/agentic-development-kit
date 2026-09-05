@@ -12,5 +12,14 @@ if [ -z "$HASH" ]; then
   exit 0
 fi
 printf '%s' "$HASH" > "$STATE_DIR/reviewed"
-rm -f "$STATE_DIR"/*.blocks 2>/dev/null || true
+
+# Clear only THIS session's block counter when the id is given (quality-gate puts
+# it in the command it prints). Without it, fall back to clearing every session's
+# counter - which resets the bounded-blocking allowance of other sessions working
+# in the same repo, sessions that never ran a review.
+if [ -n "${1:-}" ]; then
+  rm -f "$STATE_DIR/$1.blocks" 2>/dev/null || true
+else
+  rm -f "$STATE_DIR"/*.blocks 2>/dev/null || true
+fi
 echo "Review recorded for the current code changes (${HASH:0:12})."

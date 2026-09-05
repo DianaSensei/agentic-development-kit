@@ -33,8 +33,7 @@ FILE_PATH="$(jq_in '.tool_input.file_path')"
 # (present the written proposal, then ask). Reuse quality-gate's own
 # code/not-code line so a non-code write (the plan doc, a README, a changelog)
 # never trips this gate in the first place.
-EXT="$(jq_cfg '.code_extensions' '\.(java|kt|rs|ts|tsx|js|jsx|py|go|rb|php|cs|sql|sh)$')"
-printf '%s' "$FILE_PATH" | grep -qE "$EXT" || exit 0
+printf '%s' "$FILE_PATH" | grep -qE "$(code_ext)" || exit 0
 
 TRANSCRIPT="$(jq_in '.transcript_path')"
 [ -f "$TRANSCRIPT" ] || exit 0  # cannot verify - fail open
@@ -49,8 +48,7 @@ refactor')"
 WF_PATTERN="$(printf '%s' "$WORKFLOWS" | paste -sd'|' -)"
 [ -n "$WF_PATTERN" ] || exit 0
 
-WF_START="$(last_line_matching "$TRANSCRIPT" \
-  "(${WF_PATTERN})/SKILL\.md|\"skill\"[[:space:]]*:[[:space:]]*\"(${WF_PATTERN})\"")"
+WF_START="$(last_line_matching "$TRANSCRIPT" "$(skill_ref_pattern "$WF_PATTERN")")"
 [ -n "$WF_START" ] || exit 0   # not inside a gated workflow - nothing to check
 
 HEADER="$(jq_cfg '.checkpoint_gate.header' 'Checkpoint')"
@@ -77,9 +75,10 @@ if [ "$MODE" = "block" ]; then
   exit 0
 fi
 
-# warn mode: nag at most once per session - this is a single coarse gate per
-# workflow run, not a per-file check like skill-gate.
+# warn mode: nag at most once per workflow RUN, not once per session. Keying the
+# marker to WF_START rather than just the session id means a second feature in the
+# same session gets its own warning instead of inheriting the first one's silence.
 SEEN="$STATE_DIR/$(jq_in '.session_id' unknown).checkpointgate"
-[ -f "$SEEN" ] && exit 0
-: > "$SEEN" 2>/dev/null || true
+[ "$(cat "$SEEN" 2>/dev/null)" = "wf-$WF_START" ] && exit 0
+printf '%s' "wf-$WF_START" > "$SEEN" 2>/dev/null || true
 warn "$MSG"
