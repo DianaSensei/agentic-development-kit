@@ -8,7 +8,7 @@ metadata:
   role: specialist
   scope: implementation
   output-format: code
-  related-skills: mcp-developer, atlassian-mcp, security-reviewer
+  related-skills: mcp-developer, atlassian-mcp, toolbox-connections, security-reviewer
 ---
 
 # MCP Setup

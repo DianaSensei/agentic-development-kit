@@ -1,6 +1,6 @@
 # Agentic Development Kit
 
-A Claude Code plugin for AI-assisted software development: a library of 31 skills, a tiered subagent
+A Claude Code plugin for AI-assisted software development: a library of 30 skills, a tiered subagent
 pipeline, quality-check hooks, and MCP configs for reaching beyond the codebase.
 
 The workflow core is stack-agnostic. Anything technology-specific lives in its own skill, so a project
@@ -23,7 +23,7 @@ Each directory sits at the plugin root, where Claude Code's
 
 | Directory | What it is |
 |---|---|
-| [`skills/`](./skills/README.md) | 31 skills. Claude Code picks the right one from its `description`, so there is nothing to invoke by hand (a few are manual-only). Also reachable as `/agentic-development-kit:<skill-name>`. |
+| [`skills/`](./skills/README.md) | 30 skills. Claude Code picks the right one from its `description`, so there is nothing to invoke by hand (a few are manual-only). Also reachable as `/agentic-development-kit:<skill-name>`. |
 | [`agents/`](./agents-guide.md) | Tiered Task subagents. Tier 1 clarifies requirements and proposes solutions, Tier 2 implements. They pass a fixed JSON contract between steps. |
 | [`hooks/`](./hooks/README.md) | Gates for the rules a model cannot self-police: the owning `SKILL.md` was read before an edit, and `code-review-skill` ran before "done". Warn by default, blocking per gate. |
 | [`mcp/`](./mcp/README.md) | Toolbox config for databases - PostgreSQL, MySQL, TiDB, Redis, MongoDB, or any other type Toolbox supports. Ships with no pre-built connections; add exactly what you have. Declared in the root `.mcp.json`, connected automatically once a connection exists - no repo clone needed. |

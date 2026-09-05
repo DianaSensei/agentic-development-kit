@@ -167,5 +167,5 @@ Consistency and query flexibility are prioritised over unlimited horizontal writ
 - This skill decides *which deployment topology* (VM/IaaS, cloud-native, hybrid, multi-cloud) a system
   or component runs on. It does not design *how to keep the code portable* across that choice -
   config/secrets abstraction, containerization, avoiding proprietary-API coupling in business logic -
-  that's `solution-design-principles`'s `references/environment-portability.md`. Use both together when
+  that's `solution-design-principles/references/environment-portability.md`. Use both together when
   a system must remain portable across VM and cloud, or is expected to migrate between them.

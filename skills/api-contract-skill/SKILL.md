@@ -7,7 +7,7 @@ metadata:
   role: architect
   scope: design
   output-format: specification
-  related-skills: architecture-designer, kafka-skill, rabbitmq-skill, pubsub-skill, java-spring-skill, tauri-react-skill, code-review-skill
+  related-skills: architecture-designer, kafka-skill, rabbitmq-skill, java-spring-skill, tauri-react-skill, code-review-skill
 ---
 
 # API & Message Contract Design
@@ -18,7 +18,7 @@ implementation code is written, for both synchronous (REST/GraphQL/RPC) and asyn
 
 ## Core Workflow
 
-1. **Discover** - Read the existing contract (OpenAPI/`.graphql`/`.proto`/AsyncAPI if present) and the naming/versioning/auth conventions already in use. Determine the kind of communication being designed: synchronous (REST/GraphQL/RPC) or asynchronous via a broker (`kafka-skill`/`rabbitmq-skill`/`pubsub-skill`). If a distributed-systems-level decision is still open (which services should even talk to each other, sync vs. async as an architecture choice), that's `architecture-designer`'s call to make first - this skill takes it from there to the concrete contract.
+1. **Discover** - Read the existing contract (OpenAPI/`.graphql`/`.proto`/AsyncAPI if present) and the naming/versioning/auth conventions already in use. Determine the kind of communication being designed: synchronous (REST/GraphQL/RPC) or asynchronous via a broker (`kafka-skill`/`rabbitmq-skill`). If a distributed-systems-level decision is still open (which services should even talk to each other, sync vs. async as an architecture choice), that's `architecture-designer`'s call to make first - this skill takes it from there to the concrete contract.
 2. **Choose the Protocol** - If not already constrained by an existing convention, compare trade-offs (see `references/protocol-choice.md`) and choose the best-fitting option, stating the reasoning in the report. Only ask the user back when the decision affects multiple services already running in production.
 3. **Design the Contract** - Apply the correct principles for the chosen protocol type (see the Reference Guide below), including error format and security scheme. Always write message contracts to the AsyncAPI standard.
 4. **Validate** - If the project already has a spec-lint tool (e.g. `@redocly/cli` for OpenAPI), run it before reporting done. Don't add a new tool just for this purpose if the project doesn't already have one.

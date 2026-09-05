@@ -61,7 +61,6 @@ off to the right orchestrator, so in practice you rarely need to name a workflow
 | [`database-skill`](./database-skill/SKILL.md) | RDBMS (Oracle/PostgreSQL/MySQL) and NoSQL (MongoDB/DynamoDB/Cassandra/ScyllaDB) design and optimization |
 | [`kafka-skill`](./kafka-skill/SKILL.md) | Apache Kafka topic/partition design, delivery semantics, consumer groups |
 | [`rabbitmq-skill`](./rabbitmq-skill/SKILL.md) | RabbitMQ exchanges, routing, dead-letter, queue durability |
-| [`pubsub-skill`](./pubsub-skill/SKILL.md) | Google Cloud Pub/Sub topics/subscriptions, ordering, delivery |
 | [`redis-skill`](./redis-skill/SKILL.md) | Redis caching, distributed locks, lightweight queues, leaderboards |
 | [`elasticsearch-skill`](./elasticsearch-skill/SKILL.md) | Elasticsearch index/mapping design, Query DSL, aggregations |
 | [`testcontainers-skill`](./testcontainers-skill/SKILL.md) | Container-based integration test setup/lifecycle (pairs with the infra skills above) |

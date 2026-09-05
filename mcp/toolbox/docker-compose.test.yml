@@ -1,0 +1,101 @@
+# Local test databases for the toolbox MCP - NOT part of the plugin itself,
+# just a convenience for testing the six pre-built connections (or your own)
+# against real services. See TESTING.md in this directory for how to point
+# the plugin's userConfig at these.
+#
+# Usage (docker-compose v1/standalone; use `docker compose` instead of
+# `docker-compose` if that's what's on your machine):
+#   docker-compose -f docker-compose.test.yml up -d
+#   docker-compose -f docker-compose.test.yml down -v   # -v also wipes seeded data
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: toolbox-test-postgres
+    environment:
+      POSTGRES_DB: testdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./test-init/postgres:/docker-entrypoint-initdb.d:ro
+      - toolbox-test-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d testdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mysql-1:
+    image: mysql:8.4
+    container_name: toolbox-test-mysql-1
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: testdb1
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: appuser
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./test-init/mysql:/docker-entrypoint-initdb.d:ro
+      - toolbox-test-mysql-1-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mysql-2:
+    image: mysql:8.4
+    container_name: toolbox-test-mysql-2
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: testdb2
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: appuser
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./test-init/mysql:/docker-entrypoint-initdb.d:ro
+      - toolbox-test-mysql-2-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: toolbox-test-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - toolbox-test-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis-seed:
+    image: redis:7-alpine
+    depends_on:
+      redis:
+        condition: service_healthy
+    entrypoint:
+      - sh
+      - -c
+      - >
+        redis-cli -h redis SET session:abc123 alice EX 3600 &&
+        redis-cli -h redis SET session:def456 bob EX 3600 &&
+        redis-cli -h redis HSET user:1 name Alice email alice@example.com status active &&
+        redis-cli -h redis HSET user:2 name Bob email bob@example.com status active &&
+        echo seeded
+    restart: "no"
+
+volumes:
+  toolbox-test-postgres-data:
+  toolbox-test-mysql-1-data:
+  toolbox-test-mysql-2-data:
+  toolbox-test-redis-data:

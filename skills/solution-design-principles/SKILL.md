@@ -97,8 +97,8 @@ When reviewing a design or codebase, provide:
   skill *after* `architecture-designer` produces a proposal, to sanity-check it against foundational
   principles, or independently on existing code.
 - This skill does not decide *which* deployment topology (VM/IaaS, cloud-native, hybrid, multi-cloud) a
-  system or component should run on - that's `architecture-designer`'s
-  `references/deployment-topology.md`. This skill only designs the code so that decision doesn't lock
+  system or component should run on - that's
+  `architecture-designer/references/deployment-topology.md`. This skill only designs the code so that decision doesn't lock
   the system in, and so a VM-cloud boundary in a hybrid system doesn't become a hidden source of bugs.
 - It does not perform a line-by-line security/OWASP review - implementing secure code is
   `secure-code-guardian`'s job; auditing existing code/infra for vulnerabilities is
