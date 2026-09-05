@@ -3,7 +3,7 @@ name: rabbitmq-skill
 description: In-depth RabbitMQ knowledge - exchange types, routing, queue durability, dead-letter exchange, prefetch, quorum queues, priority queues. Use when the feature needs RabbitMQ (project already depends on `spring-boot-starter-amqp` or the user names RabbitMQ explicitly). If the request only says "async processing" with no technology named, check the actual dependency first - don't default to RabbitMQ; for high throughput/replay see `kafka-skill`, for GCP see `pubsub-skill`.
 metadata:
   domain: messaging
-  triggers: RabbitMQ, AMQP, exchange, direct exchange, topic exchange, fanout, routing key, queue durability, dead letter exchange, prefetch, quorum queue, priority queue, task queue
+  triggers: direct exchange, topic exchange, fanout, routing key, dead letter exchange, task queue
   role: specialist
   scope: implementation
   output-format: code
@@ -54,7 +54,3 @@ Testcontainers RabbitMQ for integration tests - test correct ack/requeue behavio
 
 ## Boundary
 For a NEW exchange/queue, choose the type that best fits the described routing need (state the reasoning briefly), cross-checking `api-contract-skill` if a contract was already finalized there. Only stop to present trade-offs and wait for the user when the change affects an exchange/queue ALREADY RUNNING in production (changing type, changing the routing of messages currently in flight) - these are hard to reverse without downtime.
-
-## Knowledge Reference
-
-Exchange types (direct/topic/fanout/headers), routing keys and bindings, queue durability, quorum queues vs. classic mirrored queues, manual ack and prefetch, dead-letter exchange (DLX), priority queues, at-least-once idempotency.

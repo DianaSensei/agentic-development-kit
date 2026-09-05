@@ -54,9 +54,3 @@ Read `CLAUDE.md`/existing conventions. Determine which technologies are ACTUALLY
 ## A Note on Objectivity
 
 If this is a self-review (the same agent that just wrote the code), it's inherently less objective than a separate session/agent reviewing it. A severe issue MUST be fixed before reporting done - never skip it just because "this is only a self-review." For more objectivity, suggest the user open a new Claude Code session (no shared context) for an independent review.
-
-## Knowledge Reference
-
-DRY, single responsibility, silent error swallowing, self-review objectivity limits, per-technology
-review checklists (transaction boundaries, delivery semantics, cache TTL, index correctness, contract
-conformance, capability least-privilege).

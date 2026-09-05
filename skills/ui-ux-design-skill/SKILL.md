@@ -3,7 +3,7 @@ name: ui-ux-design-skill
 description: In-depth UI/UX design knowledge - usability, accessibility, and consistency principles, and responsive/cross-platform design for desktop apps. Use when a feature has a UI component that needs design before implementation; coordinates with `tauri-react-skill` for the actual build.
 metadata:
   domain: design
-  triggers: UI, UX, usability, accessibility, a11y, WCAG, responsive design, cross-platform layout, interaction design, information hierarchy, design consistency, user flow
+  triggers: a11y, WCAG, responsive design, cross-platform layout, interaction design, information hierarchy, design consistency, user flow
   role: specialist
   scope: design
   output-format: document
@@ -46,7 +46,3 @@ What this skill does NOT own is **visual direction**: type scale, colour palette
 If a design-taste skill is present in the session (`design-taste-frontend`, `minimalist-ui`, `high-end-visual-design`, `industrial-brutalist-ui`, or a similar house-style skill), read it for that visual layer and apply it on top of the usability/accessibility constraints here - the constraints win where the two conflict, because a design that fails WCAG AA contrast is not saved by being beautiful. If no such skill is present, stay with the project's existing design tokens and component library found in Discover, and do not invent a new visual language.
 
 This is a soft reference on purpose. None of those skills ship with this plugin and none is declared as a dependency, so this section is a no-op when they are absent - see the companion-plugin note in the root [`README.md`](../../README.md) for how to install them separately.
-
-## Knowledge Reference
-
-Nielsen's usability heuristics, WCAG accessibility contrast/keyboard-navigation requirements, design tokens, responsive layout at variable window sizes, per-OS UI conventions, dark/light theming, information architecture.

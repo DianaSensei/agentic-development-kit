@@ -3,7 +3,7 @@ name: java-spring-skill
 description: In-depth Java + Spring ecosystem knowledge (Spring Boot 3.x, Java 21) - Spring MVC/WebFlux, Spring Data JPA, Spring Security 6 (JWT/OAuth2), Spring Cloud (Config/Eureka/Gateway)/Resilience4j, package structure (package-by-layer vs. package-by-feature, Spring Modulith, cross-module transactions), Java code style/formatting (Google Java Style, Spotless/Checkstyle), plus unit + integration testing (JUnit5, Mockito, Testcontainers). Does NOT cover Kafka/RabbitMQ (see `kafka-skill`/`rabbitmq-skill`), API contract design (see `api-contract-skill`), or DB schema design (see `database-skill`). Use when implementing Java/Spring business logic.
 metadata:
   domain: java-backend
-  triggers: Java, Spring Boot, Spring MVC, Spring WebFlux, Spring Data JPA, Spring Security, Spring Cloud, Resilience4j, JUnit, Mockito, Java microservices, reactive Java, package structure, package by feature, package by layer, Spring Modulith, modular monolith, Google Java Style, code format, Checkstyle, Spotless, lazy collection, optimistic locking, pessimistic locking, distributed lock, multiple instances, horizontal scaling, race condition, bulk update, JOIN FETCH, aggregate root, nested relationship, delta update, IDOR, scoped repository query
+  triggers: Spring WebFlux, Java microservices, reactive Java, package by feature, package by layer, modular monolith, code format, lazy collection, optimistic locking, pessimistic locking, distributed lock, multiple instances, horizontal scaling, race condition, bulk update, JOIN FETCH, aggregate root, nested relationship, delta update, IDOR, scoped repository query
   role: engineer
   scope: implementation
   output-format: code
@@ -20,15 +20,6 @@ inside a module, transaction pattern, abstraction - from the simplest option tha
 problem in front of you. Add complexity (a new layer, a new interface, an async/event path, a new
 abstraction) only when a concrete, present requirement demands it, never because it might be needed
 later. When unsure between a simpler and a more elaborate option, default to the simpler one.
-
-## When to Use This Skill
-
-- Implementing/modifying Java business logic with Spring Boot (MVC or WebFlux).
-- Designing the data-access layer (JPA), security (JWT/OAuth2), or cloud-native infrastructure (Config/Discovery/Gateway/Resilience4j) for a Java service.
-- Choosing or evaluating package structure (package-by-layer vs. package-by-feature, module boundaries,
-  cross-module transactions) for a Spring Boot service.
-- Applying or checking Java code style/formatting conventions.
-- Writing unit tests for logic just implemented (JUnit5 + Mockito).
 
 ## Core Workflow
 
@@ -159,11 +150,3 @@ names, how to break down logic) without asking - this is this skill's routine, e
 to present trade-offs and wait for user approval on a LARGE architectural decision affecting the whole
 service and hard to reverse (switching MVC ↔ WebFlux, adding a new runtime framework, changing the
 service-discovery/gateway strategy).
-
-## Knowledge Reference
-
-Spring Boot 3.x, Java 21, Spring MVC/WebFlux, Project Reactor, R2DBC, Spring Data JPA, Spring Security 6,
-OAuth2/JWT, Spring Cloud (Config/Eureka/Gateway), Resilience4j, Micrometer, Hibernate, JUnit 5, Mockito,
-AssertJ, Testcontainers, Maven/Gradle, package-by-layer/package-by-feature, Spring Modulith, Google Java
-Style Guide, google-java-format, Spotless, Checkstyle, optimistic/pessimistic locking, distributed locks,
-lazy collection filtering, aggregate root read/write split, bulk update as atomic invariant.

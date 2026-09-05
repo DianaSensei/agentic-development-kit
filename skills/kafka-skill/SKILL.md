@@ -3,7 +3,7 @@ name: kafka-skill
 description: In-depth Apache Kafka knowledge - topic/partition design, consumer groups, delivery semantics, idempotency, schema evolution, dead-letter handling, lag monitoring. Use when the feature needs Kafka (project already depends on `spring-kafka` or an equivalent client, or the user names Kafka explicitly). If the request only says "async processing" with no technology named, check the actual dependency first - don't default to Kafka; for a simple queue see `rabbitmq-skill`, for GCP see `pubsub-skill`.
 metadata:
   domain: messaging
-  triggers: Kafka, topic, partition, consumer group, offset, delivery semantics, idempotent producer, schema evolution, dead letter topic, consumer lag, rebalance, event streaming, replay
+  triggers: offset, idempotent producer, dead letter topic, consumer lag, rebalance, event streaming, replay
   role: specialist
   scope: implementation
   output-format: code
@@ -55,7 +55,3 @@ Testcontainers Kafka for integration tests - test the delivery semantics actuall
 
 ## Boundary
 For a NEW topic, choose the most sensible partition count/delivery semantics based on what's already known (cross-check `api-contract-skill` if already finalized there), and state the choice and reasoning in the report. Only stop to present trade-offs and wait for the user when there isn't enough information to estimate (throughput/consumer count unknown), or when the change affects a topic ALREADY RUNNING in production.
-
-## Knowledge Reference
-
-Topic/partition design, partition key selection, consumer group rebalancing (eager vs. cooperative-sticky), delivery semantics (at-least-once, exactly-once, transactions), producer idempotence (`acks=all`, `enable.idempotence`), schema evolution/compatibility (Avro/Protobuf, Schema Registry), dead-letter topics, consumer lag monitoring.

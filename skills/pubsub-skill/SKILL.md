@@ -3,7 +3,7 @@ name: pubsub-skill
 description: In-depth Google Cloud Pub/Sub knowledge - topics/subscriptions, push vs. pull, ack deadlines, ordering keys, dead-letter topics, exactly-once delivery. Use when the feature needs Pub/Sub (project already uses a GCP client, or the infrastructure already runs on GCP). If the request only says "async processing" with no technology named, check the actual dependency/infrastructure first - don't default to Pub/Sub; for multi-cloud/on-prem see `kafka-skill`/`rabbitmq-skill`.
 metadata:
   domain: messaging
-  triggers: Pub/Sub, Google Cloud Pub/Sub, GCP messaging, topic, subscription, push subscription, pull subscription, ack deadline, ordering key, dead letter topic, exactly-once delivery
+  triggers: GCP messaging, push subscription, pull subscription, dead letter topic
   role: specialist
   scope: implementation
   output-format: code
@@ -53,7 +53,3 @@ Use the Pub/Sub emulator (provided by GCP) for local integration tests - test ac
 
 ## Boundary
 For a NEW topic/subscription, choose push/pull and whether to enable ordering/exactly-once based on the described requirement (cross-check `api-contract-skill` if already finalized), and state the reasoning in the report. Only present trade-offs and wait for the user when the change affects a subscription ALREADY RUNNING in production, or the request isn't clear enough to infer from (e.g. unclear whether ordering is required).
-
-## Knowledge Reference
-
-Topics and subscriptions (fan-out model), push vs. pull delivery, ack deadlines and `modifyAckDeadline`, ordering keys, dead-letter topics and `maxDeliveryAttempts`, exactly-once delivery, GCP project quotas.

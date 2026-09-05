@@ -3,7 +3,7 @@ name: atlassian-mcp
 description: Integrates with Atlassian products to manage project tracking and documentation via MCP protocol. Use when querying Jira issues with JQL filters, creating and updating tickets with custom fields, searching or editing Confluence pages with CQL, managing sprints and backlogs, setting up MCP server authentication, syncing documentation, or debugging Atlassian API integrations.
 metadata:
   domain: platform
-  triggers: Jira, Confluence, Atlassian, MCP, tickets, issues, wiki, JQL, CQL, sprint, backlog, project management, worklog, log work, time tracking
+  triggers: wiki, project management, worklog, log work, time tracking
   role: expert
   scope: implementation
   output-format: code
@@ -11,18 +11,6 @@ metadata:
 ---
 
 # Atlassian MCP Expert
-
-## When to Use This Skill
-
-- Querying Jira issues with JQL filters
-- Searching or creating Confluence pages
-- Automating sprint workflows and backlog management
-- Logging work against a ticket from a local session's actual elapsed time, and commenting changelogs/decisions
-- Setting up MCP server authentication (OAuth/API tokens)
-- Syncing meeting notes to Jira tickets
-- Generating documentation from issue data
-- Debugging Atlassian API integration issues
-- Choosing between official vs open-source MCP servers
 
 ## Core Workflow
 
@@ -91,27 +79,13 @@ space = "ENG" AND type = page AND text ~ "deployment runbook"
 
 ## Constraints
 
-### MUST DO
-- Respect user permissions and workspace access controls
-- Validate JQL/CQL queries before execution (use `maxResults=1` probe first)
-- Handle rate limits with exponential backoff
-- Use pagination for large result sets (50-100 items per page)
-- Implement error recovery for network failures
-- Log API calls for debugging and audit trails
-- Test with read-only operations first
-- Document required permission scopes
-- Confirm before any write or bulk operation against production data
-- Log worklogs from actual measured session time (see `references/jira-queries.md`), never a fabricated or rounded-up estimate
-
-### MUST NOT DO
-- Hardcode API tokens or OAuth secrets in code
-- Ignore rate limit headers from Atlassian APIs
-- Create issues without validating required fields
-- Skip input sanitization on user-provided query strings
-- Deploy without testing permission boundaries
-- Update production data without confirmation prompts
-- Mix different authentication methods in same session
-- Expose sensitive issue data in logs or error messages
+- Probe a JQL/CQL query with `maxResults=1` before running it for real, and paginate large result sets
+  (50-100/page).
+- Confirm with the user before any write or bulk operation against production data.
+- Log worklogs from actual measured session time (see `references/jira-queries.md`), never a fabricated
+  or rounded-up estimate.
+- Never hardcode API tokens/OAuth secrets, or expose issue data in logs and error messages.
+- Never mix authentication methods in the same session.
 
 ## Output Templates
 
@@ -121,9 +95,3 @@ When implementing Atlassian MCP features, provide:
 3. Tool call implementation with error handling
 4. Authentication setup instructions
 5. Brief explanation of permission requirements
-
-## Knowledge Reference
-
-JQL (Jira Query Language), CQL (Confluence Query Language), Jira custom fields, sprint/backlog
-management, Confluence page hierarchy, OAuth 2.0/API token authentication for Atlassian Cloud, MCP
-server permission scoping.

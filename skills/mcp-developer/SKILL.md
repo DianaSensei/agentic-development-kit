@@ -3,7 +3,7 @@ name: mcp-developer
 description: Use when building, debugging, or extending MCP (Model Context Protocol) servers or clients that connect AI systems with external tools and data sources. Invoke to implement tool/resource/prompt handlers with the high-level TypeScript (McpServer) or Python (FastMCP) SDKs, configure stdio or Streamable HTTP transport, add OAuth 2.1 authorization for remote servers, validate schemas with Zod or Pydantic, debug protocol compliance issues, or scaffold a complete MCP server/client project.
 metadata:
   domain: api-architecture
-  triggers: MCP, Model Context Protocol, MCP server, MCP client, Claude integration, AI tools, context protocol, JSON-RPC, Streamable HTTP, MCP authorization
+  triggers: MCP client, Claude integration, AI tools, JSON-RPC, MCP authorization
   role: specialist
   scope: implementation
   output-format: code
@@ -112,25 +112,11 @@ Server → { "result": { "content": [{ "type": "text", "text": "{\"temp\": 18, \
 
 ## Constraints
 
-### MUST DO
-- Implement JSON-RPC 2.0 protocol correctly
-- Validate all inputs with schemas (Zod/Pydantic)
-- Use stdio for local servers, Streamable HTTP for remote servers
-- Implement comprehensive error handling with structured MCP errors
-- Implement OAuth 2.1 authorization (see `references/authorization.md`) for any remote or multi-tenant server
-- Log protocol messages to stderr (stdio transport reserves stdout for protocol traffic)
-- Test protocol compliance with the MCP Inspector before shipping
-- Document server capabilities and each tool's description/schema
-
-### MUST NOT DO
-- Skip input validation on tool inputs
-- Expose sensitive data in resource content
-- Ignore protocol version negotiation - a server must advertise a version it actually supports, not assume the client's
-- Mix synchronous blocking code into async transport handlers
-- Hardcode credentials or secrets
-- Return unstructured errors to clients
-- Deploy a remote server without rate limiting
-- Deploy a remote server without OAuth 2.1 authorization
+- Log to **stderr** on stdio transport - stdout is reserved for protocol traffic, and anything written
+  there corrupts the session.
+- Advertise a protocol version the server actually supports; never assume the client's.
+- Never deploy a remote server without OAuth 2.1 authorization and rate limiting.
+- Never expose secrets in resource content or return unstructured errors.
 
 ## Output Templates
 
@@ -156,10 +142,3 @@ When implementing MCP features, provide:
 - The MCP spec evolves quickly; before citing a protocol version, transport name, or SDK API as
   "current," verify against `references/protocol.md` or the live spec - this file is a snapshot, not
   a guarantee it stays current after future spec revisions.
-
-## Knowledge Reference
-
-JSON-RPC 2.0, MCP protocol lifecycle (initialize/initialized/shutdown), protocol version negotiation,
-Streamable HTTP transport, stdio transport, tools/resources/prompts primitives, resource URI schemes
-and templates, OAuth 2.1 authorization (PKCE, Protected Resource Metadata, Resource Indicators), Zod,
-Pydantic, MCP Inspector.

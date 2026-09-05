@@ -3,7 +3,7 @@ name: api-contract-skill
 description: In-depth API contract design knowledge - REST (OpenAPI 3.x/3.1), GraphQL, RPC (gRPC/Protobuf), and asynchronous message contracts for Kafka/RabbitMQ/Pub-Sub under the AsyncAPI 3.x standard (the same role as OpenAPI, but for messages instead of REST). Covers design principles, security (OWASP API Security Top 10), naming/versioning, and standardized error format (RFC 7807). Use before implementation, to finalize the communication contract before writing code.
 metadata:
   domain: api-architecture
-  triggers: API design, REST API, OpenAPI, GraphQL, gRPC, Protobuf, message contract, AsyncAPI, event schema, API versioning, API security
+  triggers: API design, REST API, event schema, API versioning
   role: architect
   scope: design
   output-format: specification
@@ -15,13 +15,6 @@ metadata:
 Acts as the contract architect - finalizes the communication contract before a single line of
 implementation code is written, for both synchronous (REST/GraphQL/RPC) and asynchronous
 (message-via-broker) communication.
-
-## When to Use This Skill
-
-- Designing a new endpoint/API, or changing the shape of an existing one (breaking or not).
-- Designing an event/message contract for communication over Kafka/RabbitMQ/Pub-Sub.
-- Deciding between REST, GraphQL, or RPC for a specific communication need.
-- Standardizing the error format, versioning strategy, or security scheme shared across the whole API.
 
 ## Core Workflow
 
@@ -49,20 +42,13 @@ Load detail based on the context currently being designed:
 
 ## Constraints
 
-### MUST DO
-- Determine clearly whether this is a NEW contract or a change to one with existing dependent consumers/producers - that determines whether a breaking change needs user confirmation first.
-- Use one shared error schema across the whole API/service - never let each endpoint invent its own format.
-- Include a clear deprecation policy whenever releasing a version with a breaking change.
-- For message contracts (Kafka/RabbitMQ/Pub-Sub): always write them to the AsyncAPI 3.x standard, never an ad-hoc, disconnected JSON format.
-- Always specify the REQUIRED delivery semantics (at-least-once/exactly-once) for a message contract - this is a contract term, not a broker implementation detail.
-- Write the contract to a real file (see Output), even when the feature only adds one small endpoint/event.
-
-### MUST NOT DO
-- Never decide broker infrastructure detail (partitions, consumer groups, ack mode) - that belongs to `kafka-skill`/`rabbitmq-skill`/`pubsub-skill` at implementation time.
-- Never change the shape/field number/type of a contract that ALREADY has real dependent consumers without asking the user first.
-- Never skip writing the file just because "the endpoint is too simple to need its own contract."
-- Never put a verb in a REST URI (`/getUser/{id}` - wrong; `/users/{id}` - right).
-- Never change or reuse a `.proto` field number that's already been published.
+- One shared error schema across the whole API/service - never let each endpoint invent its own.
+- Ship a deprecation policy with any version that carries a breaking change.
+- Never put a verb in a REST URI (`/getUser/{id}` wrong, `/users/{id}` right).
+- Never change or reuse a `.proto` field number that has already been published.
+- Never change the shape/field number/type of a contract that ALREADY has real dependent consumers
+  without asking the user first - for a contract with no consumers yet, decide and state the reasoning.
+- Never skip writing the contract file because "the endpoint is too simple."
 
 ## Output - MANDATORY, must be written to a real file
 
@@ -151,9 +137,3 @@ exist, choose the best one by clear criteria - simplicity, consistency with exis
 breaking changes - and state the reasoning in the report, no need to ask first. Only stop to ask the
 user when the contract already has a real consumer and the change would be breaking, or when the
 original request is too vague to infer the actual business intent.
-
-## Knowledge Reference
-
-REST, OpenAPI 3.0/3.1, GraphQL, gRPC/Protobuf, JSON Schema, AsyncAPI, RFC 7807 Problem
-Details, OWASP API Security Top 10, OAuth 2.0/JWT, HATEOAS, cursor/offset pagination, API
-versioning strategies.

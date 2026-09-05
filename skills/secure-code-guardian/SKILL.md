@@ -3,7 +3,7 @@ name: secure-code-guardian
 description: Use when IMPLEMENTING authentication/authorization, securing user input, or preventing OWASP Top 10 vulnerabilities while writing code - custom security implementations such as hashing passwords with bcrypt/argon2, sanitizing SQL queries with parameterized statements, configuring CORS/CSP headers, validating input with Zod, and setting up JWT tokens. Produces secure CODE, not audit reports. Invoke for authentication, authorization, input validation, encryption, OWASP Top 10 prevention, secure session management, and security hardening. For auditing/scanning EXISTING code or infrastructure for vulnerabilities (SAST, penetration testing, compliance checks) instead of writing new secure code, use `security-reviewer`.
 metadata:
   domain: security
-  triggers: security, authentication, authorization, encryption, OWASP, vulnerability, secure coding, password, JWT, OAuth
+  triggers: vulnerability, secure coding, OAuth
   role: specialist
   scope: implementation
   output-format: code
@@ -40,24 +40,6 @@ Load detailed guidance based on context:
 | Input Validation | `references/input-validation.md` | Zod, SQL injection |
 | XSS/CSRF | `references/xss-csrf.md` | XSS prevention, CSRF |
 | Headers | `references/security-headers.md` | Helmet, rate limiting |
-
-## Constraints
-
-### MUST DO
-- Hash passwords with bcrypt/argon2 (never MD5/SHA-1/unsalted hashes)
-- Use parameterized queries (never string-interpolated SQL)
-- Validate and sanitize all user input before use
-- Implement rate limiting on auth endpoints
-- Set security headers (CSP, HSTS, X-Frame-Options)
-- Log security events (failed auth, privilege escalation attempts)
-- Store secrets in environment variables or secret managers (never in source code)
-
-### MUST NOT DO
-- Store passwords in plaintext or reversibly encrypted form
-- Trust user input without validation
-- Expose sensitive data in logs or error responses
-- Use weak or deprecated algorithms (MD5, SHA-1, DES, ECB mode)
-- Hardcode secrets or credentials in code
 
 ## Code Examples
 
@@ -182,7 +164,3 @@ When implementing security features, provide:
 2. Security considerations noted
 3. Configuration requirements (env vars, headers)
 4. Testing recommendations
-
-## Knowledge Reference
-
-OWASP Top 10, bcrypt/argon2, JWT, OAuth 2.0, OIDC, CSP, CORS, rate limiting, input validation, output encoding, encryption (AES, RSA), TLS, security headers

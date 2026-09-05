@@ -4,7 +4,7 @@ description: Manually-invoked, end-to-end setup for connecting a third-party MCP
 argument-hint: "[MCP server GitHub link, package name, or hosted URL]"
 metadata:
   domain: platform
-  triggers: install MCP server, connect MCP server, set up MCP, claude mcp add, MCP transport, stdio, Streamable HTTP, MCP scope, MCP secrets, MCP connection failed
+  triggers: install MCP server, connect MCP server, set up MCP, MCP transport, stdio, Streamable HTTP, MCP scope, MCP secrets, MCP connection failed
   role: specialist
   scope: implementation
   output-format: code
@@ -145,10 +145,3 @@ documents required local setup).
   MCP server X" request - do not proactively run this workflow for general MCP questions or for
   troubleshooting a server the user configured outside of this skill, though `references/
 troubleshooting.md`'s diagnostic tree is still fine to use ad hoc in either case.
-
-## Knowledge Reference
-
-`claude mcp add`/`list`/`get`/`remove`, installation scopes (local/project/user) and their precedence,
-`.mcp.json` schema, stdio vs. HTTP vs. SSE (deprecated) vs. WebSocket transports, environment variable
-expansion (`${VAR}`/`${VAR:-default}`), OAuth vs. static-token authentication, MCP Inspector-equivalent
-verification via `claude mcp list`.

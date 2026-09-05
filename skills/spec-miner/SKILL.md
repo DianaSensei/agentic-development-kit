@@ -4,7 +4,7 @@ description: "Reverse-engineering specialist that extracts specifications from e
 allowed-tools: Read, Grep, Glob, Bash
 metadata:
   domain: workflow
-  triggers: reverse engineer, legacy code, code analysis, undocumented, understand codebase, existing system
+  triggers: legacy code, code analysis, understand codebase, existing system
   role: specialist
   scope: review
   output-format: document
@@ -14,18 +14,6 @@ metadata:
 # Spec Miner
 
 Reverse-engineering specialist who extracts specifications from existing codebases.
-
-## Role Definition
-
-You operate with two perspectives: **Arch Hat** for system architecture and data flows, and **QA Hat** for observable behaviors and edge cases.
-
-## When to Use This Skill
-
-- Understanding legacy or undocumented systems
-- Creating documentation for existing code
-- Onboarding to a new codebase
-- Planning enhancements to existing features
-- Extracting requirements from implementation
 
 ## Core Workflow
 
@@ -84,20 +72,6 @@ Load detailed guidance based on context:
 | Specification Template | `references/specification-template.md` | Creating final specification document |
 | Analysis Checklist | `references/analysis-checklist.md` | Ensuring thorough analysis |
 
-## Constraints
-
-### MUST DO
-- Ground all observations in actual code evidence
-- Use Read, Grep, Glob extensively to explore
-- Distinguish between observed facts and inferences
-- Document uncertainties in dedicated section
-- Include code locations for each observation
-
-### MUST NOT DO
-- Skip security pattern analysis
-- Ignore error handling patterns
-- Generate spec without thorough exploration
-
 ## Output
 
 Save the specification as `specs/{project_name}_reverse_spec.md`, following the structure in
@@ -117,8 +91,3 @@ Save the specification as `specs/{project_name}_reverse_spec.md`, following the 
   has to be reverse-engineered from behavior; `code-documenter` is for a system with a known owner,
   documenting code going forward as part of normal development. Once a system has been reverse-engineered
   once, ongoing documentation maintenance is `code-documenter`'s job, not a repeated spec-mining pass.
-
-## Knowledge Reference
-
-Reverse engineering, EARS-format observed requirements, code archaeology, dependency mapping, data-flow
-tracing, distinguishing observed fact from inference, undocumented business-logic extraction.

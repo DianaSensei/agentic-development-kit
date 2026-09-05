@@ -3,7 +3,7 @@ name: toolbox-connections
 description: Manage this plugin's bundled toolbox MCP server (mcp/toolbox/) - full CRUD for database connections (PostgreSQL, MySQL, TiDB, Redis, MongoDB, or any other type Toolbox supports) and their tools. Create a connection/tool (checking for an existing target match first, and a read-only permission check for connections), read/list existing ones (secrets redacted), update values on an existing connection/tool, or delete either. Always applies a write through validate.sh's snapshot/check/restore flow. Use for any add/list/show/edit/update/remove request about a toolbox connection or tool. Do NOT use for a different third-party MCP server (`mcp-setup`) or for authoring toolbox/a new MCP server (`mcp-developer`).
 metadata:
   domain: platform
-  triggers: toolbox connection, list toolbox connections, show connection, update connection, rotate password, edit connection, remove connection, add database connection, connect postgres, connect mysql, connect redis, connect mongodb, connect tidb, toolbox tool, edit toolbox tool, remove toolbox tool, database MCP setup
+  triggers: list toolbox connections, show connection, update connection, rotate password, edit connection, remove connection, add database connection, connect postgres, connect mysql, connect redis, connect mongodb, connect tidb, toolbox tool, edit toolbox tool, remove toolbox tool, database MCP setup
   role: specialist
   scope: implementation
   output-format: code

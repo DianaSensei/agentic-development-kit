@@ -22,7 +22,7 @@ hooks:
           statusMessage: "Quality gate..."
 metadata:
   domain: workflow
-  triggers: bug, defect, broken, not working, wrong behavior, regression, error, reproduce, root cause, postmortem
+  triggers: defect, broken, not working, wrong behavior, regression, error, root cause
   role: orchestrator
   scope: end-to-end
   output-format: code-and-report

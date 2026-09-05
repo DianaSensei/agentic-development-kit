@@ -4,7 +4,7 @@ description: Identifies security vulnerabilities in EXISTING code/infrastructure
 allowed-tools: Read, Grep, Glob, Bash
 metadata:
   domain: security
-  triggers: security review, vulnerability scan, SAST, security audit, penetration test, code audit, security analysis, infrastructure security, DevSecOps, cloud security, compliance audit
+  triggers: vulnerability scan, code audit, security analysis, compliance audit
   role: specialist
   scope: review
   output-format: report
@@ -14,15 +14,6 @@ metadata:
 # Security Reviewer
 
 Security analyst specializing in code review, vulnerability identification, penetration testing, and infrastructure security.
-
-## When to Use This Skill
-
-- Code review and SAST scanning
-- Vulnerability scanning and dependency audits
-- Secrets scanning and credential detection
-- Penetration testing and reconnaissance
-- Infrastructure and cloud security audits
-- DevSecOps pipelines and compliance automation
 
 ## Core Workflow
 
@@ -52,27 +43,10 @@ Load detailed guidance based on context:
 
 ## Constraints
 
-### MUST DO
-- Check authentication/authorization first
-- Run automated tools before manual review
-- Provide specific file/line locations
-- Include remediation for each finding
-- Rate severity consistently
-- Check for secrets in code
-- Verify scope and authorization before active testing
-- Document all testing activities
-- Follow rules of engagement
-- Report critical findings immediately
-
-### MUST NOT DO
-- Skip manual review (tools miss things)
-- Test on production systems without authorization
-- Ignore "low" severity issues
-- Assume frameworks handle everything
-- Share detailed exploits publicly
-- Exploit beyond proof of concept
-- Cause service disruption or data loss
-- Test outside defined scope
+- Rate every finding, including Info/Low - never drop one for being minor.
+- Stop at proof of concept. Never exploit further, disrupt a service, or destroy data.
+- Never publish detailed exploits.
+- Tools miss context: the manual review pass in step 3 is mandatory, not optional when scans come back clean.
 
 ## Output Templates
 
@@ -94,7 +68,3 @@ Remediation: Use parameterized queries or an ORM. Replace `cursor.execute(f"SELE
              with `cursor.execute("SELECT * FROM users WHERE name=%s", (name,))`.
 References: CWE-89, OWASP A03:2021
 ```
-
-## Knowledge Reference
-
-OWASP Top 10, CWE, Semgrep, Bandit, ESLint Security, gosec, npm audit, gitleaks, trufflehog, CVSS scoring, nmap, Burp Suite, sqlmap, Trivy, Checkov, HashiCorp Vault, AWS Security Hub, CIS benchmarks, SOC2, ISO27001

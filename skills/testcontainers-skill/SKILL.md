@@ -3,7 +3,7 @@ name: testcontainers-skill
 description: In-depth Testcontainers setup/operation knowledge for integration tests - dependencies, container lifecycle (singleton pattern, reuse, cleanup), wait strategies, multi-container networking, CI integration. Does NOT cover infrastructure-specific test scenarios (see `database-skill`/`kafka-skill`/`rabbitmq-skill`/`redis-skill`/`elasticsearch-skill`). Use when an integration test needs real infrastructure via containers instead of a mock.
 metadata:
   domain: quality
-  triggers: Testcontainers, integration test, container lifecycle, singleton container, container reuse, wait strategy, Ryuk, Docker in tests, real infrastructure test, flaky integration test
+  triggers: singleton container, container reuse, wait strategy, Ryuk, Docker in tests, real infrastructure test, flaky integration test
   role: specialist
   scope: testing
   output-format: code
@@ -14,9 +14,6 @@ metadata:
 
 ## Discover Before Setting Up
 Read `pom.xml`/`build.gradle` (or `package.json` if using the Node binding) to check whether a Testcontainers dependency already exists, and which modules are already used (postgresql/kafka/rabbitmq/elasticsearch/...). Confirm the Docker daemon is running on the machine/CI (`docker info`). Read any existing test config (`application-test.yml`, `docker-compose.test.yml` if present) before adding anything new - don't create a duplicate mechanism for something that already exists.
-
-## When to Use Testcontainers / When Not To
-Use it when an integration test needs the infrastructure's **real** behavior (real SQL dialect, real Kafka delivery semantics, real Redis TTL, etc.) that a mock/in-memory substitute (H2, embedded Kafka) can't faithfully reproduce - especially if the project has previously hit bugs caused by a mock/prod behavior gap. Do NOT use it for pure business-logic unit tests (mock the dependency per the relevant language/framework skill) - Testcontainers belongs strictly at the integration-test layer; it's slower, so don't overuse it for every test case.
 
 ## Basic Setup (JVM/JUnit5)
 1. Add the `testcontainers-bom` + the matching module (`postgresql`, `kafka`, `rabbitmq`, `elasticsearch`, etc.) - pick the latest version compatible with the other test dependencies already in the project (no need to ask, this is a test-scope-only dependency). Only ask back if the new version forces a build-tool/JDK version bump outside the task's scope.
@@ -51,6 +48,4 @@ When a test needs multiple containers to talk to each other (e.g. an app contain
 ## Boundary
 This skill only covers **the mechanics of setting up/running containers** (dependencies, lifecycle, wait strategy, networking, CI). The actual test scenarios per infrastructure type (which SQL dialect to test, which Kafka delivery semantics, how to test Redis TTL, what Elasticsearch mapping to test) → coordinate with the matching skill: `database-skill`, `kafka-skill`, `rabbitmq-skill`, `redis-skill`, `elasticsearch-skill`. Pure unit tests (mocked, no container) → the relevant language/framework skill (e.g. `java-spring-skill`).
 
-## Knowledge Reference
-
-Singleton container pattern, `@Testcontainers`/`@Container` (JUnit5), container reuse (`testcontainers.reuse.enable`), Ryuk resource reaper, wait strategies (`forListeningPort`, `forLogMessage`, `forHealthcheck`), multi-container networking (`Network.newNetwork()`, network aliases), CI Docker-in-Docker integration, image version pinning.
+Containers are slow - reach for one only when the test needs behavior a mock/in-memory substitute (H2, embedded Kafka) can't faithfully reproduce, not for every test case.

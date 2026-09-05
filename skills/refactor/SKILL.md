@@ -22,7 +22,7 @@ hooks:
           statusMessage: "Quality gate..."
 metadata:
   domain: workflow
-  triggers: refactor, restructure, clean up, improve code quality, reduce technical debt, extract method, rename, behavior-preserving change
+  triggers: reduce technical debt, extract method, rename, behavior-preserving change
   role: orchestrator
   scope: end-to-end
   output-format: code-and-report

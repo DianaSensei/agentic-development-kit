@@ -3,7 +3,7 @@ name: legacy-modernizer
 description: Designs incremental migration strategies, identifies service boundaries, produces dependency maps and migration roadmaps, and generates API facade designs for aging codebases. Use when modernizing legacy systems, implementing strangler fig pattern or branch by abstraction, decomposing monoliths, upgrading frameworks or languages, or reducing technical debt without disrupting business operations.
 metadata:
   domain: specialized
-  triggers: legacy modernization, strangler fig, incremental migration, technical debt, legacy refactoring, system migration, legacy system, modernize codebase
+  triggers: legacy modernization, legacy refactoring, system migration, modernize codebase
   role: specialist
   scope: architecture
   output-format: code+analysis
@@ -58,28 +58,6 @@ for you.
   refactoring safe: a change that alters undocumented legacy behavior fails loudly instead of shipping
   silently. → `references/legacy-testing.md`
 
-## Constraints
-
-### MUST DO
-
-- Maintain zero production disruption during all migrations
-- Create comprehensive test coverage before refactoring (target 80%+)
-- Use feature flags for all incremental rollouts
-- Implement monitoring and rollback procedures
-- Document all migration decisions and rationale
-- Preserve existing business logic and behavior
-- Communicate progress and risks transparently
-
-### MUST NOT DO
-
-- Big bang rewrites or replacements
-- Skip testing legacy behavior before changes
-- Deploy without rollback capability
-- Break existing integrations or APIs
-- Ignore technical debt in new code
-- Rush migrations without proper validation
-- Remove legacy code before new code is proven
-
 ## Output Templates
 
 When implementing modernization, provide:
@@ -115,7 +93,3 @@ When implementing modernization, provide:
   strategy) are `test-master`'s job; deep target-architecture questions (what the system should look
   like once migrated) are `architecture-designer`'s job - this skill owns the safe *path* from the
   current system to that target, not the target's design itself.
-
-## Knowledge Reference
-
-Strangler fig pattern, branch by abstraction, characterization testing, incremental migration, feature flags, canary deployments, API versioning, database refactoring, microservices extraction, technical debt reduction, zero-downtime deployment
