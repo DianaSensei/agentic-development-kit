@@ -43,7 +43,7 @@ Template: `examples/new-sql-connection.yaml.example` (any SQL type), `new-redis-
    `AskUserQuestion` call (≤4 questions, never one call per field), each with a
    `(Recommended)` default - `localhost`, the type's standard port, a plausible db/user guess
    - and "Other" for the real value. Keep every `header` to 12 characters or less (it's a
-   hard schema limit) - `Host`, `Port`, `Database`, `User`, not "Database name" (14 chars).
+     hard schema limit) - `Host`, `Port`, `Database`, `User`.
 3. **Uniqueness check**: compare `host:port` + `database` + `user` (SQL), `address` +
    `database` index (Redis), or `uri` + `database` (Mongo) against every connection listed in
    Step 1. Exact match on all of them → this connection already exists (name it), stop and
@@ -53,10 +53,9 @@ Template: `examples/new-sql-connection.yaml.example` (any SQL type), `new-redis-
 5. Read-only permission: its own single-question `AskUserQuestion` (header `Access`,
    `Read-only (Recommended)` / `Can write too`). If not read-only, explain why it matters
    (`../../mcp/toolbox/README.md`) and get explicit confirmation either way.
-6. Pick a unique connection *name* (don't ask unless genuinely ambiguous - this is just the
-   file/identifier, separate from the uniqueness check in step 3), write the file with
-   literal values (safe - this directory is private, uncommitted), and derive the generic
-   tools from the template rather than inventing a different shape.
+6. Pick a unique file/identifier _name_ (don't ask unless genuinely ambiguous), write the
+   file with literal values (safe - this directory is private, uncommitted), and derive the
+   generic tools from the template rather than inventing a different shape.
 
 Go to Step 5.
 
@@ -87,14 +86,10 @@ No auto-reload, no CLI reconnect command. Tell the user: open `/mcp` → `toolbo
 
 ## Constraints
 
-**MUST**: confirm read-only before a query-only connection · snapshot/check every change, no
-exceptions · list existing connections before adding a new one, and reject an exact
-host:port+database+user (or type-equivalent) match instead of duplicating it · state
-reconnecting is required · discover the connections-dir via `claude mcp list`, never
-hardcode · batch non-secret
-fields into as few `AskUserQuestion` calls as possible · keep every `AskUserQuestion`
-`header` to ≤12 characters (a hard schema limit - a longer one is an invalid tool call, not
-just a style issue).
+**MUST**: confirm read-only before a query-only connection · snapshot/check every change ·
+list existing connections and reject an exact-target duplicate (step 2.3) before adding a
+new one · state reconnecting is required · discover the connections-dir via `claude mcp
+list`, never hardcode · batch `AskUserQuestion` fields per step 2.2's rules.
 
 **MUST NOT**: ask for a password/URI via `AskUserQuestion`, or echo one back · assume write
 access without being asked · write to the live directory without a preceding snapshot ·
