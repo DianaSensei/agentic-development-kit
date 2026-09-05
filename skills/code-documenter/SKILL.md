@@ -3,20 +3,16 @@ name: code-documenter
 description: Generates, formats, and validates technical documentation - inline documentation (docstrings/comments), API specs (OpenAPI/Swagger, JSDoc-style annotations), documentation sites, and user guides - for any language or framework. Use when adding documentation to functions or classes, creating API documentation, building documentation sites, or writing tutorials and user guides.
 metadata:
   domain: quality
-  triggers: documentation, docstrings, OpenAPI, Swagger, JSDoc, comments, API docs, tutorials, user guides, doc site
+  triggers: API docs, doc site
   role: specialist
   scope: implementation
   output-format: code
-  related-skills: spec-miner, code-review-skill, api-contract-skill
+  related-skills: legacy-modernizer, code-review-skill, api-contract-skill
 ---
 
 # Code Documenter
 
 Documentation specialist for inline documentation, API specs, documentation sites, and developer guides, independent of language or framework. Concrete doc-comment syntax and validation tooling vary by language/ecosystem and aren't enumerated here - this file covers the method: what makes documentation worth writing and how to verify it stays true.
-
-## When to Use This Skill
-
-Applies to any task involving code documentation, API specs, or developer-facing guides, in any language or framework. See the reference table below for topic-specific guidance.
 
 ## Core Workflow
 
@@ -53,27 +49,6 @@ a specific API framework's doc-generation decorators), rely on the target langua
 documentation and whatever skill in this repo owns that language - this skill's method (Documentation
 Principles above) applies regardless of the concrete syntax.
 
-## Constraints
-
-### MUST DO
-
-- Ask for format preference before starting
-- Detect framework for correct API doc strategy
-- Document all public functions/classes
-- Include parameter types and descriptions
-- Document exceptions/errors
-- Test code examples in documentation
-- Generate coverage report
-
-### MUST NOT DO
-
-- Assume docstring format without asking
-- Apply wrong API doc strategy for framework
-- Write inaccurate or untested documentation
-- Skip error documentation
-- Document obvious getters/setters verbosely
-- Create documentation that's hard to maintain
-
 ## Output Formats
 
 Depending on the task, provide:
@@ -91,17 +66,10 @@ Depending on the task, provide:
 - Designing a NEW API contract (endpoints, request/response schemas, as a contract-first exercise before
   implementation) is `api-contract-skill`'s job - this skill documents what an existing implementation
   does, not what a not-yet-built one should do.
-- Overlaps with `spec-miner` on generating API documentation from source - the difference is the
-  starting condition: `spec-miner` is for a legacy/undocumented/inherited system where the spec has to
-  be reverse-engineered from behavior with no prior owner; this skill is for a system with a known
-  owner, documenting code going forward as part of normal development. Once `spec-miner` has produced
-  an initial understanding of a previously undocumented system, ongoing documentation maintenance is
-  this skill's job, not a repeated spec-mining pass.
+- Overlaps with `legacy-modernizer` on generating documentation from source - the difference is the
+  starting condition: that skill reverse-engineers a spec from a legacy/undocumented/inherited system
+  with no prior owner; this skill is for a system with a known owner, documented going forward as part
+  of normal development. Once a previously undocumented system has been reverse-engineered once,
+  ongoing documentation maintenance is this skill's job, not a repeated mining pass.
 - A documentation pass is not a substitute for code review; correctness/security issues found while
   documenting should be raised, but a deeper review is `code-review-skill`'s job.
-
-## Knowledge Reference
-
-Doc-comment/docstring conventions, OpenAPI/Swagger, AsyncAPI, gRPC/Protocol Buffers, GraphQL schema
-documentation, documentation coverage metrics, static doc-site generators, progressive disclosure,
-information architecture for developer docs

@@ -128,7 +128,7 @@ write.
 ## Testcontainers / Local Testing
 
 Use the `cassandra` image (or `scylladb/scylla` if the project uses ScyllaDB via CQL) through
-`testcontainers-skill` - this tests real CQL/consistency-level behavior accurately, which is especially
+`test-master/references/testcontainers.md` - this tests real CQL/consistency-level behavior accurately, which is especially
 important for catching queries missing a partition key early (they fail immediately when running CQL).
 
 ## When to choose Cassandra (vs DynamoDB/ScyllaDB Alternator/RDBMS/MongoDB - see the main SKILL.md)

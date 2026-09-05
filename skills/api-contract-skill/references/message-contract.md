@@ -2,7 +2,7 @@
 
 This skill decides the CONTRACT portion of asynchronous communication. Specific broker
 infrastructure details (partitions, consumer groups, ack mode, exchange type) belong to
-`kafka-skill`/`rabbitmq-skill`/`pubsub-skill` at implementation time - they are not
+`messaging-skill` at implementation time - they are not
 decided here.
 
 **AsyncAPI is the mandatory standard for message contracts** - it plays the same role

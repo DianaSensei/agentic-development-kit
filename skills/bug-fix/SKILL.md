@@ -7,13 +7,9 @@ hooks:
     - matcher: "Edit|Write|MultiEdit|NotebookEdit"
       hooks:
         - type: command
-          command: "${CLAUDE_PLUGIN_ROOT}/hooks/skill-gate.sh"
+          command: "${CLAUDE_PLUGIN_ROOT}/hooks/edit-gates.sh"
           timeout: 15
-          statusMessage: "Checking the owning skill was read..."
-        - type: command
-          command: "${CLAUDE_PLUGIN_ROOT}/hooks/checkpoint-gate.sh"
-          timeout: 15
-          statusMessage: "Checking the CHECKPOINT was confirmed..."
+          statusMessage: "Checking the owning skill was read and the CHECKPOINT confirmed..."
   Stop:
     - hooks:
         - type: command
@@ -22,11 +18,11 @@ hooks:
           statusMessage: "Quality gate..."
 metadata:
   domain: workflow
-  triggers: bug, defect, broken, not working, wrong behavior, regression, error, reproduce, root cause, postmortem
+  triggers: defect, broken, not working, wrong behavior, regression, error, root cause
   role: orchestrator
   scope: end-to-end
   output-format: code-and-report
-  related-skills: workflow-router, code-review-skill, test-master, monitoring-expert, spec-miner
+  related-skills: workflow-router, code-review-skill, test-master, monitoring-expert, legacy-modernizer
 ---
 
 # Bug Fix Workflow

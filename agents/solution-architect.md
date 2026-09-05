@@ -28,13 +28,25 @@ Record clearly in the output which source was used to determine the stack, so th
 user/lead-agent knows how reliable it is.
 
 ## Step 0.5 - Discover the list of available Tier-2 agents (mandatory, do NOT use a fixed list)
-Read `agents/*.md` (and `~/.claude/agents/*.md` if present) - take the `name` and
-`description` from each file's frontmatter. This is the ONLY source of truth about which
-agents currently exist and what they're used for - do NOT use any hardcoded list of agent
-names from other guidance (if other documentation lists agent names, treat that as
-illustrative example only, possibly outdated). Use `description` to choose the right agent
-for each task in `task_breakdown` - if no agent matches a need, note it clearly in
-`open_questions` instead of inventing a nonexistent agent name.
+Establish which agents actually exist, in this order:
+
+1. **The caller's prompt.** `feature-development` resolves the plugin's `agents/` directory and
+   passes the available agents (name + description) in. If that list is there, use it - it is
+   already correct.
+2. **Otherwise, search.** Your working directory is the USER'S PROJECT, not this plugin, so a
+   bare `agents/*.md` finds nothing on a normal install - it only works when the plugin's own
+   repo happens to be the project. Look in `.claude/agents/*.md` and `~/.claude/agents/*.md`,
+   then `Glob` for `**/agents/*.md`.
+3. **If you still found nothing, say so in `open_questions`** and leave `assigned_agent` empty
+   on every task. Do NOT quietly produce a `task_breakdown` with no Tier-2 assignments as if
+   none were needed - that is indistinguishable from a feature that genuinely needs none, and
+   it hides a broken lookup.
+
+Take `name` and `description` from each file's frontmatter; that is the ONLY source of truth
+about which agents exist. Do NOT use a hardcoded list from other guidance - if other
+documentation lists agent names, treat it as illustrative and possibly outdated. Use
+`description` to choose the right agent per task, and if no agent matches a need, note that in
+`open_questions` rather than inventing a name.
 
 ## Important principle: every proposal must be SELF-CONTAINED
 Since you're only called once in the normal flow (no follow-up round to ask for more after

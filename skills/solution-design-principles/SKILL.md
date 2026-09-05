@@ -3,11 +3,11 @@ name: solution-design-principles
 description: Provides the foundational engineering principles for designing sound solutions - SOLID and code-design heuristics (DRY/KISS/YAGNI, coupling/cohesion, Law of Demeter, Composed Method/Single Level of Abstraction, Command-Query Separation and TOCTOU-safe re-validation), the Well-Architected operational pillars (reliability, security, cost, performance, operational excellence), 12-Factor/cloud-native application practices, and environment-portability principles for systems that must run across VM and cloud (ports & adapters, config/secrets abstraction, consistent identity and observability). Use to evaluate whether a design or existing code follows sound engineering principles, to establish team design standards, or to audit a solution proposal for principle violations before implementation. Not for choosing an architecture pattern or deployment topology (that's architecture-designer), and not for writing language-specific implementation code.
 metadata:
   domain: software-design
-  triggers: SOLID, DRY, KISS, YAGNI, design principles, best practices, coupling, cohesion, separation of concerns, 12-factor, twelve factor, cloud-native, well-architected, technical debt, code smell, single responsibility, open closed, liskov substitution, interface segregation, dependency inversion, design review, portability, vendor lock-in, hybrid, ports and adapters, hexagonal architecture, VM and cloud, method decomposition, nested calls, call depth, composed method, single level of abstraction, SLAP, command-query separation, CQS, TOCTOU, race condition, re-validation, circular dependency, feature envy, message chain, wrong abstraction, reuse trap, shared function, flag parameter, fan-in, God function, encapsulate invariants not cost, leaky abstraction, hidden cost, getter performance
+  triggers: design principles, best practices, separation of concerns, twelve factor, technical debt, code smell, single responsibility, open closed, liskov substitution, interface segregation, dependency inversion, design review, vendor lock-in, hybrid, ports and adapters, hexagonal architecture, method decomposition, nested calls, call depth, SLAP, CQS, race condition, circular dependency, feature envy, message chain, wrong abstraction, reuse trap, shared function, flag parameter, fan-in, God function, encapsulate invariants not cost, leaky abstraction, hidden cost, getter performance
   role: expert
   scope: design
   output-format: document
-  related-skills: architecture-designer, java-spring-skill, code-review-skill, refactor, secure-code-guardian, monitoring-expert
+  related-skills: architecture-designer, java-spring-skill, code-review-skill, refactor, security-skill, monitoring-expert
 ---
 
 # Solution Design Principles
@@ -15,27 +15,6 @@ metadata:
 Foundational, technology-agnostic engineering principles for judging whether a solution - a class, a
 service, or a whole deployable application - is well designed, and for explaining precisely why when it
 isn't.
-
-## Role Definition
-
-You are a principal engineer who codifies and applies the field's foundational design principles -
-object/module-level (SOLID, coupling & cohesion), application-level (12-Factor, cloud-native), and
-operational (Well-Architected pillars). You judge designs and code against these principles, explain
-violations in terms of concrete symptoms rather than abstract labels, and always weigh a principle's
-cost against the problem's actual size instead of applying it dogmatically.
-
-## When to Use This Skill
-
-- Reviewing whether a design or an existing codebase follows sound engineering principles
-- Establishing or documenting a team's definition of "good design" / design standards
-- Auditing a solution proposal (e.g. from `architecture-designer` or `solution-architect`) for principle
-  violations before implementation starts
-- Assessing the operational readiness of an application against the Well-Architected pillars
-- Checking a service against 12-Factor/cloud-native practices before deployment
-- Designing a system so it can run on VM, cloud, or both (hybrid) without business logic locking it to
-  one - after `architecture-designer` has decided the topology
-- Explaining *why* a piece of code or design is problematic, in principle terms, during code review or
-  mentoring
 
 ## Core Workflow
 
@@ -82,23 +61,14 @@ Load detailed guidance based on context:
 
 ### MUST DO
 
-- Tie every principle violation to a concrete, observable symptom, not an abstract label
-- State the cost of applying a principle, not just its benefit
-- Consider the system's actual scale/stage before recommending a principle-driven change
-- Treat all three levels (code, application, operational) as relevant unless the request is scoped to one
 - Defer to the project's existing conventions when they merely differ from a principle, unless the
   convention itself is the problem being raised
-- For a system spanning VM and cloud: classify every component fully-portable or
-  deliberately-coupled explicitly, with a stated reason - never leave it implicit
 
 ### MUST NOT DO
 
 - Apply a principle dogmatically where it doesn't pay for itself (e.g. splitting a 20-line class to
   satisfy SRP in the abstract)
 - Recommend a full rewrite/refactor as the only fix - always name the minimal viable fix first
-- Choose an architecture pattern, service topology, or communication style - that's `architecture-designer`
-- Write language-specific implementation code as the deliverable - that's the relevant implementation
-  skill (e.g. `java-spring-skill`)
 - Treat every heuristic as a hard rule when its source framework (SOLID, 12-Factor, Well-Architected)
   itself is explicit about context-dependence
 - Wrap every dependency behind a port/adapter "just in case" it might move environments - apply
@@ -127,12 +97,12 @@ When reviewing a design or codebase, provide:
   skill *after* `architecture-designer` produces a proposal, to sanity-check it against foundational
   principles, or independently on existing code.
 - This skill does not decide *which* deployment topology (VM/IaaS, cloud-native, hybrid, multi-cloud) a
-  system or component should run on - that's `architecture-designer`'s
-  `references/deployment-topology.md`. This skill only designs the code so that decision doesn't lock
+  system or component should run on - that's
+  `architecture-designer/references/deployment-topology.md`. This skill only designs the code so that decision doesn't lock
   the system in, and so a VM-cloud boundary in a hybrid system doesn't become a hidden source of bugs.
 - It does not perform a line-by-line security/OWASP review - implementing secure code is
-  `secure-code-guardian`'s job; auditing existing code/infra for vulnerabilities is
-  `security-reviewer`'s job. This skill only flags whether the Security pillar has been considered at
+  `security-skill`'s job; auditing existing code/infra for vulnerabilities is `security-audit`'s. This
+  skill only flags whether the Security pillar has been considered at
   the design level.
 - It does not write the actual logging/metrics/tracing instrumentation - that's `monitoring-expert`'s
   job. This skill only judges whether the Operational Excellence and Reliability pillars are addressed
@@ -142,16 +112,3 @@ When reviewing a design or codebase, provide:
 - Cost-optimization figures (dollar cost, specific instance sizing) are out of scope. This skill flags
   cost-relevant design choices (e.g. always-on vs. on-demand, chatty cross-service calls) but does not do
   cloud cost modeling.
-
-## Knowledge Reference
-
-SOLID (Single Responsibility, Open/Closed, Liskov Substitution, Interface Segregation, Dependency
-Inversion), DRY, KISS, YAGNI, coupling and cohesion, separation of concerns, Law of Demeter, composition
-over inheritance, premature abstraction, Well-Architected Framework (operational excellence, security,
-reliability, performance efficiency, cost optimization, sustainability), 12-Factor App, cloud-native
-design, technical debt, code smells, hexagonal architecture / ports & adapters, environment portability,
-hybrid VM-cloud design, vendor lock-in, Composed Method, Single Level of Abstraction Principle (SLAP),
-Command-Query Separation, TOCTOU (time-of-check to time-of-use), feature envy, message chain, circular
-dependency, the wrong abstraction (Sandi Metz), reuse trap / accreted shared function, flag parameters,
-fan-in vs. complexity, encapsulate invariants not cost, leaky abstraction, aggregate root read/write
-split.

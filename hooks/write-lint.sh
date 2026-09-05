@@ -26,17 +26,25 @@ FINDINGS=""
 add() { FINDINGS="${FINDINGS}
 - $1"; }
 
-while IFS= read -r pat; do
-  [ -n "$pat" ] || continue
-  hit="$(printf '%s' "$CONTENT" | grep -Ein "$pat" 2>/dev/null | head -n 1)"
-  [ -n "$hit" ] && add "possible hardcoded secret (line ${hit%%:*}) - move it to configuration/env, never commit it"
-done < <(jq -r '.write_lint.secret_patterns[]?' "$CONFIG_FILE" 2>/dev/null)
+# One grep per category, not one per pattern. This hook runs after every single
+# write, so the patterns are joined into a single alternation up front: the old
+# loop spawned a grep per pattern and made this the slowest hook in the kit while
+# doing the least work. Only the first hit per category is reported either way.
+scan() {
+  local re hit
+  re="$(jq -r "[.write_lint.$1[]?] | join(\"|\")" "$CONFIG_FILE" 2>/dev/null)"
+  [ -n "$re" ] || return 0
+  hit="$(printf '%s' "$CONTENT" | grep -Ein "$re" 2>/dev/null | head -n 1)"
+  [ -n "$hit" ] && add "$2 (line ${hit%%:*} of the text just written, not of the file) - $3"
+  return 0
+}
 
-while IFS= read -r pat; do
-  [ -n "$pat" ] || continue
-  hit="$(printf '%s' "$CONTENT" | grep -Ein "$pat" 2>/dev/null | head -n 1)"
-  [ -n "$hit" ] && add "placeholder or unfinished marker left in the written content (line ${hit%%:*}) - finish it or remove it before reporting done"
-done < <(jq -r '.write_lint.placeholder_patterns[]?' "$CONFIG_FILE" 2>/dev/null)
+scan secret_patterns \
+  "possible hardcoded secret" \
+  "move it to configuration/env, never commit it"
+scan placeholder_patterns \
+  "an elided or unfinished block was left in the written content" \
+  "write the real code before reporting done"
 
 [ -n "$FINDINGS" ] || exit 0
 warn "[write-lint] \`$REL\`:$FINDINGS"

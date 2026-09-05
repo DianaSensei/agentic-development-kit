@@ -2,7 +2,7 @@
 
 Principles for building a system so that *where* it runs - a self-managed VM, a managed cloud service,
 or both at once (hybrid) - is a deployment-time decision, not a design-time assumption baked into the
-code. This is the design counterpart to `architecture-designer`'s `references/deployment-topology.md`:
+code. This is the design counterpart to `architecture-designer/references/deployment-topology.md`:
 that reference decides *which* topology to run on; this one keeps the code from being locked into that
 choice once made, and keeps a VM-cloud boundary from becoming a hidden source of bugs.
 

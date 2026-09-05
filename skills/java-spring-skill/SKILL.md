@@ -1,13 +1,13 @@
 ---
 name: java-spring-skill
-description: In-depth Java + Spring ecosystem knowledge (Spring Boot 3.x, Java 21) - Spring MVC/WebFlux, Spring Data JPA, Spring Security 6 (JWT/OAuth2), Spring Cloud (Config/Eureka/Gateway)/Resilience4j, package structure (package-by-layer vs. package-by-feature, Spring Modulith, cross-module transactions), Java code style/formatting (Google Java Style, Spotless/Checkstyle), plus unit + integration testing (JUnit5, Mockito, Testcontainers). Does NOT cover Kafka/RabbitMQ (see `kafka-skill`/`rabbitmq-skill`), API contract design (see `api-contract-skill`), or DB schema design (see `database-skill`). Use when implementing Java/Spring business logic.
+description: In-depth Java + Spring ecosystem knowledge (Spring Boot 3.x, Java 21) - Spring MVC/WebFlux, Spring Data JPA, Spring Security 6 (JWT/OAuth2), Spring Cloud (Config/Eureka/Gateway)/Resilience4j, package structure (package-by-layer vs. package-by-feature, Spring Modulith, cross-module transactions), Java code style/formatting (Google Java Style, Spotless/Checkstyle), plus unit + integration testing (JUnit5, Mockito, Testcontainers). Does NOT cover Kafka/RabbitMQ (see `messaging-skill`), API contract design (see `api-contract-skill`), or DB schema design (see `database-skill`). Use when implementing Java/Spring business logic.
 metadata:
   domain: java-backend
-  triggers: Java, Spring Boot, Spring MVC, Spring WebFlux, Spring Data JPA, Spring Security, Spring Cloud, Resilience4j, JUnit, Mockito, Java microservices, reactive Java, package structure, package by feature, package by layer, Spring Modulith, modular monolith, Google Java Style, code format, Checkstyle, Spotless, lazy collection, optimistic locking, pessimistic locking, distributed lock, multiple instances, horizontal scaling, race condition, bulk update, JOIN FETCH, aggregate root, nested relationship, delta update, IDOR, scoped repository query
+  triggers: Spring WebFlux, Java microservices, reactive Java, package by feature, package by layer, modular monolith, code format, lazy collection, optimistic locking, pessimistic locking, distributed lock, multiple instances, horizontal scaling, race condition, bulk update, JOIN FETCH, aggregate root, nested relationship, delta update, IDOR, scoped repository query
   role: engineer
   scope: implementation
   output-format: code
-  related-skills: database-skill, kafka-skill, rabbitmq-skill, api-contract-skill, testcontainers-skill, code-review-skill, architecture-designer, solution-design-principles
+  related-skills: database-skill, messaging-skill, api-contract-skill, test-master, code-review-skill, architecture-designer, solution-design-principles
 ---
 
 # Java + Spring Ecosystem
@@ -21,15 +21,6 @@ problem in front of you. Add complexity (a new layer, a new interface, an async/
 abstraction) only when a concrete, present requirement demands it, never because it might be needed
 later. When unsure between a simpler and a more elaborate option, default to the simpler one.
 
-## When to Use This Skill
-
-- Implementing/modifying Java business logic with Spring Boot (MVC or WebFlux).
-- Designing the data-access layer (JPA), security (JWT/OAuth2), or cloud-native infrastructure (Config/Discovery/Gateway/Resilience4j) for a Java service.
-- Choosing or evaluating package structure (package-by-layer vs. package-by-feature, module boundaries,
-  cross-module transactions) for a Spring Boot service.
-- Applying or checking Java code style/formatting conventions.
-- Writing unit tests for logic just implemented (JUnit5 + Mockito).
-
 ## Core Workflow
 
 1. **Discover** - Read `pom.xml`/`build.gradle`: exact Java/Spring Boot version, reactive (WebFlux) or servlet (MVC), whether Resilience4j/Spring Security is present, the test framework in use (JUnit4 vs. 5, Mockito/AssertJ). Read `CLAUDE.md`/existing conventions, and any existing formatter config (`.editorconfig`, Spotless/Checkstyle). Do NOT assume anything without evidence.
@@ -38,7 +29,7 @@ later. When unsure between a simpler and a more elaborate option, default to the
    - *Safety*: clear transaction boundaries (avoid self-invocation, which silently defeats the `@Transactional`/`@Async`/`@Cacheable` proxy), idempotency for endpoints that can be called twice, thread safety for stateful singleton beans, input validation at the boundary (`@Valid`).
    - *Performance*: avoid N+1 (`@EntityGraph`/`JOIN FETCH`), batch processing for large volumes, connection-pool tuning (HikariCP) based on measured evidence - don't guess without data.
    - *Scalability*: prefer stateless services for horizontal scaling; Resilience4j (circuit breaker/retry/bulkhead) for calls to dependent services if the project already has this convention, or add it for a specific call site that clearly needs it (state this in the report, no need to stop and wait for approval).
-4. **Test** - Write unit tests (JUnit5 + Mockito) for every Acceptance Criterion/edge case, mock every external dependency, test the exception path too. Run the tests for real (`mvn test`/`gradle test`) before reporting done; if they fail, fix within reasonable scope and re-run. For integration tests against real infrastructure (DB/broker) → coordinate with `testcontainers-skill`.
+4. **Test** - Write unit tests (JUnit5 + Mockito) for every Acceptance Criterion/edge case, mock every external dependency, test the exception path too. Run the tests for real (`mvn test`/`gradle test`) before reporting done; if they fail, fix within reasonable scope and re-run. For integration tests against real infrastructure (DB/broker) → coordinate with `test-master/references/testcontainers.md`.
 5. **Handoff** - List every file created/modified clearly in the report, so the lead orchestrator (`feature-development`/`bug-fix`) can add it to the "Files Changed" list.
 
 ## Reference Guide
@@ -148,7 +139,7 @@ This skill decides the Java/Spring implementation: business logic, transaction b
 layering, data-access patterns, security/resilience configuration. It does NOT decide the API contract's
 shape (that's `api-contract-skill`, which runs BEFORE implementation), does NOT design the DB schema
 (that's `database-skill`), and does NOT decide messaging infrastructure detail (that's
-`kafka-skill`/`rabbitmq-skill`). It decides *in-service* package structure (`project-structure.md`); it
+`messaging-skill`). It decides *in-service* package structure (`project-structure.md`); it
 does NOT decide whether to split into multiple deployable services in the first place - that's
 `architecture-designer`'s `deployment-topology.md`/`service-decomposition.md`. It does NOT check the
 implementation against foundational design principles (SOLID, coupling/cohesion) as a distinct review
@@ -159,11 +150,3 @@ names, how to break down logic) without asking - this is this skill's routine, e
 to present trade-offs and wait for user approval on a LARGE architectural decision affecting the whole
 service and hard to reverse (switching MVC ↔ WebFlux, adding a new runtime framework, changing the
 service-discovery/gateway strategy).
-
-## Knowledge Reference
-
-Spring Boot 3.x, Java 21, Spring MVC/WebFlux, Project Reactor, R2DBC, Spring Data JPA, Spring Security 6,
-OAuth2/JWT, Spring Cloud (Config/Eureka/Gateway), Resilience4j, Micrometer, Hibernate, JUnit 5, Mockito,
-AssertJ, Testcontainers, Maven/Gradle, package-by-layer/package-by-feature, Spring Modulith, Google Java
-Style Guide, google-java-format, Spotless, Checkstyle, optimistic/pessimistic locking, distributed locks,
-lazy collection filtering, aggregate root read/write split, bulk update as atomic invariant.

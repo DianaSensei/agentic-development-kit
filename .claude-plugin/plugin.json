@@ -1,6 +1,6 @@
 {
   "name": "agentic-development-kit",
-  "description": "Skill library (workflow orchestration + per-technology knowledge), a tiered subagent pipeline, and quality-check hooks for AI-assisted software development. Technology-agnostic core; stack-specific knowledge lives in its own skills.",
+  "description": "Skill library (workflow orchestration + per-technology knowledge), a tiered subagent pipeline, quality-check hooks, and a bundled database MCP for AI-assisted software development. Technology-agnostic core; stack-specific knowledge lives in its own skills.",
   "version": "0.1.0",
   "author": {
     "name": "DianaSensei"

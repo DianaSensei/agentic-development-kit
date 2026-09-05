@@ -10,7 +10,11 @@
 
 . "${0%/*}/common.sh" || exit 0
 
-MODE="$(mode_of quality_gate block)"
+# Defaults to warn, like every other gate here. This is the only gate that can
+# halt a turn, so a missing or malformed config must not be what turns it into a
+# blocker - see the FAIL OPEN rule at the top of common.sh. Set
+# `mode.quality_gate` to "block" in quality-check.config.json to make it binding.
+MODE="$(mode_of quality_gate warn)"
 [ "$MODE" = "off" ] && exit 0
 
 # Claude Code sets this when the turn is already continuing because of a Stop
@@ -39,7 +43,7 @@ Before reporting this work done:
    plus any untracked files), applying only the per-technology sections the change actually touches.
 2. Fix every severe finding - a self-review is less objective than an independent one, which is a
    reason to be stricter with it, not more lenient.
-3. Record that it happened by running: \`${PLUGIN_ROOT}/hooks/mark-reviewed.sh\`
+3. Record that it happened by running: \`${PLUGIN_ROOT}/hooks/mark-reviewed.sh ${SESSION}\`
 Editing code afterwards invalidates the record, which is intended: the next review covers the new state."
 
 # Optional Step-5 artifact checks, off by default - a small refactor legitimately

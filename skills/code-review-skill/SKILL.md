@@ -7,7 +7,7 @@ metadata:
   role: specialist
   scope: review
   output-format: report
-  related-skills: feature-development, bug-fix, refactor, security-reviewer, solution-design-principles, test-master
+  related-skills: feature-development, bug-fix, refactor, security-skill, solution-design-principles, test-master, security-audit
 ---
 
 # Code Review Checklist
@@ -41,8 +41,6 @@ Read `CLAUDE.md`/existing conventions. Determine which technologies are ACTUALLY
 
 **Database (RDBMS/Mongo)**: index on the correct filter/join/sort columns, isolation level fits the business need, migration is backward-compatible, no latent deadlock risk (locks acquired in a consistent order).
 
-**Google Pub/Sub**: ack deadline sufficient for actual processing time, subscriber idempotency, dead-letter topic configured if needed.
-
 **API Contract (REST/RPC/Message)**: response/message matches the finalized contract (`api-contract-skill`), no silent breaking change to a schema/proto field.
 
 **Tauri/React**: correct path-handling API (no path traversal), capabilities declared least-privilege for the commands actually used, standard plugin used for dialogs, `#[cfg(target_os)]` covers all 3 OSes, Rust commands never panic (return `Result`), event listeners cleaned up on unmount, React has loading/error/empty states covered.
@@ -54,9 +52,3 @@ Read `CLAUDE.md`/existing conventions. Determine which technologies are ACTUALLY
 ## A Note on Objectivity
 
 If this is a self-review (the same agent that just wrote the code), it's inherently less objective than a separate session/agent reviewing it. A severe issue MUST be fixed before reporting done - never skip it just because "this is only a self-review." For more objectivity, suggest the user open a new Claude Code session (no shared context) for an independent review.
-
-## Knowledge Reference
-
-DRY, single responsibility, silent error swallowing, self-review objectivity limits, per-technology
-review checklists (transaction boundaries, delivery semantics, cache TTL, index correctness, contract
-conformance, capability least-privilege).

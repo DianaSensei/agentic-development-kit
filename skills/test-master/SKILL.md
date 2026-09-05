@@ -1,13 +1,13 @@
 ---
 name: test-master
-description: Generates test files, creates mocking strategies, analyzes code coverage, designs test architectures, and produces test plans and defect reports across functional, performance, and security testing disciplines. Use when writing unit tests, integration tests, or E2E tests; creating test strategies or automation frameworks; analyzing coverage gaps; performance testing with k6 or Artillery; security testing with OWASP methods; debugging flaky tests; or working on QA, regression, test automation, quality gates, shift-left testing, or test maintenance.
+description: Generates test files, creates mocking strategies, analyzes code coverage, designs test architectures, and produces test plans and defect reports across functional, performance, and security testing disciplines. Use when writing unit tests, integration tests, or E2E tests; creating test strategies or automation frameworks; analyzing coverage gaps; performance testing with k6 or Artillery; security testing with OWASP methods; setting up Testcontainers for integration tests (container lifecycle, wait strategies, CI); debugging flaky tests; or working on QA, regression, test automation, quality gates, shift-left testing, or test maintenance.
 metadata:
   domain: quality
-  triggers: test, testing, QA, unit test, integration test, E2E, coverage, performance test, security test, regression, test strategy, test automation, test framework, quality metrics, defect, exploratory, usability, accessibility, localization, manual testing, shift-left, quality gate, flaky test, test maintenance
+  triggers: test strategy, test framework, quality metrics, exploratory, usability, accessibility, localization, manual testing
   role: specialist
   scope: testing
   output-format: report
-  related-skills: feature-development, java-spring-skill, tauri-react-skill, testcontainers-skill, code-review-skill, monitoring-expert
+  related-skills: feature-development, java-spring-skill, tauri-react-skill, code-review-skill, monitoring-expert
 ---
 
 # Test Master
@@ -66,23 +66,14 @@ Load detailed guidance based on context:
 | Automation            | `references/automation-frameworks.md` | Framework patterns, scaling, maintenance, team enablement           |
 | TDD Iron Laws         | `references/tdd-iron-laws.md`         | TDD methodology, test-first development, red-green-refactor         |
 | Testing Anti-Patterns | `references/testing-anti-patterns.md` | Test review, mock issues, test quality problems                     |
+| Testcontainers        | `references/testcontainers.md`        | Container setup/lifecycle for integration tests - singleton pattern, reuse, wait strategy, networking, CI |
 
 ## Constraints
 
-**MUST DO**
-
-- Test happy paths AND error/edge cases (e.g., empty input, null, boundary values)
-- Mock external dependencies - never call real APIs or databases in unit tests
-- Use meaningful `it('…')` descriptions that read as plain-English specifications
-- Assert specific outcomes (`expect(result).toBe(90)`), not just truthiness
-- Run tests in CI/CD; document and remediate coverage gaps
-
-**MUST NOT**
-
-- Use production data in tests - use fixtures or factories instead
-- Create order-dependent tests - each test must be independently runnable
-- Ignore flaky tests - quarantine and fix them; don't just re-run until green
-- Test implementation details (internal method calls) - test observable behaviour
+- Never use production data - fixtures or factories only.
+- Every test independently runnable; no order dependency.
+- Test observable behaviour, not internal method calls.
+- Quarantine and fix a flaky test; never re-run until green.
 
 ## Output Templates
 
@@ -93,9 +84,3 @@ When creating test plans, provide:
 3. Coverage analysis
 4. Findings with severity (Critical/High/Medium/Low)
 5. Specific fix recommendations
-
-## Knowledge Reference
-
-Unit/integration/E2E test boundaries, test pyramids, mocking/stubbing/fakes, fixtures vs. factories,
-flaky-test quarantine, coverage analysis, k6/Artillery load testing, OWASP-based security testing,
-shift-left testing, regression/quality gates, defect severity classification.

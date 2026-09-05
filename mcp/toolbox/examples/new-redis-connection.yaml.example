@@ -1,0 +1,103 @@
+# Template: add a Redis-shaped connection (a second Redis instance, or the
+# first one if you removed the pre-built default). Toolbox models Redis as
+# a source plus one `kind: tool` block per Redis COMMAND you want to expose
+# - there's no generic "run any command" tool by design, each one is
+# explicit and named.
+#
+# HOW TO USE:
+#   The easiest way is to just ask Claude Code, e.g. "add a second Redis
+#   connection for my cache instance" - it will follow ../validate.sh's
+#   snapshot/check/restore flow (see the "Adding or editing a connection
+#   safely" section of ../README.md). To do it by hand:
+#   1. Find the live directory: `claude mcp list | grep
+#      '^plugin:agentic-development-kit:toolbox'` shows the exact
+#      --config-folder path.
+#   2. `../validate.sh snapshot <that path>` - saves the current working
+#      state so a mistake below is recoverable.
+#   3. Copy this file into that directory, renamed to something unique,
+#      e.g. `cache-redis.yaml`.
+#   4. Replace CONN_NAME everywhere below with a short, unique identifier
+#      (e.g. `cache`) - it must not collide with any other file's
+#      source/tool/toolset name already in that directory.
+#   5. Fill in the real address/username/password/database, directly (no
+#      env vars needed - this directory is private to your machine, not
+#      committed to git or shared, so a literal value here is safe).
+#   6. `../validate.sh check <that path>` - confirms toolbox can actually
+#      start with the new file. If it FAILS, run `../validate.sh restore
+#      <that path>` to undo, fix the error it printed, and try again from
+#      step 3.
+
+kind: source
+name: CONN_NAME-source
+type: redis
+address:
+  - your-redis-host:6379
+username: your-username-or-leave-blank
+password: your-password-or-leave-blank
+database: 0
+
+---
+kind: tool
+name: CONN_NAME_get
+type: redis
+source: CONN_NAME-source
+description: Get the string value stored at a given Redis key.
+commands:
+  - [GET, $key]
+parameters:
+  - name: key
+    type: string
+    description: The Redis key to read.
+
+---
+kind: tool
+name: CONN_NAME_set
+type: redis
+source: CONN_NAME-source
+description: Set a string value for a given Redis key.
+commands:
+  - [SET, $key, $value]
+parameters:
+  - name: key
+    type: string
+    description: The Redis key to write.
+  - name: value
+    type: string
+    description: The value to store.
+
+---
+kind: tool
+name: CONN_NAME_del
+type: redis
+source: CONN_NAME-source
+description: Delete a Redis key.
+commands:
+  - [DEL, $key]
+parameters:
+  - name: key
+    type: string
+    description: The Redis key to delete.
+
+---
+kind: tool
+name: CONN_NAME_keys
+type: redis
+source: CONN_NAME-source
+description: >-
+  List Redis keys matching a glob-style pattern (e.g. "user:*"). Caution:
+  KEYS scans the whole keyspace - use sparingly on large/production instances.
+commands:
+  - [KEYS, $pattern]
+parameters:
+  - name: pattern
+    type: string
+    description: Glob-style pattern to match keys against.
+
+---
+kind: toolset
+name: CONN_NAME-toolset
+tools:
+  - CONN_NAME_get
+  - CONN_NAME_set
+  - CONN_NAME_del
+  - CONN_NAME_keys

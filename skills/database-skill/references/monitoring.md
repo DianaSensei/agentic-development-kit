@@ -1,6 +1,6 @@
 # Monitoring & Alert Thresholds
 
-For container-based testing (Testcontainers), see `testcontainers-skill`. This file covers health-monitoring
+For container-based testing (Testcontainers), see `test-master/references/testcontainers.md`. This file covers health-monitoring
 queries for a **real** database (staging/production), not tests.
 
 ## Baseline before optimizing - ALWAYS measure before/after every change, don't change multiple things at once

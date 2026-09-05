@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "toolbox": {
+      "command": "toolbox",
+      "args": ["--stdio", "--config-folder", "${CLAUDE_PLUGIN_DATA}/connections"]
+    }
+  }
+}

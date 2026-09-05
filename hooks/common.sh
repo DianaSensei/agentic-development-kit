@@ -106,7 +106,41 @@ resolve_skill() {
   done
 }
 
+# skill_ref_pattern <name|alternation> - ERE matching a transcript line where the
+# skill was actually READ or INVOKED, not merely mentioned.
+#
+# The bare path `<skill>/SKILL.md` is NOT sufficient, which is the whole point of
+# this helper: skills/README.md links every skill as `./<name>/SKILL.md`, so any
+# turn that reads that file (or a plan doc, or a commit message quoting a path)
+# would otherwise look like a read of the skill itself. One real transcript had
+# 16 such lines for a single skill. Anchoring to the `file_path` argument of a
+# tool call, or to the Skill tool's `skill` argument, matches only real use.
+skill_ref_pattern() {
+  printf '"file_path"[[:space:]]*:[[:space:]]*"[^"]*/(%s)/SKILL\\.md"|"skill"[[:space:]]*:[[:space:]]*"(%s)"' "$1" "$1"
+}
+
+# code_ext - the regex deciding what counts as a code file, for the Stop gate and
+# the checkpoint gate alike. Single definition on purpose: it used to be a literal
+# duplicated in two scripts, both narrower than the shipped config, so the same
+# change counted as code or not depending on whether the config file was found.
+code_ext() {
+  jq_cfg '.code_extensions' '\.(java|kt|kts|rs|ts|tsx|js|jsx|py|go|rb|php|cs|sql|sh|bash|yaml|yml|tf|gradle|xml|toml)$'
+}
+
 mkdir -p "$STATE_DIR" 2>/dev/null || true
+
+# prune_state - drop session-scoped markers left behind by finished sessions.
+# `reviewed` and `warned` are deliberately untouched: they track the state of the
+# working tree, not a session, and deleting them would silently demand a re-review.
+#
+# Called ONLY from session-context.sh, once per session. It lives here rather than
+# running at source time because common.sh is sourced by every hook - at source
+# time this ran three times per file edit to do work that is worth doing once.
+prune_state() {
+  find "$STATE_DIR" -maxdepth 1 -type f \
+    \( -name '*.blocks' -o -name '*.skillgate.*' -o -name '*.checkpointgate' \) \
+    -mtime +7 -delete 2>/dev/null || true
+}
 
 # code_change_hash - a stable fingerprint of the working tree's uncommitted CODE
 # changes (tracked edits and untracked new files alike), or nothing when there
@@ -117,7 +151,7 @@ mkdir -p "$STATE_DIR" 2>/dev/null || true
 code_change_hash() {
   local root ext files sum
   root="$(git_repo_root)"; [ -n "$root" ] || return 0
-  ext="$(jq_cfg '.code_extensions' '\.(java|kt|rs|ts|tsx|js|jsx|py|go|rb|php|cs|sql|sh)$')"
+  ext="$(code_ext)"
 
   files="$(git -C "$root" status --porcelain --untracked-files=all 2>/dev/null \
            | sed 's/^...//' | sed 's/.* -> //' | grep -E "$ext" || true)"

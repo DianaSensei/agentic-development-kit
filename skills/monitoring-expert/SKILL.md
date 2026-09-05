@@ -3,7 +3,7 @@ name: monitoring-expert
 description: Sets up continuous production observability - structured logging pipelines, Prometheus/Grafana metrics and dashboards, distributed tracing, and alerting rules - plus application profiling and capacity forecasting from real production trends. Use when adding observability to a service, debugging production issues via logs/metrics/traces, profiling CPU/memory bottlenecks, or forecasting capacity needs. For a one-off load test gating a merge or release as part of the QA test lifecycle (pass/fail, defect report), use `test-master` instead - this skill's load-testing content targets capacity/production-readiness validation, not CI gating.
 metadata:
   domain: devops
-  triggers: monitoring, observability, logging, metrics, tracing, alerting, Prometheus, Grafana, DataDog, APM, performance testing, load testing, profiling, capacity planning, bottleneck
+  triggers: monitoring, DataDog, APM, performance testing, load testing, capacity planning
   role: specialist
   scope: implementation
   output-format: code
@@ -77,26 +77,12 @@ Load detailed guidance based on context:
 
 ## Constraints
 
-### MUST DO
-
-- Use structured logging (JSON)
-- Include request IDs for correlation
-- Set up alerts for critical paths
-- Monitor business metrics, not just technical
-- Use appropriate metric types (counter/gauge/histogram)
-- Implement health check endpoints
-
-### MUST NOT DO
-
-- Log sensitive data (passwords, tokens, PII)
-- Alert on every error (alert fatigue)
-- Use string interpolation in logs (use structured fields)
-- Skip correlation IDs in distributed systems
-- Duplicate a framework's built-in instrumentation (e.g. hand-writing HTTP metrics Spring Boot
-  Actuator/Micrometer already expose) instead of configuring and wiring up what already exists
-- Make an architectural change (add a cache, split a service, resize infrastructure) on the basis of
-  a capacity forecast without the user's/architecture owner's approval - this skill measures and
-  projects, it does not decide the response
+- Never log secrets or PII.
+- Configure and wire up a framework's built-in instrumentation (Spring Boot Actuator/Micrometer, etc.)
+  rather than hand-writing metrics it already exposes.
+- Never make an architectural change (add a cache, split a service, resize infrastructure) off a
+  capacity forecast without the user's/architecture owner's approval - this skill measures and
+  projects, it does not decide the response.
 
 ## Boundaries
 
@@ -116,10 +102,3 @@ Load detailed guidance based on context:
   exhaustion forecasts, profiling results) - it does not decide the architectural response to that
   data (scaling strategy, caching layer, service decomposition). Present the forecast/finding and
   defer the architectural decision to `architecture-designer`.
-
-## Knowledge Reference
-
-Structured logging, correlation IDs, Prometheus metric types (counter/gauge/histogram/summary),
-Grafana dashboards, distributed tracing (spans, trace context propagation, sampling), alert design
-(symptom-based alerting, alert fatigue, runbooks), SLI/SLO/error budgets, CPU/memory/heap profiling,
-capacity forecasting from production trends.

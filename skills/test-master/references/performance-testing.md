@@ -2,8 +2,8 @@
 
 For a one-off load test gating a merge/release (pass/fail against a test plan), use the patterns
 below. For ongoing production capacity forecasting, dashboards, and alerting on a service already
-running in production, see `monitoring-expert` instead - its `references/performance-testing.md` and
-`references/capacity-planning.md` cover that side; the k6 syntax itself is the same tool either way.
+running in production, see `monitoring-expert` instead - its `monitoring-expert/references/performance-testing.md` and
+`monitoring-expert/references/capacity-planning.md` cover that side; the k6 syntax itself is the same tool either way.
 
 ## k6 Load Test
 

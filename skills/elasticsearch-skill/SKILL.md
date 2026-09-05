@@ -3,11 +3,11 @@ name: elasticsearch-skill
 description: In-depth Elasticsearch knowledge - index/mapping design, analyzers, Query DSL, aggregations, reindex strategy, shard/replica sizing. Use when the feature needs full-text search or analysis/aggregation over large datasets.
 metadata:
   domain: database
-  triggers: Elasticsearch, full-text search, index mapping, analyzer, Query DSL, aggregation, reindex, shard, replica, autocomplete, fuzzy search, search relevance, log analytics
+  triggers: index mapping, autocomplete, fuzzy search, search relevance, log analytics
   role: specialist
   scope: design-and-optimization
   output-format: analysis-and-code
-  related-skills: database-skill, java-spring-skill, testcontainers-skill, monitoring-expert
+  related-skills: database-skill, java-spring-skill, test-master, monitoring-expert
 ---
 
 # Elasticsearch
@@ -51,7 +51,3 @@ Testcontainers Elasticsearch for integration tests - test that mappings produce 
 
 ## Boundary
 For a NEW index, or one with no real data yet, design the best mapping/analyzer for the requirement without asking back. Never change the mapping of an index ALREADY RUNNING in production with real data without a reindex plan - always present the migration plan and wait for user approval, since this is a hard-to-reverse change with real downtime/read-availability risk during reindex.
-
-## Knowledge Reference
-
-Explicit vs. dynamic mapping, `text` vs. `keyword` fields, analyzers and custom tokenizer/filter chains, Query DSL (`match`, `term`, `bool`, `filter` context), bucket vs. metric aggregations, alias-based reindex strategy, cluster health (green/yellow/red), shard/replica sizing.

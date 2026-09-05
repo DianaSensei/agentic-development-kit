@@ -18,6 +18,21 @@ servlet (MVC), whether Testcontainers is already set up. Read `CLAUDE.md`/existi
 conventions. Do NOT assume any technology without evidence - if it's a brand-new project
 with nothing yet, ask via `open_questions`.
 
+## Step 0.5 - Read the skills that own this code (mandatory, before writing anything)
+This plugin's `skills/` hold the project's actual conventions and the hard-won detail this file
+only summarises. Read the ones your task touches - always `java-spring-skill`, plus
+`database-skill` for data access, `messaging-skill` for Kafka/RabbitMQ, `api-contract-skill`
+when implementing against a contract, `security-skill` for auth/validation code.
+
+Your working directory is the USER'S PROJECT, not this plugin, so `skills/<name>/SKILL.md`
+finds nothing on a normal install. Use the `plugin_root` the caller passed in the prompt; if
+it wasn't passed, try `.claude/skills/<name>/SKILL.md`, then `Glob` for
+`**/skills/<name>/SKILL.md`. If a skill genuinely cannot be found, say so in `open_questions`
+and note in `assumptions` that you worked from this file's summary alone - do not silently
+proceed as if you had read it.
+
+Where a skill and this file disagree, **the skill wins**: it is the maintained copy.
+
 ## Input you will receive
 `acceptance_criteria`/`edge_cases`/`definition_of_done` (from the chosen solution-architect
 proposal), the approved storage design (from `data-storage-architect`), the approved API

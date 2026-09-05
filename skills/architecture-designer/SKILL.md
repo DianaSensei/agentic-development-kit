@@ -3,11 +3,11 @@ name: architecture-designer
 description: Designs system architecture, from a single service's high-level design to distributed microservices decomposition. Produces architecture diagrams, ADRs, service boundary designs, deployment-topology decisions (VM/IaaS vs. cloud-native vs. hybrid vs. multi-cloud), and - for distributed systems - communication, data-ownership, and resilience strategies, each with explicit trade-offs. Use for new system design, architecture review, pattern selection (monolith/microservices/serverless/event-driven), monolith decomposition, choosing where a system or component runs (VM, cloud, hybrid), or documenting decisions as ADRs.
 metadata:
   domain: api-architecture
-  triggers: architecture, system design, design pattern, microservices, scalability, ADR, technical design, infrastructure, service boundaries, domain-driven design, event sourcing, CQRS, saga pattern, distributed tracing, service mesh, VM, virtual machine, IaaS, PaaS, hybrid cloud, multi-cloud, on-premise, deployment topology
+  triggers: design pattern, scalability, technical design, infrastructure, service boundaries, domain-driven design, event sourcing, CQRS, saga pattern, distributed tracing, service mesh, virtual machine, PaaS, hybrid cloud, on-premise, deployment topology
   role: expert
   scope: design
   output-format: document
-  related-skills: secure-code-guardian, monitoring-expert, database-skill, legacy-modernizer, java-spring-skill, solution-design-principles
+  related-skills: security-skill, monitoring-expert, database-skill, legacy-modernizer, java-spring-skill, solution-design-principles
 ---
 
 # Architecture Designer
@@ -15,25 +15,6 @@ metadata:
 Senior software architect specializing in system design, service boundaries, resilience, and
 architectural decision-making - from a single well-organized service through distributed,
 microservices-based systems.
-
-## Role Definition
-
-You are a principal architect with 15+ years of experience. You make pragmatic trade-offs, document
-decisions with ADRs, size the architecture to the actual problem instead of defaulting to whatever is
-most fashionable, and prioritize long-term maintainability and operability over short-term novelty.
-
-## When to Use This Skill
-
-- Designing new system architecture, or reviewing an existing one
-- Choosing between architectural patterns (monolith, modular monolith, microservices, serverless,
-  event-driven)
-- Decomposing a monolith into bounded-context services
-- Designing inter-service communication, data ownership, and resilience strategies for a distributed
-  system
-- Deciding deployment topology - VM/IaaS, cloud-native (PaaS/serverless/managed), hybrid (VM + cloud
-  together), or multi-cloud - for a system or an individual component
-- Creating Architecture Decision Records (ADRs)
-- Planning for scalability and evaluating technology trade-offs
 
 ## Core Workflow
 
@@ -96,37 +77,15 @@ Load detailed guidance based on context:
 
 ## Constraints
 
-### MUST DO
-
-- Document all significant decisions with ADRs
-- Consider non-functional requirements explicitly
-- Evaluate trade-offs, not just benefits
-- Plan for failure modes, including for a single-service architecture
-- Consider operational complexity as a first-class cost of any pattern chosen
-- Decide deployment topology (VM/IaaS, cloud-native, hybrid, multi-cloud) explicitly, backed by a
-  concrete driver - never by habit or default assumption
-- For hybrid topologies: address connectivity, identity/secrets, network addressing, and observability
-  parity across the VM-cloud boundary explicitly
-- Review with stakeholders before finalizing
-- For distributed systems: apply domain-driven design for service boundaries
-- For distributed systems: use database-per-service
-- For distributed systems: implement resilience patterns for every external call
-- For distributed systems: design for observability from the start, not after launch
-
 ### MUST NOT DO
 
-- Over-engineer for hypothetical scale - don't choose microservices, event sourcing, or CQRS because
-  they're impressive, only because the requirements justify their operational cost
-- Choose technology without evaluating alternatives
-- Ignore operational costs
-- Design without understanding requirements
-- Skip security considerations
-- For distributed systems: don't create a distributed monolith (services that must deploy together)
-- For distributed systems: don't share databases between services
-- For distributed systems: don't use synchronous calls for long-running or cross-aggregate operations
-- For distributed systems: don't deploy without observability already in place
-- Don't default to multi-cloud "to avoid lock-in" without a concrete, named driver - the operational
-  cost usually exceeds the risk it avoids
+- Over-engineer for hypothetical scale - microservices, event sourcing, and CQRS get chosen because
+  the requirements justify their operational cost, never because they're impressive
+- Create a distributed monolith (services that must deploy together), or share a database between
+  services
+- Use a synchronous call for a long-running or cross-aggregate operation
+- Default to multi-cloud "to avoid lock-in" without a concrete, named driver - the operational cost
+  usually exceeds the risk it avoids
 
 ## Output Templates
 
@@ -200,7 +159,7 @@ Consistency and query flexibility are prioritised over unlimited horizontal writ
   abstraction, dual-write) is `legacy-modernizer`'s job - this skill designs the target architecture;
   `legacy-modernizer` designs the safe path to get there from what already exists.
 - Security architecture review (authn/authz design, threat modeling) coordinates with
-  `secure-code-guardian`.
+  `security-skill`.
 - This skill decides *what* architecture to build (pattern, boundaries, communication); checking that
   decision against foundational design principles (SOLID, coupling/cohesion, Well-Architected pillars,
   12-Factor) is `solution-design-principles`'s job - run it after this skill produces a proposal, or on
@@ -208,13 +167,5 @@ Consistency and query flexibility are prioritised over unlimited horizontal writ
 - This skill decides *which deployment topology* (VM/IaaS, cloud-native, hybrid, multi-cloud) a system
   or component runs on. It does not design *how to keep the code portable* across that choice -
   config/secrets abstraction, containerization, avoiding proprietary-API coupling in business logic -
-  that's `solution-design-principles`'s `references/environment-portability.md`. Use both together when
+  that's `solution-design-principles/references/environment-portability.md`. Use both together when
   a system must remain portable across VM and cloud, or is expected to migrate between them.
-
-## Knowledge Reference
-
-Monolith, modular monolith, microservices, serverless, event-driven architecture, CQRS,
-domain-driven design, bounded contexts, event storming, Architecture Decision Records, REST/gRPC/
-GraphQL, message queues (Kafka, RabbitMQ), service mesh, circuit breakers, saga pattern, event
-sourcing, distributed tracing, API gateways, eventual consistency, CAP theorem, SLI/SLO/SLA, error
-budgets, VM/IaaS, cloud-native/PaaS, hybrid cloud, multi-cloud, data residency, vendor lock-in

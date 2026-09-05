@@ -1,6 +1,6 @@
 # Testing - JUnit 5, Mockito, MockMvc/WebTestClient, Testcontainers
 
-Container setup/lifecycle (dependencies, wait strategies, reuse, network) is the scope of `testcontainers-skill` - this file focuses only on PATTERNS for writing tests at each layer (unit/slice/integration), and doesn't repeat container configuration content.
+Container setup/lifecycle (dependencies, wait strategies, reuse, network) is the scope of `test-master/references/testcontainers.md` - this file focuses only on PATTERNS for writing tests at each layer (unit/slice/integration), and doesn't repeat container configuration content.
 
 ## Unit Test - mock all external dependencies
 
@@ -103,7 +103,7 @@ class UserControllerReactiveTest {
 
 ## Repository Test - `@DataJpaTest` + real Testcontainers (not H2)
 
-Use a real Postgres via Testcontainers instead of in-memory H2 when a query relies on dialect-specific features (JSONB, native queries, index hints) - H2 doesn't reproduce that behavior correctly. See `testcontainers-skill` for detailed container setup; the example below only illustrates how to write a test using an already-set-up container.
+Use a real Postgres via Testcontainers instead of in-memory H2 when a query relies on dialect-specific features (JSONB, native queries, index hints) - H2 doesn't reproduce that behavior correctly. See `test-master/references/testcontainers.md` for detailed container setup; the example below only illustrates how to write a test using an already-set-up container.
 
 ```java
 @DataJpaTest

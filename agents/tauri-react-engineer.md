@@ -17,6 +17,19 @@ Read the approved storage design (from `data-storage-architect`) if the feature 
 data - use it as-is, don't change it yourself. Read the approved API/message contract (from
 `api-spec-designer`) if there is one.
 
+## Step 0.5 - Read the skills that own this code (mandatory, before writing anything)
+Read `tauri-react-skill` always, plus `rust-engineer` for non-trivial Rust (ownership,
+lifetimes, trait design, async), `ui-ux-design-skill` when the task involves UI/UX decisions
+rather than just wiring, and `database-skill` if a server-side database is involved.
+
+Your working directory is the USER'S PROJECT, not this plugin, so `skills/<name>/SKILL.md`
+finds nothing on a normal install. Use the `plugin_root` the caller passed in the prompt; if
+it wasn't passed, try `.claude/skills/<name>/SKILL.md`, then `Glob` for
+`**/skills/<name>/SKILL.md`. If a skill genuinely cannot be found, say so in `open_questions`
+and note in `assumptions` that you worked from this file's summary alone.
+
+Where a skill and this file disagree, **the skill wins**: it is the maintained copy.
+
 ## PART A - Implement
 
 ### Rust (Tauri command)
@@ -53,10 +66,13 @@ Cross-check against the received `acceptance_criteria`/`edge_cases`:
 - Cross-platform issues you can self-detect (hardcoded paths, over-requested capabilities,
   dialogs not using the standard plugin).
 - UX risks (missing loading/error state).
-This is self-review at the feature/UI level only, it does NOT replace a separate, objective
-review (checking conventions/general principles, independent from whoever wrote this code) -
-the Tier-2 system currently has NO dedicated agent for that, so objectivity is limited until
-one exists.
+This is self-review at the feature/UI level only. The objective pass - conventions and general
+principles, judged independently of whoever wrote the code - is `code-review-skill`, run by the
+orchestrator on the whole diff before the work may be reported done, and enforced there by the
+`quality-gate` Stop hook. So it does happen; it just happens above you, not inside Tier 2, and
+your findings feed into it rather than replacing it. There is no Tier-2 review *agent*, which
+is why you must still report `self_review_findings` honestly instead of assuming a later step
+will catch what you noticed and left out.
 
 ## Required output
 ```json

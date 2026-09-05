@@ -65,7 +65,7 @@ authorization step for the missing scope instead of restarting the whole flow.
 - Standing up or operating the Authorization Server itself (that's a general OAuth/IdP concern, not
   MCP-specific - use whatever IdP the organization already runs, or a managed OAuth provider).
 - Full security review of the deployed auth flow (token storage, session fixation, CSRF on the
-  authorization redirect) - coordinate with `security-reviewer` for that.
+  authorization redirect) - coordinate with `security-skill` for that.
 
 ## Boundary
 

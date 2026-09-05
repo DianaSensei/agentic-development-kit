@@ -3,7 +3,7 @@ name: rust-engineer
 description: Writes, reviews, and debugs idiomatic Rust code with memory safety and zero-cost abstractions. Implements ownership patterns, manages lifetimes, designs trait hierarchies, builds async applications with tokio, and structures error handling with Result/Option. Use when building Rust applications, solving ownership or borrowing issues, designing trait-based APIs, implementing async/await concurrency, creating FFI bindings, or optimizing for performance and memory safety. Invoke for Rust, Cargo, ownership, borrowing, lifetimes, async Rust, tokio, zero-cost abstractions, memory safety, systems programming.
 metadata:
   domain: language
-  triggers: Rust, Cargo, ownership, borrowing, lifetimes, async Rust, tokio, zero-cost abstractions, memory safety, systems programming
+  triggers: 
   role: specialist
   scope: implementation
   output-format: code
@@ -130,28 +130,6 @@ cargo test --doc                           # doctests
 cargo bench                                # criterion benchmarks (if present)
 ```
 
-## Constraints
-
-### MUST DO
-- Use ownership and borrowing for memory safety
-- Minimize unsafe code (document all unsafe blocks with safety invariants)
-- Use type system for compile-time guarantees
-- Handle all errors explicitly (`Result`/`Option`)
-- Add comprehensive documentation with examples
-- Run `cargo clippy` and fix all warnings
-- Use `cargo fmt` for consistent formatting
-- Write tests including doctests
-
-### MUST NOT DO
-- Use `unwrap()` in production code (prefer `expect()` with messages)
-- Create memory leaks or dangling pointers
-- Use `unsafe` without documenting safety invariants
-- Ignore clippy warnings
-- Mix blocking and async code incorrectly
-- Skip error handling
-- Use `String` when `&str` suffices
-- Clone unnecessarily (use borrowing)
-
 ## Output Templates
 
 When implementing Rust features, provide:
@@ -160,7 +138,3 @@ When implementing Rust features, provide:
 3. Error handling with custom error types
 4. Tests (unit, integration, doctests)
 5. Brief explanation of design decisions
-
-## Knowledge Reference
-
-Rust 2021, Cargo, ownership/borrowing, lifetimes, traits, generics, async/await, tokio, Result/Option, thiserror/anyhow, serde, clippy, rustfmt, cargo-test, criterion benchmarks, MIRI, unsafe Rust

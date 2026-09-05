@@ -7,6 +7,10 @@
 
 . "${0%/*}/common.sh" || exit 0
 
+# Once per session is the right cadence for this, and SessionStart is the only
+# hook that runs exactly that often.
+prune_state
+
 [ "$(mode_of session_context warn)" = "off" ] && exit 0
 
 # General engineering/style guidelines - independent of whether this kit's own
@@ -34,21 +38,46 @@ if [ "$(jq_cfg '.session_context.general_guidelines' true)" = "true" ]; then
 TXT
 fi
 
-# Only speak up about the kit's own rules if the skill library is actually installed here.
-[ -n "$(resolve_skill workflow-router)" ] || exit 0
-
+# Gate each rule on the skill it actually describes, not on one skill standing in
+# for the whole kit. Announcing a rule whose skill isn't installed here is noise;
+# worse, using one skill's presence as the proxy for all of them means removing or
+# renaming that one silently takes the unrelated rules down with it, with no error
+# anywhere. quality-gate.sh already gates on the skill it needs - same idea here.
+ROUTER="$(resolve_skill workflow-router)"
 REVIEW_SKILL="$(jq_cfg '.quality_gate.review_skill' 'code-review-skill')"
+REVIEW="$(resolve_skill "$REVIEW_SKILL")"
 
-cat <<TXT
-[agentic-development-kit] Rules enforced by hooks in this project:
-- Any request to WRITE OR CHANGE code starts at the \`workflow-router\` skill, which classifies it and
-  hands off to \`feature-development\` / \`bug-fix\` / \`refactor\`. Pure questions and read-only
+# The SKILL.md-read and CHECKPOINT rules are enforced by hooks carried in the
+# orchestrators' own frontmatter, so they apply as soon as any orchestrator is here.
+ORCHESTRATORS=""
+for s in feature-development bug-fix refactor; do
+  [ -n "$(resolve_skill "$s")" ] && { ORCHESTRATORS=1; break; }
+done
+
+# None of the kit's skills resolve here - stay quiet rather than describe rules
+# that nothing will enforce.
+[ -n "${ROUTER}${ORCHESTRATORS}${REVIEW}" ] || exit 0
+
+echo "[agentic-development-kit] Rules enforced by hooks in this project:"
+
+[ -n "$ROUTER" ] && cat <<'TXT'
+- Any request to WRITE OR CHANGE code starts at the `workflow-router` skill, which classifies it and
+  hands off to `feature-development` / `bug-fix` / `refactor`. Pure questions and read-only
   exploration skip this.
+TXT
+
+[ -n "$ORCHESTRATORS" ] && cat <<'TXT'
 - Before editing a file that a technical skill owns, Read that skill's SKILL.md in full, within the
   scope of the CURRENT request (a read from an earlier request does not count).
-- Inside \`feature-development\`/\`bug-fix\`/\`refactor\`, a CHECKPOINT is not satisfied by presenting a
-  proposal - it requires an actual \`AskUserQuestion\` call with \`header\` set exactly to
-  \`"Checkpoint"\`. A PreToolUse hook checks the transcript for this before Step 3/4 may write code.
+- Inside `feature-development`/`bug-fix`/`refactor`, a CHECKPOINT is not satisfied by presenting a
+  proposal - it requires an actual `AskUserQuestion` call with `header` set exactly to
+  `"Checkpoint"`. A PreToolUse hook checks the transcript for this before Step 3/4 may write code.
+TXT
+
+[ -n "$REVIEW" ] && cat <<TXT
 - Before reporting any code change done, run the \`$REVIEW_SKILL\` self-check on the diff and fix
   severe findings, then record it with the mark-reviewed hook. A Stop hook checks this.
 TXT
+
+# The last conditional above may be false; never let that become the hook's exit code.
+exit 0
