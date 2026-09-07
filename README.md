@@ -39,7 +39,7 @@ Each directory sits at the plugin root, where Claude Code's
 |---|---|
 | [`skills/`](./skills/README.md) | 25 skills. Claude Code picks the right one from its `description`, so there is nothing to invoke by hand. Also reachable as `/agentic-development-kit:<skill-name>`. |
 | [`agents/`](./agents-guide.md) | Tiered Task subagents. Tier 1 clarifies requirements and proposes solutions, Tier 2 implements. They pass a fixed JSON contract between steps. |
-| [`hooks/`](./hooks/README.md) | Gates for the rules a model cannot self-police: the owning `SKILL.md` was read before an edit, and `code-review-skill` ran before "done". Warn by default, blocking per gate. |
+| [`hooks/`](./hooks/README.md) | Gates for the rules a model cannot self-police: the owning `SKILL.md` was read before an edit, `code-review-skill` ran before "done", and a whole-file `Read` past a line threshold routes to the cheap `bulk-reader` agent instead of the expensive model's context. Warn by default, blocking per gate. |
 | [`mcp/`](./mcp/README.md) | Toolbox config for databases - PostgreSQL, MySQL, TiDB, Redis, MongoDB, or any other type Toolbox supports. Ships with no pre-built connections; add exactly what you have. Declared in the root `.mcp.json`, connected automatically once a connection exists - no repo clone needed. |
 
 ## Using it

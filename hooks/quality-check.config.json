@@ -6,7 +6,8 @@
     "skill_gate": "warn",
     "checkpoint_gate": "warn",
     "write_lint": "warn",
-    "quality_gate": "warn"
+    "quality_gate": "warn",
+    "bulk_read_gate": "warn"
   },
 
   "$comment_session_context": "general_guidelines is a fixed block of engineering/style conventions injected every SessionStart, independent of whether this kit's own skills are installed. Set to false in a project's own .claude/quality-check.config.json to keep the kit's routing/checkpoint reminders but drop these.",
@@ -39,6 +40,12 @@
     "max_blocks": 2,
     "require_changelog": false,
     "require_experience_log": false
+  },
+
+  "$comment_bulk_read_gate": "Redirects a whole-file Read past line_threshold to the bulk-reader Task subagent instead of loading it into the main (expensive) model's context. A targeted read (offset/limit set) is always let through, as is any read from inside a subagent. exclude is an ordered list of EREs matched against the repo-relative path - files that are long but must be read whole regardless belong here. SKILL.md ships excluded because skill_gate requires a genuine Read of it before an edit and a bulk-reader summary does not satisfy that check: with both gates set to block, a SKILL.md over the threshold would otherwise be unreadable and unedittable at once.",
+  "bulk_read_gate": {
+    "line_threshold": 350,
+    "exclude": ["(^|/)SKILL\\.md$"]
   },
 
   "$comment_write_lint": "Cheap textual checks on freshly written content. Advisory only - real review is the review_skill's job, not a regex's.",
