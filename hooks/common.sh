@@ -106,6 +106,17 @@ resolve_skill() {
   done
 }
 
+# resolve_agent <agent-name> - path to that Task subagent's .md file, or nothing
+# if it isn't installed anywhere this session can reach. Same search order as
+# resolve_skill, for the same reason: a gate that names an agent the session
+# cannot actually dispatch must no-op rather than block on it forever.
+resolve_agent() {
+  local name="$1" root
+  for root in "$PLUGIN_ROOT/agents" "$PROJECT_DIR/.claude/agents" "$PROJECT_DIR/agents"; do
+    [ -f "$root/$name.md" ] && { printf '%s' "$root/$name.md"; return; }
+  done
+}
+
 # skill_ref_pattern <name|alternation> - ERE matching a transcript line where the
 # skill was actually READ or INVOKED, not merely mentioned.
 #

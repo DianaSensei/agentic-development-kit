@@ -64,6 +64,17 @@ The subagents here therefore never hardcode a plugin-relative path. Instead:
 3. **Failing that, it says so** in `open_questions` rather than proceeding on guessed knowledge -
    silently continuing is what turns a path bug into a wrong design.
 
+## Utility agents outside the pipeline
+
+[`bulk-reader`](./agents/bulk-reader.md) is not part of the tiered flow above - it is a cheap-model,
+`Read`-only agent dispatched by the `bulk-read-gate` hook (see [`hooks/README.md`](./hooks/README.md))
+whenever a whole-file `Read` targets something past the configured line threshold, and directly
+invocable any time you have a large file and one narrow question about it. It reads the file in its
+own context and returns only the bullets that answer that question - full context cost paid once, by
+the cheap model, instead of on every subsequent turn by the expensive one. It is deliberately narrow:
+it does not edit, and it hands judgement calls back via `caveat` rather than guessing at them, since
+those are exactly the two things worth paying full price for.
+
 ## General conventions
 
 - **Structured JSON output** - each agent returns a JSON object following a fixed schema defined in its
