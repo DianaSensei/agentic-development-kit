@@ -16,6 +16,20 @@ in an uncovered stack still gets the structure (checkpoints, fix-attempt limits,
 This repo is both the plugin and its own marketplace, so nothing gets copied into `.claude/`.
 To test local changes instead of installing: `claude --plugin-dir /path/to/agentic-development-kit`.
 
+### Auto-update
+
+Since this is a self-added (non-Anthropic) marketplace, Claude Code leaves auto-update off by default.
+Turn it on once per machine:
+
+```
+/plugin
+```
+
+Open the **Marketplaces** tab, select `agentic-development-kit`, and choose **Enable auto-update**. From
+then on, Claude Code checks this repo's `version` field in the background each session and offers to
+reload when it changes - no reinstalling needed. To check manually instead: `/plugin marketplace update
+agentic-development-kit`.
+
 ## What's in it
 
 Each directory sits at the plugin root, where Claude Code's
