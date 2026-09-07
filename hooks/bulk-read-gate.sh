@@ -18,20 +18,34 @@
 # - Anything at or under the line threshold.
 # - A file resolve_agent can't find `bulk-reader` for (nothing installed to
 #   delegate to - see common.sh's fail-open rule).
-# - A Read made BY the `bulk-reader` subagent itself. Hooks apply inside
-#   subagents too (a plugin PreToolUse hook fires for every tool call a Task
-#   subagent makes, not just the main thread), and bulk-reader's whole job is
-#   to read the same large file whole - it carries no Task tool to delegate
-#   further, so without this exemption `block` mode denies its own delegate
-#   forever. `agent_type` on the hook's stdin JSON names the running subagent
-#   when the call originates inside one; absent for the main thread.
+# - Any Read made from INSIDE a Task subagent. Hooks apply inside subagents too
+#   (a plugin PreToolUse hook fires for every tool call a subagent makes, not
+#   just the main thread), and this gate exists to keep a large file out of the
+#   MAIN thread's expensive, persistent context. A subagent's context is
+#   disposable - it is discarded the moment the agent reports back, so the file
+#   never reaches the caller either way and there is no saving left to make.
+#   Delegating from there would only add a round trip.
+#
+#   That is also the difference between a rule and a trap: not one agent in this
+#   plugin carries the `Task` tool (`bulk-reader` least of all - it has only
+#   `Read`, and reading the whole file IS its job). Without this exemption,
+#   `block` mode denies any subagent's read of a large file and tells it to
+#   dispatch a delegate it has no way to dispatch.
+#
+#   `agent_type`/`agent_id` on the hook's stdin JSON identify the running
+#   subagent when the call originates inside one, and are absent on the main
+#   thread. A session started with `--agent` also carries `agent_type`, which
+#   turns this gate off for that session - the fail-open direction, consistent
+#   with every other hook here.
 
 . "${0%/*}/common.sh" || exit 0
 
 MODE="$(mode_of bulk_read_gate warn)"
 [ "$MODE" = "off" ] && exit 0
 
-[ "$(jq_in '.agent_type')" = "bulk-reader" ] && exit 0
+# Inside a subagent - either field being present is enough to say so.
+[ -n "$(jq_in '.agent_type')" ] && exit 0
+[ -n "$(jq_in '.agent_id')" ] && exit 0
 
 FILE_PATH="$(jq_in '.tool_input.file_path')"
 [ -n "$FILE_PATH" ] || exit 0
