@@ -1,0 +1,103 @@
+name: Release
+
+# Manual-only: pick a bump (or type an exact version), and this bumps
+# .claude-plugin/plugin.json + marketplace.json, commits, tags, and cuts a
+# GitHub release. Auto-update relies on that version field changing, so this
+# is also how installed plugins learn a new version exists (see README's
+# "Auto-update" section).
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump"
+        type: choice
+        options: [patch, minor, major, exact]
+        default: patch
+      version:
+        description: "Exact version (only used when bump = exact, e.g. 1.2.3)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute next version
+        id: version
+        run: |
+          set -euo pipefail
+          current=$(jq -r .version .claude-plugin/plugin.json)
+
+          if [ "${{ inputs.bump }}" = "exact" ]; then
+            next="${{ inputs.version }}"
+            if [ -z "$next" ]; then
+              echo "::error::bump=exact requires the 'version' input" >&2
+              exit 1
+            fi
+          else
+            IFS='.' read -r major minor patch <<< "$current"
+            case "${{ inputs.bump }}" in
+              major) next="$((major + 1)).0.0" ;;
+              minor) next="${major}.$((minor + 1)).0" ;;
+              patch) next="${major}.${minor}.$((patch + 1))" ;;
+            esac
+          fi
+
+          if ! [[ "$next" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::'$next' is not a plain X.Y.Z semver" >&2
+            exit 1
+          fi
+          if [ "$next" = "$current" ]; then
+            echo "::error::next version ($next) matches current version - nothing to release" >&2
+            exit 1
+          fi
+          if git rev-parse "v$next" >/dev/null 2>&1; then
+            echo "::error::tag v$next already exists" >&2
+            exit 1
+          fi
+
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+          echo "next=$next" >> "$GITHUB_OUTPUT"
+
+      - name: Bump version fields
+        run: |
+          set -euo pipefail
+          next="${{ steps.version.outputs.next }}"
+          tmp=$(mktemp)
+          jq --arg v "$next" '.version = $v' .claude-plugin/plugin.json > "$tmp"
+          mv "$tmp" .claude-plugin/plugin.json
+          tmp=$(mktemp)
+          jq --arg v "$next" '.plugins[0].version = $v' .claude-plugin/marketplace.json > "$tmp"
+          mv "$tmp" .claude-plugin/marketplace.json
+
+      - name: Commit and tag
+        run: |
+          set -euo pipefail
+          next="${{ steps.version.outputs.next }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .claude-plugin/plugin.json .claude-plugin/marketplace.json
+          git commit -m "Release v$next"
+          git tag "v$next"
+          git push origin HEAD:main
+          git push origin "v$next"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          next="${{ steps.version.outputs.next }}"
+          current="${{ steps.version.outputs.current }}"
+          gh release create "v$next" \
+            --title "v$next" \
+            --generate-notes \
+            --notes-start-tag "v$current" || \
+          gh release create "v$next" --title "v$next" --notes "Release v$next"
