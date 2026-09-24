@@ -10,3 +10,6 @@
 
 # Local hook overrides (e.g. turning a gate off on one machine) stay out of the repo.
 .claude/settings.local.json
+
+# Written by `claude plugin eval` on every run (evals/README.md).
+evals/results/
