@@ -1,13 +1,13 @@
 ---
 name: workflow-router
-description: Use FIRST for any request asking Claude to WRITE OR CHANGE code - new feature, bug fix, refactor, enhancement, "improve", "add capability", etc. Classifies the request as feature-development, bug-fix, or refactor by its true nature (does external behavior change, and if so is it fixing a defect or adding/changing capability?), asking the user only if genuinely ambiguous, then hands off. Skip when the request type is already obvious. Do NOT use for no-code-change requests - pure questions/explanations, read-only exploration, or explicit review requests ("review this PR/diff") - handle those directly instead.
+description: Use FIRST for any request asking Claude to WRITE OR CHANGE code - new feature, bug fix, refactor, enhancement, "improve", "add capability", etc. Classifies the request as feature-development, bug-fix, or refactor by its true nature (does external behavior change, and if so is it fixing a defect or adding/changing capability?), asking the user only if genuinely ambiguous, then hands off. Skip when the request type is already obvious. Also the entry point for "implement/build/fix docs/intents/<slug>.md". Do NOT use for no-code-change requests - pure questions/explanations, read-only exploration, or explicit review requests ("review this PR/diff") - handle those directly instead; and not for recording an idea to build later - that is `intent-capture`.
 metadata:
   domain: workflow
   triggers: write code, add feature, fix bug, implement, classify request
   role: orchestrator
   scope: routing
   output-format: handoff
-  related-skills: feature-development, bug-fix, refactor
+  related-skills: feature-development, bug-fix, refactor, intent-capture
 ---
 
 # Dev Request Router
@@ -34,6 +34,10 @@ they can never be classified from the wording alone - that ambiguity is the reas
 1. Read the request and cross-check it against the existing code - a quick read, not the depth the
    target workflow will go to. Whatever gets read stays in the session; the target's Step 0 reuses it
    rather than starting over.
+   If the request names an intent (`docs/intents/<slug>.md`, written by `intent-capture`), read it and
+   classify from its Problem and Desired outcome. Its `type` is the originator's hint, not the answer -
+   a "feature" whose problem is behavior that is wrong today is still a `bug-fix`. Pass the path on in
+   the handoff; the target workflow reads it in its Step 0.
 2. Clearly one of the three → state the classification in one sentence and hand off. Don't ask.
 3. Still ambiguous after reading the code → ask exactly one single-select question: is this (a) new
    capability or a spec change, (b) fixing behavior that is currently wrong, or (c) improving code

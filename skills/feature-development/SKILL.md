@@ -22,7 +22,7 @@ metadata:
   role: orchestrator
   scope: end-to-end
   output-format: code-and-report
-  related-skills: workflow-router, code-review-skill, test-master, ui-ux-design-skill, technical-proposal-writer
+  related-skills: workflow-router, intent-capture, code-review-skill, test-master, ui-ux-design-skill, technical-proposal-writer
 ---
 
 # Feature Development Workflow
@@ -36,6 +36,16 @@ Input: `$ARGUMENTS`
 
 Read `CLAUDE.md`, memory/MCP if connected, and the existing code relevant to the request. If
 `workflow-router` just read these before handing off, reuse that rather than re-reading.
+
+**Starting from an intent**: if the request names `docs/intents/<slug>.md` (written by
+`intent-capture`), read it in full. Its Problem, Desired outcome, Success signal, Non-goals,
+Constraints, and Open questions are the raw request for Step 1, and its slug is `<feature-slug>` for
+every file this workflow writes. Check `status` first:
+- `accepted` → proceed.
+- `draft` / `proposed` → nobody has decided to build it yet. Ask the user to accept it (record that per
+  `intent-capture`'s Decide mode) or stop; building it silently skips the decision the file exists to
+  record.
+- `rejected` / `done` / `superseded` → stop and tell the user what the file says.
 
 This skill's own `references/` cover requirement-gathering *method* (not technology) - load each when its
 step is reached: `ears-syntax.md`, `interview-questions.md`, `acceptance-criteria.md`,
@@ -67,6 +77,12 @@ here in the main thread:
 - Fold the answers back into `business-analyst`'s output before Step 2. Re-invoke it only if the answers
   substantially reopen a `not_feasible_as_stated` verdict.
 
+No intent in Step 0 → back-fill one now, so every plan and changelog has an intent to point back to:
+write `docs/intents/<feature-slug>.md` from `intent-capture`'s `references/intent-template.md` (in this
+plugin's `skills/`), filled from the confirmed Step 1 output. Status `accepted`, originator the user,
+Decision log line "back-filled from the request; accepted by asking to build it". Problem and outcome
+only - acceptance criteria stay in the plan.
+
 ## Step 2 - Solution Proposal (`solution-architect`, refined and checkpointed here)
 
 1. Launch `solution-architect` (Task tool) with Step 1's finalized output. Also read-only (`Read, Grep,
@@ -91,8 +107,8 @@ here in the main thread:
    - Non-functional requirements where a concrete constraint exists. Never invent a number - write "needs
      confirmation" instead.
 3. Write every refined proposal to `docs/plans/<feature-slug>.md` per
-   `references/specification-template.md`. This is the durable record; it does not replace presenting the
-   proposal to the user in conversation.
+   `references/specification-template.md`, opening with a line `Intent: docs/intents/<feature-slug>.md`.
+   This is the durable record; it does not replace presenting the proposal to the user in conversation.
 4. `solution-architect` may mark one `recommended` - fine to relay, but never choose on the user's behalf.
 
 **CHECKPOINT (required)**: present the full proposal, then confirm via `AskUserQuestion` with `header`
@@ -102,7 +118,9 @@ gated on this literal call, so moving on after merely presenting will be caught.
 
 Immediately after the user decides: update `docs/plans/<feature-slug>.md` - chosen proposal to the top,
 marked (`## ✅ Chosen: <name>`); rejected ones below, each wrapped in
-`<details><summary>Rejected: <name></summary> ... </details>` so they render collapsed.
+`<details><summary>Rejected: <name></summary> ... </details>` so they render collapsed. In
+`docs/intents/<feature-slug>.md` set `status: in-progress`, `plan: docs/plans/<feature-slug>.md`,
+`updated`, and add a Decision log line naming the chosen proposal.
 
 ## Step 3 - Implement + Test (loop until the quality bar is met)
 
@@ -180,6 +198,9 @@ Templates for both files: `references/report-and-logs.md`.
 3. **Experience log (required, cumulative, never overwritten)**: append one entry per Step 3.3 issue -
    fixed or not - to `docs/knowledge/experience-log.md`, using the reference's template. Next time a
    similar issue appears, in this project or another, reading this first avoids retrying a known dead end.
+4. `docs/intents/<feature-slug>.md`: `status: done`, `changelog: docs/changelog/<feature-slug>.md`,
+   `updated`, and a Decision log line. A workflow stopped at an issue raised to the user never gets
+   here, so its intent stays `in-progress` - which is accurate.
 
 ## Boundaries
 

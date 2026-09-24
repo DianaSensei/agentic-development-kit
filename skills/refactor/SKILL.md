@@ -39,6 +39,11 @@ Read `CLAUDE.md`, memory/MCP if connected, and the existing code/logic in the ar
 `workflow-router` already read these in this same session immediately before handing off, reuse that -
 don't re-read from scratch.
 
+If the request names `docs/intents/<slug>.md` (from `intent-capture`), read it: its Problem is Step 1's
+candidate pain point - still held to Step 1's concreteness bar - and its slug is `<refactor-slug>`. A
+`rejected`/`done`/`superseded` intent → stop and tell the user what the file says. Once the Step 3
+CHECKPOINT is confirmed, set its `status: in-progress` and `updated`, with a Decision log line.
+
 ## Step 1 - Pin Down the Pain Point (vague descriptions not accepted)
 
 A refactor request must make concrete WHY it's needed - a generic reason like "the code is ugly" isn't
@@ -136,3 +141,5 @@ No separate confirmation checkpoint is needed here - proceed straight to Step 7 
 3. **Experience log** (cumulative, append-only): `docs/knowledge/experience-log.md` - record which
    refactor pattern was effective/ineffective for this type of pain point, for reference the next time a
    similar pain point comes up.
+4. Started from an intent → set it `status: done`, `changelog: docs/changelog/<refactor-slug>.md`,
+   `updated`, and a Decision log line.

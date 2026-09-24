@@ -38,6 +38,7 @@ off to the right orchestrator, so in practice you rarely need to name a workflow
 
 | Skill | Use For |
 |-------|---------|
+| [`intent-capture`](./intent-capture/SKILL.md) | An idea, pain point, or alert not yet being built - records the problem, evidence, and desired outcome as `docs/intents/<slug>.md` (no solution, no code), reviews the intent backlog, and records accept/reject decisions. The workflows above take an intent as their input |
 | [`architecture-designer`](./architecture-designer/SKILL.md) | System design, from a single service to distributed microservices decomposition, deployment topology (VM/cloud/hybrid), ADRs |
 | [`solution-design-principles`](./solution-design-principles/SKILL.md) | SOLID, DRY/KISS/YAGNI, method decomposition (SLAP), Command-Query Separation/TOCTOU, Well-Architected pillars, 12-Factor, VM/cloud portability - judging whether a design/codebase follows sound engineering principles |
 | [`api-contract-skill`](./api-contract-skill/SKILL.md) | REST/GraphQL/RPC/async message contract design, before implementation |
@@ -87,7 +88,7 @@ off to the right orchestrator, so in practice you rarely need to name a workflow
 - **`references/` is progressive disclosure** - a skill's `SKILL.md` stays lean; deep detail (code
   patterns, decision tables, troubleshooting trees) lives in `references/*.md`, loaded only when the
   matching step is actually reached, listed in each skill's Reference Guide table.
-- **`metadata:` on every skill** - a fixed block after `description`, present on all 25. Claude Code
+- **`metadata:` on every skill** - a fixed block after `description`, present on all 26. Claude Code
   does not read it; it exists so the library can be audited mechanically. `related-skills` in
   particular is checked both ways: every name must resolve to a directory under `skills/`, and every
   skill must be reachable from at least one other, so a skill cannot silently fall out of the graph.
