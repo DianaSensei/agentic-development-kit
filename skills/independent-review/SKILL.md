@@ -35,11 +35,14 @@ Input: `$ARGUMENTS`
 | Where | Diff from | Findings go to | Summary goes to |
 |---|---|---|---|
 | **CI** (the prompt says so) | `gh pr diff <number>` | an inline comment per finding, via the inline-comment tool, `confirmed: true` | the structured output the workflow asks for - the workflow posts it |
-| **Local** | `gh pr diff <number>` if `gh` works, else `git diff <base>...HEAD` (base: ask, or the default branch) | the report | the report, printed |
+| **Local** | a diff file the user points to; else `gh pr diff <number>` if `gh` works; else `git diff <base>...HEAD` (base: ask, or the default branch) | the report | the report, printed |
 
 ## Step 1 - Gather
 
-The diff, the changed-file list, the PR title and body if there is one, and `CLAUDE.md`. For each changed
+First, before opening the diff, `Read` `code-review-skill`'s `SKILL.md` - it sits next to this skill, at
+`../code-review-skill/SKILL.md` relative to this file. It is the checklist Step 4 grades against, and
+reading it after the diff is how it gets skipped: once the change looks simple, the checklist looks
+unnecessary. Then gather the diff, the changed-file list, the PR title and body if there is one, and `CLAUDE.md`. For each changed
 hunk, read enough of the surrounding file to know what the code around it assumes - a diff alone hides
 the caller that breaks.
 
@@ -66,12 +69,11 @@ Skip when Step 2 found nothing. Otherwise, for each item, say met / not met / ca
 
 ## Step 4 - Check correctness
 
-`Read` `code-review-skill`'s `SKILL.md` - it sits next to this skill, at `../code-review-skill/SKILL.md`
-relative to this file - and apply its general checklist plus the per-technology part for technologies
-the diff actually touches. Where a technical skill owns a changed file (`java-spring-skill`,
+Apply `code-review-skill`'s general checklist (read in Step 1) plus its per-technology part for
+technologies the diff actually touches. Where a technical skill owns a changed file (`java-spring-skill`,
 `database-skill`, `rust-engineer`, ...), read its `SKILL.md` too and hold the change to it - the same
-rule the author was held to. Do this even when the diff looks too small to need it: the summary's
-*Checklists applied* line lists exactly the files read in this step, so a skipped read shows. Beyond
+rule the author was held to. The summary's *Checklists applied* line lists exactly the checklists read
+in Steps 1 and 4, so a skipped read shows. Beyond
 the checklists, look for:
 - logic that is wrong for some input - boundaries, empty and null cases, ordering, off-by-one;
 - errors swallowed, or failure paths that leave state half-written;
@@ -92,6 +94,10 @@ handled elsewhere, or only a matter of taste not written down in `CLAUDE.md`. Th
 | **blocking** | a real bug, security hole, data loss, a violated non-goal, an AC with neither code nor test, or a broken `CLAUDE.md` rule |
 | **suggestion** | a real improvement the change is still correct without |
 | **question** | something only the author or approver can answer - intent, a trade-off, a number |
+
+A problem in the intent or plan itself - the change does what they say, and what they say is wrong - is
+a **question** for the approver, not a blocking finding: the change is not what needs fixing, the
+decision is. Say which document and why in *Risk for the approver*.
 
 Start every finding's text with its severity in bold, e.g. `**blocking** - ...`, so it reads the same
 inline and in the summary.
@@ -123,7 +129,7 @@ Markdown in this shape; omit a section only when it would be empty, except *Not 
 ### Not checked
 - Tests were not run by this review. <anything else that could not be verified, and why>
 
-<sub>Checklists applied: `code-review-skill`<, each technical skill read in Step 4></sub>
+<sub>Checklists applied: `code-review-skill`<, each technical skill read in Step 4 - only files actually read></sub>
 ```
 
 In CI, return that Markdown and the three counts in the structured output. Locally, print it.
