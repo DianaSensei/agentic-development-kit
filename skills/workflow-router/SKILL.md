@@ -7,7 +7,7 @@ metadata:
   role: orchestrator
   scope: routing
   output-format: handoff
-  related-skills: feature-development, bug-fix, refactor, intent-capture
+  related-skills: feature-development, bug-fix, refactor, intent-capture, project-setup
 ---
 
 # Dev Request Router
@@ -46,6 +46,8 @@ they can never be classified from the wording alone - that ambiguity is the reas
 
 ## When it fits none of the three
 
-Rare, e.g. a pure tooling/CI/infra change touching no business behavior. There is no dedicated workflow
-for that case. Say so plainly as a known gap and ask how the user wants to proceed - usually closest to
+Rare, e.g. a pure tooling/CI/infra change touching no business behavior. One common case has an owner:
+setting a repository up for this kit (`CLAUDE.md`, `REVIEW.md`, `CODEOWNERS`, `.claude/settings.json`,
+the CI reviewer) is `project-setup`, so hand off to it. For anything else there is no dedicated
+workflow: say so plainly as a known gap and ask how the user wants to proceed - usually closest to
 `refactor` (checkpoint, verification, no new acceptance criteria) - rather than picking unilaterally.
