@@ -135,6 +135,20 @@ skill_ref_pattern() {
   printf '"file_path"[[:space:]]*:[[:space:]]*"[^"]*/(%s)/SKILL\\.md"|"skill"[[:space:]]*:[[:space:]]*"([^":]*:)?(%s)"' "$1" "$1"
 }
 
+# last_code_edit_line <transcript> - 1-based line number of the last Edit / Write
+# / MultiEdit / NotebookEdit tool call on a CODE file (code_ext), or empty. Keys
+# before file_path are skipped whatever their order, so the match does not
+# depend on the order the model emitted the tool input in. Edits made through
+# Bash (sed -i, a redirect) do not appear here - a known blind spot.
+last_code_edit_line() {
+  local ext
+  ext="$(code_ext)"
+  grep -n -oE '"name":"(Edit|Write|MultiEdit|NotebookEdit)","input":\{("[a-z_]+":("([^"\\]|\\.)*"|true|false|[0-9]+),)*"(file_path|notebook_path)":"[^"]*"' "$1" 2>/dev/null \
+    | sed -E 's/^([0-9]+):.*"(file_path|notebook_path)":"([^"]*)"$/\1 \3/' \
+    | while read -r n p; do printf '%s\n' "$p" | grep -Eq "$ext" && echo "$n"; done \
+    | tail -n 1
+}
+
 # code_ext - the regex deciding what counts as a code file, for the Stop gate and
 # the checkpoint gate alike. Single definition on purpose: it used to be a literal
 # duplicated in two scripts, both narrower than the shipped config, so the same
