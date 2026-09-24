@@ -26,6 +26,7 @@ owns that judgement actually runs.
 | `edit-gates.sh` | `PreToolUse` on edits | `warn` | Two checks in one process, because they share the event, the stdin and the transcript. **Skill gate** (`mode.skill_gate`, any edit): maps the file to its owning skill via `skill_map`, then checks the transcript for a read of that `SKILL.md` **since the last user message** - a read from an earlier request does not count, the file may have changed since. **Checkpoint gate** (`mode.checkpoint_gate`, **code** edits only): inside `feature-development`/`bug-fix`/`refactor`, checks the transcript since that workflow was last invoked for an `AskUserQuestion` with `header` exactly `"Checkpoint"`, so presenting a proposal and moving on no longer passes silently. Never fires on a documentation write - the plan doc is written before the checkpoint by design. Either half can be `off` while the other blocks. |
 | `write-lint.sh` | `PostToolUse` on edits | `warn` | Scans only the newly written text for hardcoded secrets and leftover placeholders. Advisory by protocol: `PostToolUse` cannot block. |
 | `quality-gate.sh` | `Stop` | `warn` | Flags - or, set to `block`, refuses to end - a turn that leaves uncommitted **code** changes no review has vouched for. |
+| `review-gate.sh` | `Stop` | `warn` | Inside an `independent-review`, holds the turn until `quality_gate.review_skill`'s `SKILL.md` (the checklist the findings are graded against) was actually read - in a test run the reviewer skipped the read and still wrote "Checklists applied: code-review-skill". Fires once per review run and does nothing in any session that is not reviewing. `ADK_REVIEW_GATE` overrides `mode.review_gate` alone; the CI workflow ([`ci/`](../ci/README.md)) sets it to `block`. |
 | `mark-reviewed.sh` | - | - | Run after the review to record it and satisfy the gate. Takes an optional session id (`mark-reviewed.sh <session>`) so it clears only that session's block counter - `quality-gate` puts the id straight into the command it prints. |
 
 `quality-gate.sh` fingerprints the changed code rather than setting a boolean, so editing code after a
@@ -87,11 +88,15 @@ actually asked.
 
 Split deliberately:
 
-- **`hooks/hooks.json`** (this plugin's own hook manifest) - `session-context`, `write-lint`, and
-  `bulk-read-gate`. Global, registered automatically wherever the plugin is enabled, no per-project
+- **`hooks/hooks.json`** (this plugin's own hook manifest) - `session-context`, `write-lint`,
+  `bulk-read-gate`, and `review-gate`. `review-gate` is here rather than in `independent-review`'s
+  frontmatter because frontmatter hooks register only when a skill is invoked through the Skill tool, and
+  the CI reviewer may only `Read` its `SKILL.md`; it checks the transcript for a review itself and
+  no-ops everywhere else. Global, registered automatically wherever the plugin is enabled, no per-project
   setup. `session-context` and `write-lint` never block; `bulk-read-gate` can, in `block` mode - but
   each Read is an independent, retryable action rather than something that can trap a session, so it
-  is safe to register globally the same way.
+  is safe to register globally the same way. `review-gate` can block too, at most once per review run, so it cannot
+  trap one either.
 - **Frontmatter of `feature-development`, `bug-fix`, `refactor`** - `edit-gates` (both halves) and
   `quality-gate`. Frontmatter hooks are registered when the skill is invoked, so the blocking gates apply
   exactly while a code-changing workflow is running, and the rule lives next to the prose it enforces.

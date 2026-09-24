@@ -156,6 +156,9 @@ prune_state() {
   find "$STATE_DIR" -maxdepth 1 -type f \
     \( -name '*.blocks' -o -name '*.skillgate.*' -o -name '*.checkpointgate' \) \
     -mtime +7 -delete 2>/dev/null || true
+  # review-gate's once-per-review locks are directories (mkdir is the atomic part).
+  find "$STATE_DIR" -maxdepth 1 -type d -name '*.reviewgate.*' -mtime +7 \
+    -exec rmdir {} + 2>/dev/null || true
 }
 
 # code_change_hash - a stable fingerprint of the working tree's uncommitted CODE
