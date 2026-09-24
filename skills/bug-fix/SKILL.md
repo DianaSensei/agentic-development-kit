@@ -38,6 +38,12 @@ Read `CLAUDE.md`, memory/MCP if connected, and the existing code/logic relevant 
 area. If `workflow-router` already read these in this same session immediately before handing off,
 reuse that - don't re-read from scratch.
 
+**Known dead ends**: search `docs/knowledge/experience-log.md`, if it exists, for entries whose `Area` or
+cause matches this bug - `grep`, not a whole-file read. An approach it lists as "did NOT work" is ruled
+out unless you can say what differs this time; name the entries you used in Step 2's hypotheses and the
+Step 3 report. Method: `feature-development`'s `references/report-and-logs.md` (in this plugin's
+`skills/`) → "Reading the Log".
+
 If the request names `docs/intents/<slug>.md` (from `intent-capture`, often raised from monitoring or an
 incident), read it: its Problem and Evidence are Step 1's starting symptoms, and its slug is
 `<bug-slug>`. A `rejected`/`done`/`superseded` intent → stop and tell the user what the file says. Once
@@ -121,8 +127,16 @@ something).
 
 1. Memory/MCP (if connected): record the root cause, the fix, and the final outcome.
 2. **Experience log (cumulative, never overwritten)**: append to `docs/knowledge/experience-log.md`
-   using the same format as `feature-development` (date, issue description, cause, attempts used,
-   outcome, the fix or the approaches that did NOT work).
+   using the same format as `feature-development` (date, class, source, area, cause, attempts used,
+   outcome, the fix or the approaches that did NOT work) - one entry for the bug itself, one per fix-loop
+   issue, and one per correction the user made to your work in this run.
+   **Then promote repeats**: any class now in the log twice or more that `CLAUDE.md` doesn't already
+   cover gets one proposed `CLAUDE.md` line, asked via `AskUserQuestion` with `header` `"CLAUDE.md"` -
+   never written without a yes. **Yes** → append it under a `## Common mistakes` heading in the
+   project-root `CLAUDE.md` (create the heading, or the file, if missing) and add `- Promoted: CLAUDE.md`
+   to the log entry. **Not now** → add `- Promotion: declined <date>` to the log entry. Method:
+   `feature-development`'s `references/report-and-logs.md` (in this plugin's `skills/`) → "Promoting a
+   Repeat to CLAUDE.md".
 3. **Postmortem (required, specific to bug-fix)**: create `docs/postmortems/<bug-slug>.md` using the
    template in `references/postmortem-template.md`.
 4. Started from an intent → set it `status: done`, `changelog: docs/postmortems/<bug-slug>.md`,

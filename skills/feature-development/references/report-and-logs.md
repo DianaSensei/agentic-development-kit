@@ -61,14 +61,54 @@ should reflect what shipped, not what was originally planned.
 ```markdown
 ## [<date>] <feature-slug> - <short issue description>
 
+- Class: <kebab-case name for the KIND of mistake, e.g. unbounded-retry, wrong-test-command>
+- Source: fix-loop | user-correction
+- Area: <paths or modules it happened in>
 - Cause: ...
-- Attempts used: X/5
+- Attempts used: X/5 (n/a for a user correction)
 - Outcome: Fixed | Not fixed (raised to user)
 - Fix applied (if resolved) / Approaches tried that did NOT work (so they aren't retried next time)
 ```
 
-Append one entry per issue encountered in Step 3.3, whether or not it was resolved - an unresolved
+Append one entry per issue encountered in the fix loop, whether or not it was resolved - an unresolved
 issue's "approaches that didn't work" list is exactly what saves time the next time a similar issue
-appears, in this project or another.
+appears, in this project or another. Also append one entry per **user correction** in this run: each
+time the user told you a convention, command, assumption, or piece of output was wrong. Those are the
+mistakes most likely to happen again, because nothing in the code records them.
+
+**`Class` is what makes a repeat findable.** Name the kind of mistake, not this instance, and reuse an
+existing class when one fits - check first with `grep -h '^- Class:' docs/knowledge/experience-log.md |
+sort | uniq -c`. Two entries that describe the same mistake under different classes are a repeat nobody
+will notice.
 
 **Never overwrite this file** - it's a cumulative log across every feature/bug worked on. Always append.
+
+## Reading the Log (every workflow's Step 0)
+
+If `docs/knowledge/experience-log.md` exists, search it - don't read it whole, it only grows - for
+entries whose `Area` overlaps the files you are about to touch, or whose `Class` or cause matches the
+problem at hand (`grep -n -i -A8 '<path or keyword>'`). For each match:
+- An approach listed as "did NOT work" is ruled out. Retry it only if you can say what differs this
+  time, and say it.
+- A fix that worked is the first candidate, not a certainty - check it still fits the current code.
+- Name the entries you relied on in the plan or report, so the reader can see the log was used.
+
+## Promoting a Repeat to CLAUDE.md (every workflow's knowledge-capture step)
+
+After appending, count each class you just wrote:
+`grep -c '^- Class: <class>$' docs/knowledge/experience-log.md`.
+
+At 2 or more - the same mistake has now happened twice - and when no line in `CLAUDE.md` already covers
+it, propose one rule for `CLAUDE.md`:
+- **One line, imperative, specific**: where it applies and what to do. "In `src/billing/`, pass an
+  idempotency key to every `gateway.charge` call" - not "be careful with payments".
+- **Ask before writing it** - `AskUserQuestion` with `header` `"CLAUDE.md"`, the exact line as the
+  question, options "Add it" / "Not now". `CLAUDE.md` is read by every future session and every
+  teammate, so it changes only with a person's yes.
+- **Yes** → append the line under a `## Common mistakes` heading in the project-root `CLAUDE.md`
+  (create the heading, or the file, if missing) and add `- Promoted: CLAUDE.md` to this log entry.
+- **Not now** → add `- Promotion: declined <date>` to this log entry, and ask again only when the
+  class reaches its next occurrence.
+
+This is the playbook's rule - when Claude makes the same mistake twice, the correction goes into
+`CLAUDE.md` - with the log as the memory that makes "twice" countable.

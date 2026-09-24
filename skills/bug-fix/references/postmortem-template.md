@@ -23,7 +23,11 @@ Scope of impact and severity.
 ## Tests Added to Prevent Recurrence
 
 ## Lessons / Prevention Recommendations
-If there's a general pattern that could apply elsewhere.
+If there's a general pattern that could apply elsewhere. Give the experience-log `Class` of this bug, so
+the next occurrence of the same kind of mistake is countable. If the defect came from how an agent
+behaved - a skill instruction that was wrong or skipped, a rule that was missing - and the project keeps
+an eval suite (`evals/`), name the eval case that would have caught it: that is the regression test for
+the agent, the way the test above is for the code.
 ```
 
 ## If Not Reproduced/Fixed

@@ -39,6 +39,12 @@ Read `CLAUDE.md`, memory/MCP if connected, and the existing code/logic in the ar
 `workflow-router` already read these in this same session immediately before handing off, reuse that -
 don't re-read from scratch.
 
+**Known dead ends**: search `docs/knowledge/experience-log.md`, if it exists, for entries whose `Area` or
+cause matches this area or pain point - `grep`, not a whole-file read. An approach it lists as "did NOT
+work" is ruled out unless you can say what differs this time; name the entries you used in the Step 3
+proposal. Method: `feature-development`'s `references/report-and-logs.md` (in this plugin's `skills/`) →
+"Reading the Log".
+
 If the request names `docs/intents/<slug>.md` (from `intent-capture`), read it: its Problem is Step 1's
 candidate pain point - still held to Step 1's concreteness bar - and its slug is `<refactor-slug>`. A
 `rejected`/`done`/`superseded` intent → stop and tell the user what the file says. Once the Step 3
@@ -138,8 +144,15 @@ No separate confirmation checkpoint is needed here - proceed straight to Step 7 
    (+ reasoning), the behavior preservation checklist, the final outcome (cross-checked against Step 5),
    and the list of files changed. This is the record of what was ACTUALLY refactored - it doesn't
    belong in `docs/decisions/` because once complete it's a change log, not a standalone decision record.
-3. **Experience log** (cumulative, append-only): `docs/knowledge/experience-log.md` - record which
-   refactor pattern was effective/ineffective for this type of pain point, for reference the next time a
-   similar pain point comes up.
+3. **Experience log** (cumulative, append-only): `docs/knowledge/experience-log.md`, same format as
+   `feature-development` - record which refactor pattern was effective/ineffective for this type of pain
+   point, plus one entry per correction the user made to your work in this run.
+   **Then promote repeats**: any class now in the log twice or more that `CLAUDE.md` doesn't already
+   cover gets one proposed `CLAUDE.md` line, asked via `AskUserQuestion` with `header` `"CLAUDE.md"` -
+   never written without a yes. **Yes** → append it under a `## Common mistakes` heading in the
+   project-root `CLAUDE.md` (create the heading, or the file, if missing) and add `- Promoted: CLAUDE.md`
+   to the log entry. **Not now** → add `- Promotion: declined <date>` to the log entry. Method:
+   `feature-development`'s `references/report-and-logs.md` (in this plugin's `skills/`) → "Promoting a
+   Repeat to CLAUDE.md".
 4. Started from an intent → set it `status: done`, `changelog: docs/changelog/<refactor-slug>.md`,
    `updated`, and a Decision log line.

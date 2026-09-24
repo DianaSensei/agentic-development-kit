@@ -37,6 +37,11 @@ Input: `$ARGUMENTS`
 Read `CLAUDE.md`, memory/MCP if connected, and the existing code relevant to the request. If
 `workflow-router` just read these before handing off, reuse that rather than re-reading.
 
+**Known dead ends**: search `docs/knowledge/experience-log.md`, if it exists, for entries whose `Area` or
+cause matches this request - `grep`, not a whole-file read. An approach it lists as "did NOT work" is
+ruled out unless you can say what differs this time; name the entries you used in the plan. Method:
+`references/report-and-logs.md` → "Reading the Log".
+
 **Starting from an intent**: if the request names `docs/intents/<slug>.md` (written by
 `intent-capture`), read it in full. Its Problem, Desired outcome, Success signal, Non-goals,
 Constraints, and Open questions are the raw request for Step 1, and its slug is `<feature-slug>` for
@@ -196,8 +201,15 @@ Templates for both files: `references/report-and-logs.md`.
    `docs/plans/`, which captures proposals at decision time); it isn't a `docs/decisions/` entry because
    once complete it's a change log, not a standalone decision record.
 3. **Experience log (required, cumulative, never overwritten)**: append one entry per Step 3.3 issue -
-   fixed or not - to `docs/knowledge/experience-log.md`, using the reference's template. Next time a
-   similar issue appears, in this project or another, reading this first avoids retrying a known dead end.
+   fixed or not - and one per correction the user made to your work in this run, to
+   `docs/knowledge/experience-log.md`, using the reference's template (each entry names its `Class`).
+   Step 0 of the next workflow searches it, so a known dead end is not retried.
+   **Then promote repeats**: any class now in the log twice or more that `CLAUDE.md` doesn't already
+   cover gets one proposed `CLAUDE.md` line, asked via `AskUserQuestion` with `header` `"CLAUDE.md"` -
+   never written without a yes. **Yes** → append it under a `## Common mistakes` heading in the
+   project-root `CLAUDE.md` (create the heading, or the file, if missing) and add `- Promoted: CLAUDE.md`
+   to the log entry. **Not now** → add `- Promotion: declined <date>` to the log entry. Method: the
+   reference → "Promoting a Repeat to CLAUDE.md".
 4. `docs/intents/<feature-slug>.md`: `status: done`, `changelog: docs/changelog/<feature-slug>.md`,
    `updated`, and a Decision log line. A workflow stopped at an issue raised to the user never gets
    here, so its intent stays `in-progress` - which is accurate.

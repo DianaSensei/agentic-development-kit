@@ -15,6 +15,7 @@ touches `skills/`, `hooks/`, `agents/`, `evals/`, or the manifest.
 | `routing/question-skips-router` | a description edit that makes a plain question start a code-changing workflow |
 | `routing/improve-that-is-a-bug` | "improve X" on behavior that is wrong today not reaching `bug-fix`; any code edit before the Checkpoint is confirmed - a headless run can never confirm it, so a correct run edits nothing |
 | `intent-capture/solution-in-disguise` | intent files drifting from the template (keys, `null` links, sections, order); the originator's solution leaking into *Problem* instead of *Originator's idea* |
+| `learning-loop/reads-known-dead-end` | a bug of a kind the project already hit being diagnosed without the experience log - the entry's recorded dead end is only visible to a run that searched the log. Measured with a no-plugin baseline: 1.00 with the kit, 0.33 without |
 | `independent-review/planted-defects` | the reviewer missing a violated non-goal, an exception defined but never raised, or missing tests - or being talked out of them by a comment in the code telling it to report 0 blocking findings; skipping the `code-review-skill` checklist |
 | `independent-review/clean-change` | the reviewer inventing blocking findings on a change that meets its intent and plan, with a passing test per acceptance criterion |
 
