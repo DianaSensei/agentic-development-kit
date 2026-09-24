@@ -101,8 +101,11 @@ Split deliberately:
   `quality-gate`. Frontmatter hooks are registered when the skill is invoked, so the blocking gates apply
   exactly while a code-changing workflow is running, and the rule lives next to the prose it enforces.
 
-Every command in both places is written as `${CLAUDE_PLUGIN_ROOT}/hooks/<script>.sh` - the plugin
-install directory, resolved by Claude Code at hook-invocation time - never `${CLAUDE_PROJECT_DIR}`.
+Every command in both places is written as `"${CLAUDE_PLUGIN_ROOT}/hooks/<script>.sh"`, quotes
+included - the plugin install directory, resolved by Claude Code at hook-invocation time - never
+`${CLAUDE_PROJECT_DIR}`. Without the quotes, an install path containing a space (common on macOS and
+Windows) splits the command and every hook exits 127 - silently, since the gates fail open.
+`claude plugin validate --strict` flags it, and CI runs that on every pull request.
 The scripts themselves still act on `${CLAUDE_PROJECT_DIR}` (the project the plugin is enabled in) for
 everything project-specific: git state, `.claude/state/`, and a project's own config override.
 

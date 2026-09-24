@@ -1,0 +1,140 @@
+name: Skill evals
+
+# The regression check for the kit itself: a skill or hook edit that makes
+# Claude behave worse should fail here, not in someone's project. Two jobs:
+#
+# - validate: deterministic and free - manifests, skill/agent frontmatter, hook
+#   commands, hook script syntax. Runs on every relevant PR.
+# - evals: runs the behavioral suite in evals/ with `claude plugin eval`
+#   against the plugin at this PR's head. Needs a credential and costs a few
+#   dollars a run (see evals/README.md), so it skips with a warning when none
+#   is set.
+
+on:
+  pull_request:
+    paths:
+      - "skills/**"
+      - "hooks/**"
+      - "agents/**"
+      - "evals/**"
+      - ".claude-plugin/**"
+      - ".github/workflows/skill-evals.yml"
+  workflow_dispatch:
+    inputs:
+      model:
+        description: "Model under test. Pinned so a model rollout is not mistaken for a skill regression."
+        type: string
+        default: claude-sonnet-5
+      runs:
+        description: "Runs per case (empty: each case's own setting, 3 by default)."
+        type: string
+        default: ""
+      ablation:
+        description: "with-without adds a no-plugin baseline arm and reports what the plugin contributes (doubles the cost)."
+        type: choice
+        options: [none, with-without]
+        default: none
+
+permissions:
+  contents: read
+
+concurrency:
+  group: skill-evals-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Claude Code
+        run: npm install --global --no-audit --no-fund @anthropic-ai/claude-code
+      - name: Validate the plugin
+        run: |
+          set -euo pipefail
+          claude plugin validate --strict .
+          claude plugin validate --strict .claude-plugin/plugin.json
+          claude plugin validate --strict skills
+          claude plugin validate --strict agents
+      - name: Check hook script syntax
+        run: for f in hooks/*.sh skills/*/scripts/*.sh; do bash -n "$f"; done
+
+  evals:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check for credentials
+        id: auth
+        env:
+          HAS_CREDENTIAL: ${{ secrets.ANTHROPIC_API_KEY != '' || secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
+        run: |
+          if [ "$HAS_CREDENTIAL" = "true" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Skill evals skipped::No ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN secret is available. See evals/README.md. PRs from forks never receive secrets."
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.auth.outputs.enabled == 'true'
+
+      - uses: actions/setup-node@v4
+        if: steps.auth.outputs.enabled == 'true'
+        with:
+          node-version: 22
+
+      - name: Install Claude Code
+        if: steps.auth.outputs.enabled == 'true'
+        run: npm install --global --no-audit --no-fund @anthropic-ai/claude-code
+
+      # Exit codes: 0 every case at or above the threshold; 1 a case below it
+      # or a case file that failed to load; 2 partial (cost ceiling hit or the
+      # credential was rejected). All but 0 fail the job; the summary is
+      # written either way.
+      - name: Run the suite
+        if: steps.auth.outputs.enabled == 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          MODEL: ${{ inputs.model || 'claude-sonnet-5' }}
+          RUNS: ${{ inputs.runs }}
+          ABLATION: ${{ inputs.ablation || 'none' }}
+        run: |
+          set -uo pipefail
+          out="$RUNNER_TEMP/eval-results"
+          args=(. --trust-plugin --scaffold --allow-tools Write Edit
+                --ablation "$ABLATION" --model "$MODEL" --judge-model claude-haiku-4-5
+                --threshold 0.8 --max-cost-usd 15 -j 4 --no-publish
+                --output-dir "$out")
+          [ -n "$RUNS" ] && args+=(--runs "$RUNS")
+          claude plugin eval "${args[@]}"
+          rc=$?
+
+          if [ -f "$out/aggregate-result.json" ]; then
+            jq -r '
+              "### Skill evals: \(.aggregates.casesPassed)/\(.aggregates.casesTotal) cases at or above 0.8"
+              + (if .partial then " - PARTIAL (\(.partialReason))" else "" end),
+              "",
+              "| Case | Score | Failed graders |",
+              "|---|---|---|",
+              (.cases[] | "| \(.name) | \(.aggregates.score * 100 | round / 100) | \(
+                [.arms.with[].graders[] | select(.scored != false and .passed == false) | .name] | unique | join(", ")
+              ) |"),
+              "",
+              "Model \($model) · Claude Code \(.claudeVersion // "?") · cost ~$\(.costUsd * 100 | round / 100) · \(.durationSeconds | round)s. Full report: the eval-report artifact."
+            ' --arg model "$MODEL" "$out/aggregate-result.json" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit $rc
+
+      - name: Upload the report
+        if: always() && steps.auth.outputs.enabled == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-report
+          path: ${{ runner.temp }}/eval-results/
+          if-no-files-found: ignore

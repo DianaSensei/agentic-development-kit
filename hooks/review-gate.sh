@@ -43,7 +43,7 @@ SESSION="$(jq_in '.session_id' unknown)"
 mkdir "$STATE_DIR/$SESSION.reviewgate.$START" 2>/dev/null || exit 0
 
 CHECKLIST_MD="$(resolve_skill "$CHECKLIST")"
-REASON="[review-gate] This independent review has not read \`$CHECKLIST\`, the checklist its findings are graded against (independent-review Step 4).
+REASON="[review-gate] This independent review has not read \`$CHECKLIST\`, the checklist its findings are graded against (independent-review Step 1).
 Read \`${CHECKLIST_MD:-$CHECKLIST/SKILL.md}\` in full now, plus the SKILL.md of any technical skill that owns a changed file. Re-check the diff against them, update the findings and counts if anything changes, and make the *Checklists applied* line list only what was actually read."
 
 if [ "$MODE" != "block" ]; then
