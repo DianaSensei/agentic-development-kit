@@ -1,6 +1,6 @@
 # Agentic Development Kit
 
-A Claude Code plugin for AI-assisted software development: a library of 25 skills, a tiered subagent
+A Claude Code plugin for AI-assisted software development: a library of 26 skills, a tiered subagent
 pipeline, quality-check hooks, and MCP configs for reaching beyond the codebase.
 
 The workflow core is stack-agnostic. Anything technology-specific lives in its own skill, so a project
@@ -37,7 +37,7 @@ Each directory sits at the plugin root, where Claude Code's
 
 | Directory | What it is |
 |---|---|
-| [`skills/`](./skills/README.md) | 25 skills. Claude Code picks the right one from its `description`, so there is nothing to invoke by hand. Also reachable as `/agentic-development-kit:<skill-name>`. |
+| [`skills/`](./skills/README.md) | 26 skills. Claude Code picks the right one from its `description`, so there is nothing to invoke by hand. Also reachable as `/agentic-development-kit:<skill-name>`. |
 | [`agents/`](./agents-guide.md) | Tiered Task subagents. Tier 1 clarifies requirements and proposes solutions, Tier 2 implements. They pass a fixed JSON contract between steps. |
 | [`hooks/`](./hooks/README.md) | Gates for the rules a model cannot self-police: the owning `SKILL.md` was read before an edit, `code-review-skill` ran before "done", and a whole-file `Read` past a line threshold routes to the cheap `bulk-reader` agent instead of the expensive model's context. Warn by default, blocking per gate. |
 | [`mcp/`](./mcp/README.md) | Toolbox config for databases - PostgreSQL, MySQL, TiDB, Redis, MongoDB, or any other type Toolbox supports. Ships with no pre-built connections; add exactly what you have. Declared in the root `.mcp.json`, connected automatically once a connection exists - no repo clone needed. |
@@ -46,6 +46,9 @@ Each directory sits at the plugin root, where Claude Code's
 
 - **Skills** run themselves. Describe the request; `workflow-router` classifies it and hands off to
   `feature-development` / `bug-fix` / `refactor`.
+- **Ideas not ready to build** go to `intent-capture`, which writes `docs/intents/<slug>.md` - the
+  problem, evidence, and desired outcome, no solution. Later, "implement `docs/intents/<slug>.md`" starts
+  the workflow from it, and the workflow links the intent to its plan and changelog as it goes.
 - **Agents** are invoked through the Task tool, starting at `business-analyst`. See
   [`agents-guide.md`](./agents-guide.md).
 - **Hooks** need no setup. They register wherever the plugin is enabled. To tune them for a project,

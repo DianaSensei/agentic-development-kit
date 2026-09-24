@@ -38,6 +38,12 @@ Read `CLAUDE.md`, memory/MCP if connected, and the existing code/logic relevant 
 area. If `workflow-router` already read these in this same session immediately before handing off,
 reuse that - don't re-read from scratch.
 
+If the request names `docs/intents/<slug>.md` (from `intent-capture`, often raised from monitoring or an
+incident), read it: its Problem and Evidence are Step 1's starting symptoms, and its slug is
+`<bug-slug>`. A `rejected`/`done`/`superseded` intent → stop and tell the user what the file says. Once
+the Step 3 CHECKPOINT is confirmed, set its `status: in-progress` and `updated`, with a Decision log
+line.
+
 ## Step 1 - Gather Symptoms
 
 Record everything the user knows/observes: expected vs. actual behavior, the conditions it occurs under
@@ -119,6 +125,8 @@ something).
    outcome, the fix or the approaches that did NOT work).
 3. **Postmortem (required, specific to bug-fix)**: create `docs/postmortems/<bug-slug>.md` using the
    template in `references/postmortem-template.md`.
+4. Started from an intent → set it `status: done`, `changelog: docs/postmortems/<bug-slug>.md`,
+   `updated`, and a Decision log line.
 
 If the bug could NOT be reproduced/fixed (already raised to the user and stopped there), still create
 a postmortem with an "Unresolved" section stating the hypotheses tried, why work stopped, and the
