@@ -126,8 +126,13 @@ resolve_agent() {
 # would otherwise look like a read of the skill itself. One real transcript had
 # 16 such lines for a single skill. Anchoring to the `file_path` argument of a
 # tool call, or to the Skill tool's `skill` argument, matches only real use.
+#
+# The `skill` value carries the plugin namespace once this kit is installed as a
+# plugin - `"skill":"agentic-development-kit:bug-fix"`, not `"skill":"bug-fix"` -
+# so the prefix is optional here. Without it, the installed plugin's gates never
+# saw a workflow start: the checkpoint gate silently never fired.
 skill_ref_pattern() {
-  printf '"file_path"[[:space:]]*:[[:space:]]*"[^"]*/(%s)/SKILL\\.md"|"skill"[[:space:]]*:[[:space:]]*"(%s)"' "$1" "$1"
+  printf '"file_path"[[:space:]]*:[[:space:]]*"[^"]*/(%s)/SKILL\\.md"|"skill"[[:space:]]*:[[:space:]]*"([^":]*:)?(%s)"' "$1" "$1"
 }
 
 # code_ext - the regex deciding what counts as a code file, for the Stop gate and
