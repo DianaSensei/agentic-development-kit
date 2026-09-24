@@ -69,6 +69,7 @@ off to the right orchestrator, so in practice you rarely need to name a workflow
 |-------|---------|
 | [`test-master`](./test-master/SKILL.md) | Test plans, mocking strategy, coverage analysis, performance/security test design, Testcontainers setup |
 | [`code-review-skill`](./code-review-skill/SKILL.md) | The proactive self-check Claude runs before reporting any code change done - checked by the `Stop` gate in [`hooks/`](../hooks/README.md) rather than left to memory |
+| [`independent-review`](./independent-review/SKILL.md) | Reviewing a PR/branch as a session that did NOT write it - against its intent and plan, then correctness via `code-review-skill`'s checklist, ending in a risk summary for the approver. Read-only, never approves. Runs in CI via [`ci/`](../ci/README.md) |
 | [`security-skill`](./security-skill/SKILL.md) | Implementing secure code - auth, input validation, hashing, OWASP prevention |
 | [`security-audit`](./security-audit/SKILL.md) | Auditing existing code/infrastructure for vulnerabilities into a report - read-only, carries no `Edit`/`Write` tool |
 | [`monitoring-expert`](./monitoring-expert/SKILL.md) | Production observability - logging, metrics, tracing, alerting, capacity forecasting |
@@ -88,7 +89,7 @@ off to the right orchestrator, so in practice you rarely need to name a workflow
 - **`references/` is progressive disclosure** - a skill's `SKILL.md` stays lean; deep detail (code
   patterns, decision tables, troubleshooting trees) lives in `references/*.md`, loaded only when the
   matching step is actually reached, listed in each skill's Reference Guide table.
-- **`metadata:` on every skill** - a fixed block after `description`, present on all 26. Claude Code
+- **`metadata:` on every skill** - a fixed block after `description`, present on all 27. Claude Code
   does not read it; it exists so the library can be audited mechanically. `related-skills` in
   particular is checked both ways: every name must resolve to a directory under `skills/`, and every
   skill must be reachable from at least one other, so a skill cannot silently fall out of the graph.

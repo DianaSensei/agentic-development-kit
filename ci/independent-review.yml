@@ -1,0 +1,24 @@
+# Copy to .github/workflows/independent-review.yml in your project.
+# Setup and options: https://github.com/DianaSensei/agentic-development-kit/blob/main/ci/README.md
+name: Independent review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  review:
+    # Pin both refs to the same release tag once one containing this workflow
+    # exists - the workflow and the skills it runs should come from one version.
+    uses: DianaSensei/agentic-development-kit/.github/workflows/independent-review.yml@main
+    with:
+      kit_ref: main
+      # fail_on_blocking: true
+      # extra_instructions: "Payments code under src/billing/ is high risk - hold it to the strictest reading."
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    secrets:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}

@@ -1,0 +1,21 @@
+# This repo's own PRs, reviewed by the reusable workflow next to this file.
+# kit_ref stays on main on purpose: a PR is reviewed by the skills already
+# merged, not by the version of the reviewer it is proposing.
+name: Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  independent-review:
+    uses: ./.github/workflows/independent-review.yml
+    with:
+      kit_ref: main
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    secrets:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}

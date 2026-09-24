@@ -7,7 +7,7 @@ metadata:
   role: specialist
   scope: review
   output-format: report
-  related-skills: feature-development, bug-fix, refactor, security-skill, solution-design-principles, test-master, security-audit
+  related-skills: feature-development, bug-fix, refactor, security-skill, solution-design-principles, test-master, security-audit, independent-review
 ---
 
 # Code Review Checklist
@@ -51,4 +51,4 @@ Read `CLAUDE.md`/existing conventions. Determine which technologies are ACTUALLY
 
 ## A Note on Objectivity
 
-If this is a self-review (the same agent that just wrote the code), it's inherently less objective than a separate session/agent reviewing it. A severe issue MUST be fixed before reporting done - never skip it just because "this is only a self-review." For more objectivity, suggest the user open a new Claude Code session (no shared context) for an independent review.
+If this is a self-review (the same agent that just wrote the code), it's inherently less objective than a separate session/agent reviewing it. A severe issue MUST be fixed before reporting done - never skip it just because "this is only a self-review." For more objectivity, suggest an independent review: a new Claude Code session (no shared context) running `independent-review`, or the kit's CI workflow (`ci/README.md`) that runs it on every pull request.

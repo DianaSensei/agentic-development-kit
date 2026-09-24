@@ -126,8 +126,13 @@ resolve_agent() {
 # would otherwise look like a read of the skill itself. One real transcript had
 # 16 such lines for a single skill. Anchoring to the `file_path` argument of a
 # tool call, or to the Skill tool's `skill` argument, matches only real use.
+#
+# The `skill` value carries the plugin namespace once this kit is installed as a
+# plugin - `"skill":"agentic-development-kit:bug-fix"`, not `"skill":"bug-fix"` -
+# so the prefix is optional here. Without it, the installed plugin's gates never
+# saw a workflow start: the checkpoint gate silently never fired.
 skill_ref_pattern() {
-  printf '"file_path"[[:space:]]*:[[:space:]]*"[^"]*/(%s)/SKILL\\.md"|"skill"[[:space:]]*:[[:space:]]*"(%s)"' "$1" "$1"
+  printf '"file_path"[[:space:]]*:[[:space:]]*"[^"]*/(%s)/SKILL\\.md"|"skill"[[:space:]]*:[[:space:]]*"([^":]*:)?(%s)"' "$1" "$1"
 }
 
 # code_ext - the regex deciding what counts as a code file, for the Stop gate and
@@ -151,6 +156,9 @@ prune_state() {
   find "$STATE_DIR" -maxdepth 1 -type f \
     \( -name '*.blocks' -o -name '*.skillgate.*' -o -name '*.checkpointgate' \) \
     -mtime +7 -delete 2>/dev/null || true
+  # review-gate's once-per-review locks are directories (mkdir is the atomic part).
+  find "$STATE_DIR" -maxdepth 1 -type d -name '*.reviewgate.*' -mtime +7 \
+    -exec rmdir {} + 2>/dev/null || true
 }
 
 # code_change_hash - a stable fingerprint of the working tree's uncommitted CODE
