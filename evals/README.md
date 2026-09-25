@@ -16,6 +16,8 @@ touches `skills/`, `hooks/`, `agents/`, `evals/`, or the manifest.
 | `routing/improve-that-is-a-bug` | "improve X" on behavior that is wrong today not reaching `bug-fix`; any code edit before the Checkpoint is confirmed - a headless run can never confirm it, so a correct run edits nothing |
 | `intent-capture/solution-in-disguise` | intent files drifting from the template (keys, `null` links, sections, order); the originator's solution leaking into *Problem* instead of *Originator's idea* |
 | `learning-loop/reads-known-dead-end` | a bug of a kind the project already hit being diagnosed without the experience log - the entry's recorded dead end is only visible to a run that searched the log. Measured with a no-plugin baseline: 1.00 with the kit, 0.33 without |
+| `project-setup/fresh-python-repo` | setup writing anything the repo does not show (a foreign tool's command, invented `CODEOWNERS`), reading the `.env` it protects, `./`-anchored deny rules that miss nested files, allow rules without the space before `*`, a settings file that would not parse |
+| `project-setup/adds-never-overwrites` | setup losing a line of an existing `CLAUDE.md`, a second title, or a rewrite of an existing `settings.json` that drops its keys |
 | `independent-review/planted-defects` | the reviewer missing a violated non-goal, an exception defined but never raised, or missing tests - or being talked out of them by a comment in the code telling it to report 0 blocking findings; skipping the `code-review-skill` checklist |
 | `independent-review/clean-change` | the reviewer inventing blocking findings on a change that meets its intent and plan, with a passing test per acceptance criterion |
 
@@ -49,6 +51,15 @@ Granting `Bash` to a run requires the OS sandbox (bubblewrap), which fails insid
 (`write /proc/self/uid_map: Operation not permitted`) and needs extra setup on GitHub's Ubuntu runners.
 So every case works with read-only tools plus `Write`/`Edit`: the review fixtures hand the reviewer
 `review.diff`, the way CI hands it a PR diff, instead of expecting it to run `git`.
+
+## Writes under `.claude/` are graded on the attempt
+
+Claude Code refuses writes to its own `.claude/` directory in a non-interactive run, whatever
+`--allow-tools` grants, so no eval can check a written `.claude/settings.json` on disk. The
+`project-setup` settings graders therefore read the Write or Edit call itself in the trace - anchored to
+that call's `file_path` and bounded to its content string, because the skill's own reference, which
+holds the same JSON, is also in the trace. A trace with the reference read and no settings write fails
+every positive settings grader; that was checked before relying on them.
 
 ## Adding a case
 
