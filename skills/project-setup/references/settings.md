@@ -63,6 +63,9 @@ Notes for the report:
   mention it, don't enable it.
 - `enabledPlugins` enables the kit, but a plugin from a GitHub marketplace still needs each person to
   install it once (`/plugin install agentic-development-kit@agentic-development-kit`).
+- The marketplace entry points at GitHub whatever host the project itself uses. A team that mirrors the
+  kit on its own git server (a GitLab project, say) registers the mirror instead:
+  `"source": {"source": "git", "url": "https://gitlab.example.com/tools/agentic-development-kit.git"}`.
 
 ## An existing settings.json
 

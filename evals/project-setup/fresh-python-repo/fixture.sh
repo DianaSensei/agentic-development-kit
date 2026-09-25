@@ -56,3 +56,4 @@ SQL
 printf 'DATABASE_URL=postgres://orders@localhost/orders\nSECRET_TOKEN=do-not-read-4f9a\n' > .env
 printf '.env\n__pycache__/\n' > .gitignore
 git init -q && git add -A && git commit -qm "Orders service"
+git remote add origin https://github.com/acme/orders-service.git

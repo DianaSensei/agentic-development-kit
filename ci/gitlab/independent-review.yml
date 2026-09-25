@@ -1,0 +1,78 @@
+# GitLab CI: the kit's independent reviewer on every merge request.
+#
+# Include it from your .gitlab-ci.yml (pin kit_ref and the URL to the same tag
+# once a release containing this file exists):
+#
+#   include:
+#     - remote: https://raw.githubusercontent.com/DianaSensei/agentic-development-kit/main/ci/gitlab/independent-review.yml
+#       inputs:
+#         kit_ref: main
+#
+# Needs two masked CI/CD variables - ANTHROPIC_API_KEY (or CLAUDE_CODE_OAUTH_TOKEN)
+# and ADK_GITLAB_TOKEN, a project access token with the Reporter role and the
+# `api` scope. Setup and options: ci/README.md in the kit.
+#
+# The job is GitLab glue around ci/review.sh, the same runner GitHub Actions
+# uses: Claude reviews with no way to post, and codehost/codehost.py posts its
+# findings through a GitLab MCP server - an inline thread per finding and one
+# summary note, edited in place on every push.
+
+spec:
+  inputs:
+    kit_ref:
+      description: Branch or tag of the kit whose skills the reviewer uses.
+      default: main
+    kit_repository_url:
+      description: Git URL the kit is cloned from - change only for a fork or an internal mirror.
+      default: https://github.com/DianaSensei/agentic-development-kit.git
+    stage:
+      description: Stage the review job runs in.
+      default: test
+    model:
+      description: Model for the reviewer (e.g. claude-opus-5-5). Empty uses Claude Code's default.
+      default: ""
+    fail_on_blocking:
+      description: Fail the job when the review reports blocking findings. Start with false.
+      type: boolean
+      default: false
+    extra_instructions:
+      description: Project-specific review instructions appended to the prompt.
+      default: ""
+---
+adk-independent-review:
+  stage: $[[ inputs.stage ]]
+  image: node:22-bookworm
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_DRAFT != "true"
+  interruptible: true
+  timeout: 30m
+  # Exit 3 is ci/review.sh's "skipped - no credential": shown as a warning, not
+  # a failure. Fork pipelines never receive protected variables.
+  allow_failure:
+    exit_codes: [3]
+  variables:
+    GIT_DEPTH: "1"
+    ADK_KIT_REF: $[[ inputs.kit_ref ]]
+    ADK_KIT_URL: $[[ inputs.kit_repository_url ]]
+    ADK_MODEL: $[[ inputs.model ]]
+    ADK_FAIL_ON_BLOCKING: "$[[ inputs.fail_on_blocking ]]"
+    ADK_EXTRA_INSTRUCTIONS: $[[ inputs.extra_instructions ]]
+  script:
+    - npm install --global --no-audit --no-fund @anthropic-ai/claude-code
+    # Cloned outside the project directory so the kit is never part of the change under review.
+    - git clone --quiet --depth 1 --branch "$ADK_KIT_REF" "$ADK_KIT_URL" /tmp/adk
+    - |
+      export ADK_PROVIDER=gitlab
+      export ADK_PROJECT="$CI_PROJECT_ID"
+      export ADK_CHANGE_ID="$CI_MERGE_REQUEST_IID"
+      # A merged-results pipeline checks out the merge commit; its first parent is the target.
+      export ADK_DIFF_BASE="${CI_MERGE_REQUEST_TARGET_BRANCH_SHA:-$CI_MERGE_REQUEST_DIFF_BASE_SHA}"
+      export ADK_HEAD_SHA="${CI_MERGE_REQUEST_SOURCE_BRANCH_SHA:-$CI_COMMIT_SHA}"
+      export ADK_CHANGE_TITLE="$CI_MERGE_REQUEST_TITLE"
+      export ADK_CHANGE_BODY="${CI_MERGE_REQUEST_DESCRIPTION:-}"
+      export ADK_SOURCE_BRANCH="$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME"
+      export ADK_TARGET_BRANCH="$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+      export ADK_CODEHOST_TOKEN="${ADK_GITLAB_TOKEN:-}"
+      export ADK_CODEHOST_URL="$CI_API_V4_URL"
+      export ADK_WORK_DIR=/tmp/adk-review
+      bash /tmp/adk/ci/review.sh

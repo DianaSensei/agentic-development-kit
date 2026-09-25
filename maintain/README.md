@@ -7,31 +7,58 @@ accepts or rejects each one; accepted intents then go through `workflow-router` 
 
 ```
 bands.yaml ──► check-bands.py ──► breach / broken detector ─┐
-failed CI run on main ──────────────────────────────────────┼─► Claude: intent-capture (machine-raised)
+failed pipeline on main ────────────────────────────────────┼─► Claude: intent-capture (machine-raised)
                                                              │        writes docs/intents/ only
-                                                             └─► verify ─► one PR: "Proposed intents from monitoring"
+                                                             └─► verify ─► git push ─► one triage request
+                                                                              (opened through MCP)
 ```
 
-What Claude may do here: read the repository and write under `docs/intents/`, nothing else. It does
-not diagnose past the evidence and does not fix anything. The workflow checks that: if a file outside
-`docs/intents/` changed, or an intent fails `check-intent.sh`, nothing is published.
+What Claude may do here: read the repository and write under `docs/intents/`, nothing else - no shell
+beyond the intent checker, no MCP server, no token in its environment. It does not diagnose past the
+evidence and does not fix anything. [`run.sh`](./run.sh) checks that: if a file outside
+`docs/intents/` changed, or an intent fails `check-intent.sh`, nothing is published. Publishing is
+`git push` and [`codehost.py ensure-change`](../codehost/README.md), which finds or opens the triage
+request through the provider's MCP server - the same script on GitHub Actions and GitLab CI.
 
 ## Setup
 
-1. **`bands.yaml`** at the repository root - start from [`bands.example.yaml`](./bands.example.yaml).
-   Each band is a command that prints one number, and the range it must stay in (`min`, `max`, or
-   both). Quote a command that contains `": "`, or YAML will not parse it.
-2. **The caller**: copy [`ci/maintain.yml`](../ci/maintain.yml) to `.github/workflows/maintain.yml`,
+**`bands.yaml`** at the repository root - start from [`bands.example.yaml`](./bands.example.yaml).
+Each band is a command that prints one number, and the range it must stay in (`min`, `max`, or both).
+Quote a command that contains `": "`, or YAML will not parse it.
+
+### GitHub Actions
+
+1. **The caller**: copy [`ci/maintain.yml`](../ci/maintain.yml) to `.github/workflows/maintain.yml`,
    and list your CI workflows' names under `workflow_run.workflows` so a failure on the default branch
    becomes an intent too.
-3. **Secrets**:
+2. **Secrets**:
    - `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN` - the same one the CI reviewer uses.
    - `BANDS_ENV` (optional) - what the band commands need, as `NAME=value` lines
      (`PROM_URL=...`, `PROM_TOKEN=...`). It is exported for the check step only, never to Claude's
      step, and every value in it is replaced with `[redacted]` in the evidence before anything is
-     written - GitHub masks secrets in logs, not in committed files.
-4. **Repository setting**: Settings → Actions → General → "Allow GitHub Actions to create and approve
+     written - a CI masks secrets in its logs, not in committed files.
+3. **Repository setting**: Settings → Actions → General → "Allow GitHub Actions to create and approve
    pull requests", or the triage PR cannot be opened.
+
+### GitLab CI
+
+1. **The include**, in `.gitlab-ci.yml`:
+
+   ```yaml
+   include:
+     - remote: https://raw.githubusercontent.com/DianaSensei/agentic-development-kit/main/ci/gitlab/maintain.yml
+       inputs:
+         kit_ref: main
+   ```
+
+   It adds two jobs: `adk-maintain`, which runs on a schedule, and `adk-maintain-on-failure`, which runs
+   in `.post` when a push pipeline on the default branch fails and records that failure.
+2. **A schedule** (Build → Pipeline schedules), every 6 hours for example, with the variable
+   `ADK_MAINTAIN` = `true`. Give your other jobs a rule that skips scheduled pipelines if they should
+   not run on it.
+3. **Masked CI/CD variables**: `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN`; `ADK_GITLAB_TOKEN` - a
+   project access token with the **Developer** role and the **`api`** and **`write_repository`** scopes,
+   which pushes the triage branch and opens its merge request; optionally `BANDS_ENV`, as for GitHub.
 
 Without a Claude credential the checks still run and the job summary lists what they found, with a
 warning that nothing was written up.

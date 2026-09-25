@@ -14,6 +14,9 @@ bands:
     runbook: docs/runbooks/checkout.md
 
   - name: open-p1-bugs
+    # GitHub Actions passes GH_TOKEN to band commands. On GitLab, put a token in
+    # BANDS_ENV and ask the API instead, e.g.
+    # curl -sf -H "PRIVATE-TOKEN: $GITLAB_READ_TOKEN" "$CI_API_V4_URL/projects/$CI_PROJECT_ID/issues_statistics?labels=P1" | jq '.statistics.counts.opened'
     command: gh issue list --label P1 --state open --json number --jq length
     max: 3
 

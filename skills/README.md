@@ -32,7 +32,7 @@ off to the right orchestrator, so in practice you rarely need to name a workflow
 | [`workflow-router`](./workflow-router/SKILL.md) | First stop for any "write or change code" request - classifies it as a new feature, a bug fix, or a refactor, then hands off |
 | [`feature-development`](./feature-development/SKILL.md) | New capability or an intentional behavior change, start to finish |
 | [`bug-fix`](./bug-fix/SKILL.md) | Current behavior is actually wrong - reproduce, confirm root cause, fix, postmortem |
-| [`project-setup`](./project-setup/SKILL.md) | Setting a repository up for this kit in one pass - `CLAUDE.md`, `REVIEW.md`, `CODEOWNERS`, a committed `.claude/settings.json` (secret deny rules, lockfile protection, the kit enabled for everyone), the quality-check config and the CI reviewer. Adds to existing files, never overwrites |
+| [`project-setup`](./project-setup/SKILL.md) | Setting a repository up for this kit in one pass - `CLAUDE.md`, `REVIEW.md`, `CODEOWNERS`, a committed `.claude/settings.json` (secret deny rules, lockfile protection, the kit enabled for everyone), the quality-check config, the code host's MCP server and the CI reviewer for GitHub or GitLab. Adds to existing files, never overwrites |
 | [`refactor`](./refactor/SKILL.md) | Structure/performance/maintainability improvement with external behavior required to stay 100% identical |
 
 ## Requirements & Design
@@ -80,6 +80,7 @@ off to the right orchestrator, so in practice you rarely need to name a workflow
 
 | Skill | Use For |
 |-------|---------|
+| [`code-host`](./code-host/SKILL.md) | Connecting the project's GitHub or GitLab through the vendor's MCP server, and the code-host operations the SDLC uses (read a pull/merge request, post a finding on a line, keep one summary comment, open a request) with each provider's tool for each |
 | [`mcp-developer`](./mcp-developer/SKILL.md) | Building a new MCP server/client - protocol lifecycle, transports, OAuth 2.1 authorization (SDK APIs come from live docs, not a snapshot here) |
 | [`toolbox-connections`](./toolbox-connections/SKILL.md) | Configure this plugin's own bundled toolbox MCP - add/remove a database connection or a custom query/tool |
 
@@ -90,7 +91,7 @@ off to the right orchestrator, so in practice you rarely need to name a workflow
 - **`references/` is progressive disclosure** - a skill's `SKILL.md` stays lean; deep detail (code
   patterns, decision tables, troubleshooting trees) lives in `references/*.md`, loaded only when the
   matching step is actually reached, listed in each skill's Reference Guide table.
-- **`metadata:` on every skill** - a fixed block after `description`, present on all 28. Claude Code
+- **`metadata:` on every skill** - a fixed block after `description`, present on all 29. Claude Code
   does not read it; it exists so the library can be audited mechanically. `related-skills` in
   particular is checked both ways: every name must resolve to a directory under `skills/`, and every
   skill must be reachable from at least one other, so a skill cannot silently fall out of the graph.

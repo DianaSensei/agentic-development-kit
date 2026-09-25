@@ -1,7 +1,8 @@
 # Agentic Development Kit
 
-A Claude Code plugin for AI-assisted software development: a library of 28 skills, a tiered subagent
-pipeline, quality-check hooks, and MCP configs for reaching beyond the codebase.
+A Claude Code plugin for AI-assisted software development: a library of 29 skills, a tiered subagent
+pipeline, quality-check hooks, and MCP configs for reaching beyond the codebase. Works with GitHub and
+GitLab: the few steps that touch the code host go through its own MCP server.
 
 The workflow core is stack-agnostic. Anything technology-specific lives in its own skill, so a project
 in an uncovered stack still gets the structure (checkpoints, fix-attempt limits, reporting).
@@ -37,12 +38,13 @@ Each directory sits at the plugin root, where Claude Code's
 
 | Directory | What it is |
 |---|---|
-| [`skills/`](./skills/README.md) | 28 skills. Claude Code picks the right one from its `description`, so there is nothing to invoke by hand. Also reachable as `/agentic-development-kit:<skill-name>`. |
+| [`skills/`](./skills/README.md) | 29 skills. Claude Code picks the right one from its `description`, so there is nothing to invoke by hand. Also reachable as `/agentic-development-kit:<skill-name>`. |
 | [`agents/`](./agents-guide.md) | Tiered Task subagents. Tier 1 clarifies requirements and proposes solutions, Tier 2 implements. They pass a fixed JSON contract between steps. |
 | [`hooks/`](./hooks/README.md) | Gates for the rules a model cannot self-police: the owning `SKILL.md` was read before an edit, `code-review-skill` ran before "done", and a whole-file `Read` past a line threshold routes to the cheap `bulk-reader` agent instead of the expensive model's context. Warn by default, blocking per gate. |
-| [`ci/`](./ci/README.md) | A GitHub Actions caller for independent review: every pull request reviewed by a fresh Claude session running `independent-review` - against its intent and plan, then for correctness - with inline findings and one summary comment for the approver. Read-only; a person still approves. One secret to set. |
+| [`ci/`](./ci/README.md) | Independent review for GitHub Actions and GitLab CI: every pull or merge request reviewed by a fresh Claude session running `independent-review` - against its intent and plan, then for correctness - with inline findings and one summary comment for the approver. Claude only returns data; a script posts it through the code host's MCP server. A person still approves. |
+| [`codehost/`](./codehost/README.md) | How the pipelines reach the code host: provider profiles for GitHub's and GitLab's MCP servers, and a small MCP client that posts reviews and opens the maintain loop's triage request. Tested against a fake server that serves the real tool schemas. |
 | [`evals/`](./evals/README.md) | Behavioral regression tests for the kit, run with `claude plugin eval` on every PR that touches a skill, hook or agent: routing, the Checkpoint, intent files, and the independent reviewer against planted defects. |
-| [`maintain/`](./maintain/README.md) | The maintain loop: a scheduled, deterministic check of control bands (`bands.yaml`) and of CI failures on the default branch; each problem becomes a `proposed` intent on one triage pull request. Claude writes only under `docs/intents/` and fixes nothing. |
+| [`maintain/`](./maintain/README.md) | The maintain loop: a scheduled, deterministic check of control bands (`bands.yaml`) and of CI failures on the default branch; each problem becomes a `proposed` intent on one triage pull or merge request, on GitHub or GitLab. Claude writes only under `docs/intents/` and fixes nothing. |
 | [`mcp/`](./mcp/README.md) | Toolbox config for databases - PostgreSQL, MySQL, TiDB, Redis, MongoDB, or any other type Toolbox supports. Ships with no pre-built connections; add exactly what you have. Declared in the root `.mcp.json`, connected automatically once a connection exists - no repo clone needed. |
 | [`metrics/`](./metrics/README.md) | The playbook's measures - acceptance rate, time to decision, plan to shipped, design rework, repeated mistakes, monitoring triage - computed from the committed intents, plans, changelogs and experience log. Deterministic, no network. |
 
@@ -52,7 +54,8 @@ Each directory sits at the plugin root, where Claude Code's
   `feature-development` / `bug-fix` / `refactor`.
 - **A new project** starts with `project-setup` ("set this repo up for the kit"): it writes `CLAUDE.md`,
   `REVIEW.md`, `CODEOWNERS`, a committed `.claude/settings.json` that enables the kit for every
-  teammate, and the CI reviewer - adding to files that exist, never overwriting them.
+  teammate, the code host's MCP server, and the CI reviewer for GitHub or GitLab - adding to files that
+  exist, never overwriting them.
 - **Ideas not ready to build** go to `intent-capture`, which writes `docs/intents/<slug>.md` - the
   problem, evidence, and desired outcome, no solution. Later, "implement `docs/intents/<slug>.md`" starts
   the workflow from it, and the workflow links the intent to its plan and changelog as it goes.

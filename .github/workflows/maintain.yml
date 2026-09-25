@@ -8,6 +8,9 @@ name: Maintain
 # is the triage queue. Claude diagnoses nothing beyond the evidence and fixes
 # nothing; a person accepts or rejects each intent, and accepted ones go
 # through the normal workflows. Caller and setup: maintain/README.md in the kit.
+#
+# Everything here is GitHub glue around maintain/run.sh, the same script GitLab
+# CI runs; the pull request is opened through GitHub's MCP server.
 
 on:
   workflow_call:
@@ -29,7 +32,7 @@ on:
         type: string
         default: ""
       model:
-        description: "Model that writes the intents. Empty uses the action's default."
+        description: "Model that writes the intents. Empty uses Claude Code's default."
         type: string
         default: ""
     secrets:
@@ -38,7 +41,7 @@ on:
       CLAUDE_CODE_OAUTH_TOKEN:
         required: false
       BANDS_ENV:
-        description: "Environment for the band commands, as NAME=value lines (metrics URLs, API tokens). Exported for the check step only; every value is redacted from the evidence."
+        description: "Environment for the band commands, as NAME=value lines (metrics URLs, API tokens). Exported for the check only; every value is redacted from the evidence."
         required: false
 
 jobs:
@@ -49,12 +52,9 @@ jobs:
       contents: write
       pull-requests: write
       actions: read
-      id-token: write
     concurrency:
       group: maintain-${{ github.repository }}
       cancel-in-progress: false
-    env:
-      QUEUE_BRANCH: maintain/proposed-intents
     steps:
       - uses: actions/checkout@v4
         with:
@@ -70,141 +70,52 @@ jobs:
         with:
           python-version: "3.12"
 
-      # Detection is deterministic: no model runs here.
-      - name: Check the control bands
-        env:
-          BANDS_FILE: ${{ inputs.bands_file }}
-          BANDS_ENV: ${{ secrets.BANDS_ENV }}
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          RESULTS="$RUNNER_TEMP/maintain/results.json"
-          if [ -f "$BANDS_FILE" ]; then
-            if [ -n "$BANDS_ENV" ]; then
-              set -a; source /dev/stdin <<<"$BANDS_ENV"; set +a
-            fi
-            CHECK_BANDS_REDACT="$(printf '%s\n' "$BANDS_ENV" | sed -n 's/^[A-Za-z_][A-Za-z0-9_]*=//p'; printf '%s\n' "$GH_TOKEN")"
-            export CHECK_BANDS_REDACT
-            python -m pip install --quiet pyyaml
-            python "$RUNNER_TEMP/maintain/adk/maintain/check-bands.py" "$BANDS_FILE" --out "$RESULTS" > /dev/null
-          else
-            echo "No $BANDS_FILE in this repository - only CI failures are checked."
-            echo '[]' > "$RESULTS"
-          fi
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
-      - name: Record a failed CI run
+      - name: Install tools
+        run: |
+          python -m pip install --quiet pyyaml
+          npm install --global --no-audit --no-fund @anthropic-ai/claude-code
+
+      # Reading this CI's own run log is GitHub Actions glue, like GitLab's CI_
+      # variables; the evidence it produces is provider-neutral.
+      - name: Describe the failed run
         if: inputs.failed_run_id != ''
         env:
           GH_TOKEN: ${{ github.token }}
           RUN_ID: ${{ inputs.failed_run_id }}
         run: |
           set -euo pipefail
-          RESULTS="$RUNNER_TEMP/maintain/results.json"
           run="$(gh run view "$RUN_ID" --repo "$GITHUB_REPOSITORY" --json name,headBranch,headSha,url,conclusion)"
           [ "$(jq -r .conclusion <<<"$run")" = "failure" ] || { echo "Run $RUN_ID did not fail - nothing to record."; exit 0; }
-          tail="$(gh run view "$RUN_ID" --repo "$GITHUB_REPOSITORY" --log-failed 2>/dev/null | tail -n 60 || true)"
-          jq --argjson run "$run" --arg tail "$tail" '. + [{
-              name: ("ci-" + ($run.name | ascii_downcase | gsub("[^a-z0-9]+"; "-") | ltrimstr("-") | rtrimstr("-"))),
-              status: "breach", tier: "propose", value: null, min: null, max: null,
-              reason: ("workflow \"" + $run.name + "\" failed on " + $run.headBranch + " at " + $run.headSha[0:7]),
-              command: "(CI run)", output: $tail, url: $run.url, owner: null, runbook: null
-            }]' "$RESULTS" > "$RESULTS.new"
-          mv "$RESULTS.new" "$RESULTS"
+          gh run view "$RUN_ID" --repo "$GITHUB_REPOSITORY" --log-failed 2>/dev/null | tail -n 60 > "$RUNNER_TEMP/maintain/failed.log" || true
+          {
+            echo "ADK_FAILED_NAME=$(jq -r .name <<<"$run")"
+            echo "ADK_FAILED_URL=$(jq -r .url <<<"$run")"
+            echo "ADK_FAILED_REF=$(jq -r .headBranch <<<"$run")"
+            echo "ADK_FAILED_SHA=$(jq -r .headSha <<<"$run")"
+            echo "ADK_FAILED_LOG_FILE=$RUNNER_TEMP/maintain/failed.log"
+          } >> "$GITHUB_ENV"
 
-      - name: Summarize
-        id: summary
-        run: |
-          set -euo pipefail
-          RESULTS="$RUNNER_TEMP/maintain/results.json"
-          jq -r '
-            "### Maintain: \(map(select(.status != "ok")) | length) problem(s) in \(length) check(s)",
-            "",
-            "| Check | Status | Value | Range | Tier | Detail |",
-            "|---|---|---|---|---|---|",
-            (.[] | "| \(.name) | \(.status) | \(.value // "-") | \(.min // "") .. \(.max // "") | \(.tier) | \(.reason // "") |")
-          ' "$RESULTS" >> "$GITHUB_STEP_SUMMARY"
-          count="$(jq '[.[] | select(.tier == "propose" and (.status == "breach" or .status == "error"))] | length' "$RESULTS")"
-          echo "propose=$count" >> "$GITHUB_OUTPUT"
-          jq -r '.[] | select(.status == "error") | "::warning title=Broken detector::\(.name): \(.reason)"' "$RESULTS"
-
-      - name: Check for credentials
-        id: auth
-        if: steps.summary.outputs.propose != '0'
+      - name: Check, propose, publish
         env:
-          HAS_CREDENTIAL: ${{ secrets.ANTHROPIC_API_KEY != '' || secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
-        run: |
-          if [ "$HAS_CREDENTIAL" = "true" ]; then
-            echo "enabled=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "enabled=false" >> "$GITHUB_OUTPUT"
-            echo "::warning title=Maintain: intents not proposed::Problems were found (see the summary) but no ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN secret is set to write them up."
-          fi
-
-      # The queue branch carries intents proposed in earlier runs that nobody has
-      # triaged yet; starting from it lets this run update those instead of
-      # duplicating them. Merging the default branch in brings intents already
-      # accepted there into view for the same reason.
-      - name: Open the triage branch
-        if: steps.auth.outputs.enabled == 'true'
-        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          BANDS_ENV: ${{ secrets.BANDS_ENV }}
+          # For band commands that call `gh`; redacted from the evidence like BANDS_ENV.
           GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          # From the API: a scheduled run's event payload does not reliably name the default branch.
-          DEFAULT_BRANCH="$(gh api "repos/$GITHUB_REPOSITORY" --jq .default_branch)"
-          echo "DEFAULT_BRANCH=$DEFAULT_BRANCH" >> "$GITHUB_ENV"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if git ls-remote --exit-code --heads origin "$QUEUE_BRANCH" > /dev/null; then
-            git fetch --quiet origin "$QUEUE_BRANCH"
-            git checkout --quiet -B "$QUEUE_BRANCH" "origin/$QUEUE_BRANCH"
-            git merge --quiet --no-edit "origin/$DEFAULT_BRANCH"
-          else
-            git checkout --quiet -B "$QUEUE_BRANCH" "origin/$DEFAULT_BRANCH"
-          fi
-
-      - name: Write the intents
-        if: steps.auth.outputs.enabled == 'true'
-        uses: anthropics/claude-code-action@v1
-        with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          github_token: ${{ github.token }}
-          prompt: |
-            Follow ${{ runner.temp }}/maintain/adk/maintain/propose-intents.md.
-            The results file is ${{ runner.temp }}/maintain/results.json. The kit is at ${{ runner.temp }}/maintain/adk.
-            Run URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          claude_args: |
-            --add-dir ${{ runner.temp }}/maintain
-            --allowedTools "Read,Glob,Grep,Skill,Write(docs/intents/**),Edit(docs/intents/**),Bash(bash ${{ runner.temp }}/maintain/adk/skills/intent-capture/scripts/check-intent.sh *)"
-            ${{ inputs.model != '' && format('--model {0}', inputs.model) || '' }}
-
-      # The model's output is checked, not trusted: nothing outside docs/intents/
-      # may change, and every intent must pass the format check, or nothing is
-      # published.
-      - name: Verify and publish
-        if: steps.auth.outputs.enabled == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          outside="$(git status --porcelain --untracked-files=all | awk '{print $NF}' | grep -v '^docs/intents/' || true)"
-          if [ -n "$outside" ]; then
-            echo "::error title=Maintain::Files outside docs/intents/ changed - nothing published:"; echo "$outside"
-            exit 1
-          fi
-          changed="$(git status --porcelain --untracked-files=all -- docs/intents | awk '{print $NF}')"
-          if [ -z "$changed" ]; then echo "No intent changed."; exit 0; fi
-          bash "$RUNNER_TEMP/maintain/adk/skills/intent-capture/scripts/check-intent.sh" $changed
-
-          git add docs/intents
-          git commit --quiet -m "Maintain: propose intents from monitoring ($(date -u +%Y-%m-%d))"
-          git push --quiet origin "$QUEUE_BRANCH"
-
-          if [ -z "$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$QUEUE_BRANCH" --state open --json number --jq '.[].number')" ]; then
-            gh pr create --repo "$GITHUB_REPOSITORY" --base "$DEFAULT_BRANCH" --head "$QUEUE_BRANCH" \
-              --title "Proposed intents from monitoring" \
-              --body "Problems found by the maintain loop, each written up as a \`proposed\` intent. Triage them here: accept (\`intent-capture\` Decide mode, or edit \`status\`), reject with a reason, or edit before merging. Merging records the decisions; accepted intents then go through the normal workflows. New findings keep arriving on this branch until it is merged."
-          fi
-          echo "Proposed or updated:" >> "$GITHUB_STEP_SUMMARY"
-          printf -- '- `%s`\n' $changed >> "$GITHUB_STEP_SUMMARY"
+          ADK_REDACT: ${{ github.token }}
+          ADK_BANDS_FILE: ${{ inputs.bands_file }}
+          ADK_PROVIDER: github
+          ADK_PROJECT: ${{ github.repository }}
+          ADK_CODEHOST_TOKEN: ${{ github.token }}
+          ADK_CODEHOST_URL: ${{ github.server_url != 'https://github.com' && github.server_url || '' }}
+          ADK_CODEHOST_BOT_LOGIN: github-actions[bot]
+          ADK_GIT_NAME: github-actions[bot]
+          ADK_GIT_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+          ADK_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          ADK_MODEL: ${{ inputs.model }}
+          ADK_WORK_DIR: ${{ runner.temp }}/maintain/work
+        run: bash "$RUNNER_TEMP/maintain/adk/maintain/run.sh"

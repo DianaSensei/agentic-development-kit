@@ -1,0 +1,29 @@
+{
+  "provider": "gitlab",
+  "change_request": "merge request",
+  "server": {
+    "name": "@zereight/mcp-gitlab - GitLab's own MCP server signs in with OAuth only, which a pipeline cannot complete",
+    "command": ["npx", "-y", "@zereight/mcp-gitlab@2.1.66"],
+    "env": {
+      "GITLAB_PERSONAL_ACCESS_TOKEN": "${ADK_CODEHOST_TOKEN}",
+      "GITLAB_API_URL": "${ADK_CODEHOST_URL}",
+      "GITLAB_TOOLSETS": "users",
+      "GITLAB_TOOLS": "{tools}",
+      "GITLAB_PERMISSION_MODE": "modify",
+      "GITLAB_DISABLE_VERSION_CHECK": "true"
+    }
+  },
+  "install": {
+    "version": "2.1.66",
+    "package": "@zereight/mcp-gitlab"
+  },
+  "tools": [
+    "get_merge_request",
+    "get_merge_request_notes",
+    "create_merge_request_note",
+    "update_merge_request_note",
+    "create_merge_request_thread",
+    "list_merge_requests",
+    "create_merge_request"
+  ]
+}

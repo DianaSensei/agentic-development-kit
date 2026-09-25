@@ -3,7 +3,7 @@
 
 Reads docs/intents/, docs/plans/, docs/changelog/, docs/postmortems/,
 docs/knowledge/experience-log.md and git history. Deterministic, stdlib only,
-no network. Metrics that need CI or review data from GitHub are listed as not
+no network. Metrics that need CI or review data from the code host are listed as not
 measured rather than estimated.
 
 Usage: sdlc-metrics.py [repo-root] [--json]
@@ -176,7 +176,7 @@ def markdown(m):
     ]
     out = ["| Stage | Metric | Value | Meaning |", "|---|---|---|---|"]
     out += [f"| {a} | {b_} | {c} | {d} |" for a, b_, c, d in rows]
-    out += ["", "Not measured here (needs CI and review data from GitHub): " + ", ".join(m["not_measured"]) + "."]
+    out += ["", "Not measured here (needs CI and review data from the code host): " + ", ".join(m["not_measured"]) + "."]
     return "\n".join(out)
 
 
