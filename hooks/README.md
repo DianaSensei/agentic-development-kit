@@ -27,7 +27,6 @@ owns that judgement actually runs.
 | `write-lint.sh` | `PostToolUse` on edits | `warn` | Scans only the newly written text for hardcoded secrets and leftover placeholders. Advisory by protocol: `PostToolUse` cannot block. |
 | `quality-gate.sh` | `Stop` | `warn` | Flags - or, set to `block`, refuses to end - a turn that leaves uncommitted **code** changes no review has vouched for. |
 | `review-gate.sh` | `Stop` | `warn` | Inside an `independent-review`, holds the turn until `quality_gate.review_skill`'s `SKILL.md` (the checklist the findings are graded against) was actually read - in a test run the reviewer skipped the read and still wrote "Checklists applied: code-review-skill". Fires once per review run and does nothing in any session that is not reviewing. `ADK_REVIEW_GATE` overrides `mode.review_gate` alone; the CI workflow ([`ci/`](../ci/README.md)) sets it to `block`. |
-| `mark-reviewed.sh` | - | - | Records a review by hand, from a terminal outside any session. Sessions never need it: `quality-gate` clears itself when the transcript shows the review skill read after the last code edit - it used to ask Claude to run this script, which sits outside the project and was refused under a narrow allowlist or in a non-interactive session. Takes an optional session id (`mark-reviewed.sh <session>`) to clear only that session's block counter. |
 
 `quality-gate.sh` fingerprints the changed code rather than setting a boolean, so editing code after a
 review invalidates it - the next review covers the new state. Documentation-only turns never trip it.

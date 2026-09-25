@@ -75,6 +75,3 @@ every positive settings grader; that was checked before relying on them.
    been, in turn, a real skill defect (the reviewer skipping its checklist), an unfair fixture (a
    docstring that made the correct change look risky), and a judge misreading a correct review. Only the
    first is fixed in the skill.
-
-`skills/solution-design-principles/evals/` is a different kind of eval set: skill-creator's trigger
-queries for tuning that one skill's `description` by hand. It is not part of this suite or of CI.
