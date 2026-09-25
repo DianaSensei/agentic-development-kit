@@ -1,0 +1,24 @@
+# Control bands for the maintain loop (maintain/README.md in the kit).
+# Each band is a command whose stdout is ONE number, and the range it must stay in.
+# The commands run in CI with the workflow's environment: reach metrics through
+# an API your CI can call, with credentials from repository secrets.
+#
+# Quote a command that contains ": " (colon, space) - unquoted, YAML reads it as
+# a key and the file does not parse.
+bands:
+  - name: checkout-p95-latency-ms
+    command: "curl -sf \"$PROM_URL/api/v1/query?query=histogram_quantile(0.95,sum(rate(http_request_duration_seconds_bucket{route=\\\"/checkout\\\"}[1h]))by(le))*1000\" | jq -r '.data.result[0].value[1]'"
+    max: 800
+    tier: propose            # propose: open an intent when out of range (default)
+    owner: payments          # optional, shown to whoever triages
+    runbook: docs/runbooks/checkout.md
+
+  - name: open-p1-bugs
+    command: gh issue list --label P1 --state open --json number --jq length
+    max: 3
+
+  - name: disk-free-pct
+    command: df --output=pcent / | tail -1 | tr -dc '0-9' | awk '{print 100 - $1}'
+    min: 15
+    tier: observe            # observe: report in the job summary only
+    timeout_seconds: 10      # default 60

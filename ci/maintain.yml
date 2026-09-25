@@ -1,0 +1,33 @@
+# Copy to .github/workflows/maintain.yml in your project, and add a bands.yaml
+# (maintain/bands.example.yaml in the kit is a starting point).
+# Setup and options: https://github.com/DianaSensei/agentic-development-kit/blob/main/maintain/README.md
+name: Maintain
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"   # every 6 hours; bands are checked on this schedule
+  workflow_dispatch:
+  workflow_run:
+    # The name of each CI workflow whose failure on the default branch should
+    # become an intent. Replace with yours.
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  maintain:
+    # A workflow_run event fires for every completion; only a failure is a problem.
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'failure'
+    # Pin both refs to the same release tag once one containing this workflow exists.
+    uses: DianaSensei/agentic-development-kit/.github/workflows/maintain.yml@main
+    with:
+      kit_ref: main
+      failed_run_id: ${{ github.event.workflow_run.id && format('{0}', github.event.workflow_run.id) || '' }}
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: read
+      id-token: write
+    secrets:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}

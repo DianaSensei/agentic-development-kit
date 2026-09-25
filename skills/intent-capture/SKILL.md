@@ -107,7 +107,8 @@ Report the path, the status, and any open questions, then stop. The next move be
 ### Machine-raised intents
 
 When the input is an alert, log excerpt, failing job, or incident thread rather than a person (the
-maintain end of the loop), there may be nobody to interview:
+maintain end of the loop - the kit's `maintain/` workflow raises these on its own), there may be
+nobody to interview:
 - `originator` is the source (`monitoring/<alert name>`, `incident/<id>`) - a slash, not a colon, so
   the frontmatter stays valid YAML.
 - *Evidence* quotes the raw signal, trimmed to what matters, with secrets and personal data redacted.
