@@ -3,10 +3,10 @@
 # reporting done" actually true.
 #
 # It does not judge the change; it refuses to let the turn end while
-# uncommitted code changes exist that no review has vouched for. Claude clears
-# it by running the review skill and then recording the result with
-# mark-reviewed.sh - which is self-healing: the block tells it exactly what to
-# do, and doing that unblocks it.
+# uncommitted code changes exist that no review has vouched for. It clears
+# itself once the transcript shows the review skill loaded after the last code
+# edit - self-healing: the block tells Claude exactly what to do, and doing it
+# unblocks it. mark-reviewed.sh records a review by hand, outside a session.
 
 . "${0%/*}/common.sh" || exit 0
 
@@ -30,10 +30,27 @@ MARKER="$STATE_DIR/reviewed"
 REVIEW_SKILL="$(jq_cfg '.quality_gate.review_skill' 'code-review-skill')"
 [ -n "$(resolve_skill "$REVIEW_SKILL")" ] || exit 0   # skill not installed here
 
-# A session may be held at this gate only so many times. Past that it warns and
-# lets go: a quality gate that can trap a session is worse than one that misses.
 SESSION="$(jq_in '.session_id' unknown)"
 COUNTER="$STATE_DIR/$SESSION.blocks"
+
+# The review is visible in the transcript: the review skill was loaded after the
+# last edit to a code file. Record it here, so clearing the gate never depends
+# on Claude running a script from the plugin directory - which lies outside the
+# project and needs a permission a narrow allowlist or a non-interactive
+# session does not have. Hooks run outside Claude's permission system.
+TRANSCRIPT="$(jq_in '.transcript_path')"
+if [ -f "$TRANSCRIPT" ]; then
+  REVIEW_LINE="$(last_line_matching "$TRANSCRIPT" "$(skill_ref_pattern "$REVIEW_SKILL")")"
+  EDIT_LINE="$(last_code_edit_line "$TRANSCRIPT")"
+  if [ -n "$REVIEW_LINE" ] && [ "$REVIEW_LINE" -gt "${EDIT_LINE:-0}" ]; then
+    printf '%s' "$HASH" > "$MARKER" 2>/dev/null || true
+    rm -f "$COUNTER" 2>/dev/null || true
+    exit 0
+  fi
+fi
+
+# A session may be held at this gate only so many times. Past that it warns and
+# lets go: a quality gate that can trap a session is worse than one that misses.
 COUNT="$(cat "$COUNTER" 2>/dev/null || echo 0)"
 MAX="$(jq_cfg '.quality_gate.max_blocks' 2)"
 
@@ -43,8 +60,8 @@ Before reporting this work done:
    plus any untracked files), applying only the per-technology sections the change actually touches.
 2. Fix every severe finding - a self-review is less objective than an independent one, which is a
    reason to be stricter with it, not more lenient.
-3. Record that it happened by running: \`${PLUGIN_ROOT}/hooks/mark-reviewed.sh ${SESSION}\`
-Editing code afterwards invalidates the record, which is intended: the next review covers the new state."
+Reading the skill after your last code edit is what clears this gate - nothing else to run. Editing
+code afterwards invalidates it, which is intended: the next review covers the new state."
 
 # Optional Step-5 artifact checks, off by default - a small refactor legitimately
 # produces neither file, so this only fires where a project opts in.

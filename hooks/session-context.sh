@@ -76,7 +76,7 @@ TXT
 
 [ -n "$REVIEW" ] && cat <<TXT
 - Before reporting any code change done, run the \`$REVIEW_SKILL\` self-check on the diff and fix
-  severe findings, then record it with the mark-reviewed hook. A Stop hook checks this.
+  severe findings. A Stop hook checks that the skill was read after your last code edit.
 TXT
 
 # The last conditional above may be false; never let that become the hook's exit code.
