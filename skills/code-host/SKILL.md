@@ -57,8 +57,10 @@ server `codehost` so every project reads the same.
 | GitLab 18.6 or later, MCP server enabled by an administrator | `claude mcp add --transport http codehost --scope <scope> https://<host>/api/v4/mcp`, then `/mcp` to sign in with their GitLab account (OAuth - no token to store) |
 | GitLab without that server | `claude mcp add codehost --scope <scope> -e GITLAB_PERSONAL_ACCESS_TOKEN -e GITLAB_API_URL=https://<host>/api/v4 -- npx -y @zereight/mcp-gitlab@2.1.66` - a community server; the token needs the `api` scope |
 
-For the project scope, writing `.mcp.json` yourself is fine: the GitHub and GitLab-OAuth entries hold
-no secret. Merge into an existing file key by key; never replace it.
+For the project scope, you may write `.mcp.json` yourself: the GitHub and GitLab-OAuth entries hold no
+secret. Merge into an existing file key by key; never replace it. Claude Code asks a person before any
+write to `.mcp.json` and refuses it in a non-interactive session - then give the file's exact content
+instead, never another route to it.
 
 Then verify with `claude mcp list` - "added" only means the entry was saved. Each person approves a
 project `.mcp.json` server once, at their next session start.

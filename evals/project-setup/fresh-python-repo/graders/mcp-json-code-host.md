@@ -1,5 +1,6 @@
 ---
 type: regex
-target: { source: file, path: .mcp.json }
-pattern: 'api\.githubcopilot\.com/mcp[\s\S]*\$\{GITHUB_PAT\}|\$\{GITHUB_PAT\}[\s\S]*api\.githubcopilot\.com/mcp'
+target: trace
+# .mcp.json is refused in a non-interactive run like .claude/, so grade the write attempt.
+pattern: '"file_path":"[^"]*\.mcp\.json"(?:,"(?:old_string|replace_all)":(?:"(?:[^"\\]|\\.)*"|true|false))*,"(?:content|new_string)":"(?=(?:[^"\\]|\\.)*?api\.githubcopilot\.com/mcp)(?=(?:[^"\\]|\\.)*?\$\{GITHUB_PAT\})'
 ---

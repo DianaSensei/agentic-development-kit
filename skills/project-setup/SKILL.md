@@ -97,9 +97,9 @@ playbook has policy owners sign off. `CODEOWNERS` only enforces that once branch
 code-owner review (on GitLab, code-owner approval on a protected branch, a Premium feature) - say so in
 the report.
 
-**Writes under `.claude/` need a person.** Claude Code asks before any write to its own configuration
-directory, even when other edits are allowed, and refuses it outright in a non-interactive session - an
-agent does not grant itself permissions. That is expected, not an error to work around: never try
+**Writes under `.claude/`, and to `.mcp.json`, need a person.** Claude Code asks before any write to
+its own configuration - which tools and servers the agent gets - even when other edits are allowed, and
+refuses it outright in a non-interactive session: an agent does not grant itself permissions. That is expected, not an error to work around: never try
 another route (a shell redirect, a copy). If the write is refused, put the file's exact final content
 in the report under its path, so the user can create it with one paste.
 
