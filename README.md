@@ -17,6 +17,17 @@ in an uncovered stack still gets the structure (checkpoints, fix-attempt limits,
 This repo is both the plugin and its own marketplace, so nothing gets copied into `.claude/`.
 To test local changes instead of installing: `claude --plugin-dir /path/to/agentic-development-kit`.
 
+**The kit stays quiet until a project opts in.** Installed this way (user scope), its skills are
+available everywhere, but its session reminders - route code changes through `workflow-router`,
+confirm the Checkpoint, self-review before "done" - appear only in a repository that chose the kit.
+To opt a repository in, open it and say *"set this repo up for the agentic development kit"*:
+`project-setup` writes the committed settings that enable the kit for every teammate, plus
+`CLAUDE.md`, `REVIEW.md` and the CI reviewer.
+
+To keep the kit out of every other project entirely - its skills included, which is also about 7k
+tokens of skill descriptions per session - install it per project instead:
+`claude plugin install agentic-development-kit@agentic-development-kit --scope project`.
+
 ### Auto-update
 
 Since this is a self-added (non-Anthropic) marketplace, Claude Code leaves auto-update off by default.

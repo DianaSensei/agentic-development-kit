@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# The project opted into the kit, as project-setup leaves it - without that the
+# kit's session reminders stay silent (hooks/common.sh project_opted_in).
+mkdir -p .claude && printf '{"enabledPlugins":{"agentic-development-kit@agentic-development-kit":true}}\n' > .claude/settings.json
 mkdir -p src/checkout
 cat > CLAUDE.md <<'MD'
 # Demo shop

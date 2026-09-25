@@ -21,7 +21,7 @@ owns that judgement actually runs.
 
 | Hook | Event | Default | What it does |
 |---|---|---|---|
-| `session-context.sh` | `SessionStart` | on | Injects a fixed set of general engineering/style guidelines, plus (if this kit's skills are installed) the routing + self-check rules, once per session. Non-blocking. |
+| `session-context.sh` | `SessionStart` | on, in opted-in projects | Injects the routing, checkpoint and self-check rules once per session - only in a project that opted in: its `.claude/settings.json` (or `settings.local.json`) enables the plugin, or it has `.claude/quality-check.config.json`. `project-setup` does both. A user-scope install stays silent in every other repository. Non-blocking. |
 | `bulk-read-gate.sh` | `PreToolUse` on `Read` | `warn` | A whole-file `Read` over `bulk_read_gate.line_threshold` (default 350) lines is intercepted and redirected to the `bulk-reader` Task subagent (own context, cheap model), which returns only the bullets that answer a specific question instead of the file loading in full at the calling model's rate. A *targeted* read (`offset`/`limit` set) is always let through - Claude already knows which section it needs, and a delegation round trip only adds latency there. No-ops if `bulk-reader` isn't resolvable (see `resolve_agent` in `common.sh`) - nothing to delegate to, nothing to enforce. A read from **inside any subagent** is let through too: hooks fire on a subagent's tool calls as well, a subagent's context is discarded when it reports back (so the saving this gate exists for is already made), and no agent in this plugin carries the `Task` tool to delegate with - `bulk-reader` least of all, since reading the file whole is its entire job. |
 | `edit-gates.sh` | `PreToolUse` on edits | `warn` | Two checks in one process, because they share the event, the stdin and the transcript. **Skill gate** (`mode.skill_gate`, any edit): maps the file to its owning skill via `skill_map`, then checks the transcript for a read of that `SKILL.md` **since the last user message** - a read from an earlier request does not count, the file may have changed since. **Checkpoint gate** (`mode.checkpoint_gate`, **code** edits only): inside `feature-development`/`bug-fix`/`refactor`, checks the transcript since that workflow was last invoked for an `AskUserQuestion` with `header` exactly `"Checkpoint"`, so presenting a proposal and moving on no longer passes silently. Never fires on a documentation write - the plan doc is written before the checkpoint by design. Either half can be `off` while the other blocks. |
 | `write-lint.sh` | `PostToolUse` on edits | `warn` | Scans only the newly written text for hardcoded secrets and leftover placeholders. Advisory by protocol: `PostToolUse` cannot block. |
@@ -116,12 +116,11 @@ a project overrides it without forking the plugin by dropping its own copy at
 bundled default entirely (not merged field-by-field).
 
 - `mode.<gate>` - `off` | `warn` | `block`.
-- `session_context.general_guidelines` - `true`/`false`. The fixed engineering/style block
-  `session-context.sh` injects every session (em dash, commit co-author, CHANGELOG.md, Markdown
-  one-sentence-per-line, quality over dev cost, E2E-first bug fixes, pixel-perfect UI, fix
-  adjacent lint/test issues you notice). This is a specific team's conventions, not something every
-  installer necessarily wants - set to `false` in a project's own config to keep the kit's
-  routing/checkpoint reminders below without these.
+- `session_context.general_guidelines` - `true`/`false`, default `false`. A fixed block of one team's
+  engineering/style conventions (em dash, commit co-author, CHANGELOG.md, Markdown
+  one-sentence-per-line, quality over dev cost, E2E-first bug fixes, pixel-perfect UI, fix adjacent
+  lint/test issues you notice) that `session-context.sh` can add to its reminders. Some of it
+  conflicts with other teams' conventions, so a project turns it on deliberately in its own config.
 - `skill_map` - ordered `{match, skill}` rows; first ERE match against the repo-relative path wins.
   **Edit this per project**: remove stacks you do not use, add your own.
 - `checkpoint_gate.header`, `.workflows` - the exact `AskUserQuestion` header to look for, and which

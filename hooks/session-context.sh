@@ -13,11 +13,15 @@ prune_state
 
 [ "$(mode_of session_context warn)" = "off" ] && exit 0
 
-# General engineering/style guidelines - independent of whether this kit's own
-# skills are installed here, so this block does not gate on resolve_skill.
-# A project can turn just this block off (keeping the kit-specific rules below)
-# via .claude/quality-check.config.json: {"session_context":{"general_guidelines":false}}.
-if [ "$(jq_cfg '.session_context.general_guidelines' true)" = "true" ]; then
+# Nothing is injected into a project that did not opt in: a user-scope install
+# reaches every repository on the machine, most of which never asked for these
+# rules. project-setup opts a project in.
+project_opted_in || exit 0
+
+# General engineering/style guidelines - one team's conventions, off unless a
+# project turns them on in .claude/quality-check.config.json:
+# {"session_context":{"general_guidelines":true}}.
+if [ "$(jq_cfg '.session_context.general_guidelines' false)" = "true" ]; then
   cat <<'TXT'
 [agentic-development-kit] General Guidelines:
 - Never use the em dash "—". Use plain dash "-" instead.

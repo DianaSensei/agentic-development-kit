@@ -149,6 +149,23 @@ last_code_edit_line() {
     | tail -n 1
 }
 
+# project_opted_in - true when this project chose the kit: its own settings
+# enable the plugin (installed from any marketplace name), or it carries the
+# kit's config at .claude/quality-check.config.json, which project-setup writes.
+# A plugin installed at user scope is present in every repository on the machine;
+# what it injects into a session belongs only in the repositories that asked.
+project_opted_in() {
+  [ -f "$PROJECT_DIR/.claude/quality-check.config.json" ] && return 0
+  local f
+  for f in "$PROJECT_DIR/.claude/settings.json" "$PROJECT_DIR/.claude/settings.local.json"; do
+    [ -f "$f" ] || continue
+    jq -e '(.enabledPlugins // {}) | to_entries
+           | any((.key | startswith("agentic-development-kit@")) and .value == true)' "$f" >/dev/null 2>&1 \
+      && return 0
+  done
+  return 1
+}
+
 # code_ext - the regex deciding what counts as a code file, for the Stop gate and
 # the checkpoint gate alike. Single definition on purpose: it used to be a literal
 # duplicated in two scripts, both narrower than the shipped config, so the same
