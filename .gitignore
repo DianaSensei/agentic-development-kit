@@ -13,3 +13,7 @@
 
 # Written by `claude plugin eval` on every run (evals/README.md).
 evals/results/
+
+# Bytecode Python writes next to maintain/ and metrics/ scripts when they run.
+__pycache__/
+*.pyc
