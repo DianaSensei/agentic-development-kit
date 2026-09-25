@@ -6,7 +6,7 @@
 # uncommitted code changes exist that no review has vouched for. It clears
 # itself once the transcript shows the review skill loaded after the last code
 # edit - self-healing: the block tells Claude exactly what to do, and doing it
-# unblocks it. mark-reviewed.sh records a review by hand, outside a session.
+# unblocks it.
 
 . "${0%/*}/common.sh" || exit 0
 
