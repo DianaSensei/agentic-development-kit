@@ -44,6 +44,7 @@ Each directory sits at the plugin root, where Claude Code's
 | [`evals/`](./evals/README.md) | Behavioral regression tests for the kit, run with `claude plugin eval` on every PR that touches a skill, hook or agent: routing, the Checkpoint, intent files, and the independent reviewer against planted defects. |
 | [`maintain/`](./maintain/README.md) | The maintain loop: a scheduled, deterministic check of control bands (`bands.yaml`) and of CI failures on the default branch; each problem becomes a `proposed` intent on one triage pull request. Claude writes only under `docs/intents/` and fixes nothing. |
 | [`mcp/`](./mcp/README.md) | Toolbox config for databases - PostgreSQL, MySQL, TiDB, Redis, MongoDB, or any other type Toolbox supports. Ships with no pre-built connections; add exactly what you have. Declared in the root `.mcp.json`, connected automatically once a connection exists - no repo clone needed. |
+| [`metrics/`](./metrics/README.md) | The playbook's measures - acceptance rate, time to decision, plan to shipped, design rework, repeated mistakes, monitoring triage - computed from the committed intents, plans, changelogs and experience log. Deterministic, no network. |
 
 ## Using it
 
