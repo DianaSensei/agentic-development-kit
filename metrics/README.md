@@ -23,5 +23,5 @@ acceptance is counted as undecided, and a change shipped without a changelog is 
 changelog median. The table says how many items each median was computed from.
 
 **Not measured here**: first-pass CI success rate, review time, time to first review, change failure
-rate, and the DORA metrics. They need CI and review data from GitHub rather than files in the
+rate, and the DORA metrics. They need CI and review data from the code host rather than files in the
 repository; the script lists them instead of approximating them.

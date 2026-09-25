@@ -1,0 +1,88 @@
+# GitLab CI: the kit's maintain loop - problems become proposed intents on one
+# triage merge request.
+#
+# Include it from your .gitlab-ci.yml (pin kit_ref and the URL to the same tag
+# once a release containing this file exists):
+#
+#   include:
+#     - remote: https://raw.githubusercontent.com/DianaSensei/agentic-development-kit/main/ci/gitlab/maintain.yml
+#       inputs:
+#         kit_ref: main
+#
+# Then: a bands.yaml at the repository root; a pipeline schedule (Build ->
+# Pipeline schedules) with the variable ADK_MAINTAIN=true; and masked CI/CD
+# variables ANTHROPIC_API_KEY (or CLAUDE_CODE_OAUTH_TOKEN), ADK_GITLAB_TOKEN - a
+# project access token with the Developer role and the `api` and
+# `write_repository` scopes - and optionally BANDS_ENV. Setup: maintain/README.md.
+#
+# Two jobs, both GitLab glue around maintain/run.sh (the script GitHub Actions
+# runs too): `adk-maintain` on the schedule, and `adk-maintain-on-failure`,
+# which records a failed pipeline on the default branch as a problem.
+
+spec:
+  inputs:
+    kit_ref:
+      description: Branch or tag of the kit.
+      default: main
+    kit_repository_url:
+      description: Git URL the kit is cloned from - change only for a fork or an internal mirror.
+      default: https://github.com/DianaSensei/agentic-development-kit.git
+    stage:
+      description: Stage the scheduled job runs in.
+      default: test
+    bands_file:
+      description: Control bands file, relative to the repository root.
+      default: bands.yaml
+    model:
+      description: Model that writes the intents. Empty uses Claude Code's default.
+      default: ""
+---
+.adk-maintain:
+  image: node:22-bookworm
+  timeout: 30m
+  resource_group: adk-maintain
+  variables:
+    GIT_DEPTH: "0"
+    ADK_KIT_REF: $[[ inputs.kit_ref ]]
+    ADK_KIT_URL: $[[ inputs.kit_repository_url ]]
+    ADK_BANDS_FILE: $[[ inputs.bands_file ]]
+    ADK_MODEL: $[[ inputs.model ]]
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq python3-yaml > /dev/null
+    - npm install --global --no-audit --no-fund @anthropic-ai/claude-code
+    - git clone --quiet --depth 1 --branch "$ADK_KIT_REF" "$ADK_KIT_URL" /tmp/adk
+    # The job token cannot push; the project access token can.
+    - |
+      if [ -n "${ADK_GITLAB_TOKEN:-}" ]; then
+        git remote set-url origin "${CI_SERVER_PROTOCOL}://oauth2:${ADK_GITLAB_TOKEN}@${CI_REPOSITORY_URL#*@}"
+      fi
+  script:
+    - |
+      export ADK_PROVIDER=gitlab
+      export ADK_PROJECT="$CI_PROJECT_ID"
+      export ADK_CODEHOST_TOKEN="${ADK_GITLAB_TOKEN:-}"
+      export ADK_CODEHOST_URL="$CI_API_V4_URL"
+      export ADK_DEFAULT_BRANCH="$CI_DEFAULT_BRANCH"
+      export ADK_RUN_URL="$CI_PIPELINE_URL"
+      export ADK_GIT_NAME="adk-maintain"
+      export ADK_GIT_EMAIL="adk-maintain@${CI_SERVER_HOST}"
+      export ADK_WORK_DIR=/tmp/adk-maintain
+      bash /tmp/adk/maintain/run.sh
+
+adk-maintain:
+  extends: .adk-maintain
+  stage: $[[ inputs.stage ]]
+  rules:
+    - if: ($CI_PIPELINE_SOURCE == "schedule" || $CI_PIPELINE_SOURCE == "web") && $ADK_MAINTAIN == "true"
+
+adk-maintain-on-failure:
+  extends: .adk-maintain
+  stage: .post
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: on_failure
+  variables:
+    ADK_FAILED_NAME: $CI_PROJECT_NAME pipeline
+    ADK_FAILED_URL: $CI_PIPELINE_URL
+    ADK_FAILED_REF: $CI_COMMIT_BRANCH
+    ADK_FAILED_SHA: $CI_COMMIT_SHA

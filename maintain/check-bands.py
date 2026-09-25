@@ -23,10 +23,10 @@ except ImportError:
 TIERS = ("observe", "propose")
 OUTPUT_LIMIT = 2000  # characters of command output kept as evidence
 
-# Output becomes evidence in an intent file that gets committed. GitHub masks
-# secrets in logs, not in files, so every secret value the commands could see is
-# replaced before anything is written. CHECK_BANDS_REDACT holds those values,
-# one per line; the workflow fills it from BANDS_ENV and GH_TOKEN.
+# Output becomes evidence in an intent file that gets committed. A CI masks
+# secrets in its logs, not in files, so every secret value the commands could see
+# is replaced before anything is written. CHECK_BANDS_REDACT holds those values,
+# one per line; run.sh fills it from BANDS_ENV, the code-host token and ADK_REDACT.
 SECRETS = sorted({v for v in os.environ.get("CHECK_BANDS_REDACT", "").splitlines() if len(v) >= 6},
                  key=len, reverse=True)
 

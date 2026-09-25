@@ -1,0 +1,52 @@
+# Deterministic checks for the kit's pipelines: the code-host layer's tests
+# (a fake MCP server, no account and no network), the runner scripts' syntax,
+# and the GitLab CI templates against GitLab's own CI schema. No model runs
+# here, so it costs nothing and needs no secret.
+name: Pipeline tests
+
+on:
+  pull_request:
+    paths:
+      - "codehost/**"
+      - "ci/**"
+      - "maintain/**"
+      - ".github/workflows/pipeline-tests.yml"
+  push:
+    branches: [main]
+    paths:
+      - "codehost/**"
+      - "ci/**"
+      - "maintain/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Code-host tests
+        run: python -m unittest discover -s codehost/tests -v
+      - name: Script syntax
+        run: for f in ci/*.sh maintain/*.sh codehost/*.sh; do bash -n "$f"; done
+      - name: GitLab CI templates
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet pyyaml jsonschema
+          curl -fsSL -o "$RUNNER_TEMP/gitlab-ci.json" \
+            https://gitlab.com/gitlab-org/gitlab/-/raw/master/app/assets/javascripts/editor/schema/ci.json
+          python - "$RUNNER_TEMP/gitlab-ci.json" ci/gitlab/*.yml <<'EOF'
+          import json, sys, yaml, jsonschema
+          schema = json.load(open(sys.argv[1]))
+          for path in sys.argv[2:]:
+              # A template with `spec:` is two documents: the spec header, then the jobs.
+              for doc in yaml.safe_load_all(open(path)):
+                  jsonschema.validate(doc, schema)
+              print("valid:", path)
+          EOF

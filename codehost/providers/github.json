@@ -1,0 +1,30 @@
+{
+  "provider": "github",
+  "change_request": "pull request",
+  "server": {
+    "name": "GitHub's official MCP server (github/github-mcp-server)",
+    "command": ["github-mcp-server", "stdio", "--tools", "{tools}"],
+    "env": {
+      "GITHUB_PERSONAL_ACCESS_TOKEN": "${ADK_CODEHOST_TOKEN}",
+      "GITHUB_HOST": "${ADK_CODEHOST_URL:-}"
+    }
+  },
+  "install": {
+    "version": "v1.12.2",
+    "url": "https://github.com/github/github-mcp-server/releases/download/v1.12.2/github-mcp-server_Linux_{arch}.tar.gz",
+    "sha256": {
+      "x86_64": "95843162759da2c31dde082dd145be35db82164594796c294414b69790c2290e",
+      "arm64": "2b30f9fcc061b57456cbe38ddc0f13c88863bad49557508a9196f2d1c4cb17a5"
+    },
+    "binary": "github-mcp-server"
+  },
+  "tools": [
+    "pull_request_read",
+    "pull_request_review_write",
+    "add_comment_to_pending_review",
+    "add_issue_comment",
+    "update_issue_comment",
+    "list_pull_requests",
+    "create_pull_request"
+  ]
+}
