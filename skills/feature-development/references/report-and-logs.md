@@ -98,8 +98,21 @@ problem at hand (`grep -n -i -A8 '<path or keyword>'`). For each match:
 After appending, count each class you just wrote:
 `grep -c '^- Class: <class>$' docs/knowledge/experience-log.md`.
 
-At 2 or more - the same mistake has now happened twice - and when no line in `CLAUDE.md` already covers
-it, propose one rule for `CLAUDE.md`:
+At 2 or more - the same mistake has now happened twice - and when neither a check nor a line in
+`CLAUDE.md` already covers it, first ask whether a machine could catch it.
+
+**A check, when it can be one.** A mistake visible in the code itself - a forbidden call, a missing
+wrapper, a file in the wrong layer, an unformatted file - is caught every time by a check and only
+sometimes by a sentence. Propose the check instead of a `CLAUDE.md` line: a lint rule the project's
+linter already supports, a semgrep rule, or a small script, as an entry in `checks` in
+`.claude/quality-check.config.json` (format: `project-setup`'s `references/conventions.md`). Show the
+rule and the entry, run it on the file where the mistake happened (it must fail there, and pass once
+fixed), and ask with `AskUserQuestion`, `header` `"Check"`, options "Add it" / "Not now". **Yes** →
+write the rule and the entry and add `- Promoted: check <name>` to this log entry. A check runs on
+every future write, so, like `CLAUDE.md`, it changes only with a person's yes.
+
+**Otherwise, a line in `CLAUDE.md`** - for what needs judgement (when to add an index, which service
+owns a concept). Propose one rule:
 - **One line, imperative, specific**: where it applies and what to do. "In `src/billing/`, pass an
   idempotency key to every `gateway.charge` call" - not "be careful with payments".
 - **Ask before writing it** - `AskUserQuestion` with `header` `"CLAUDE.md"`, the exact line as the
@@ -111,4 +124,5 @@ it, propose one rule for `CLAUDE.md`:
   class reaches its next occurrence.
 
 This is the playbook's rule - when Claude makes the same mistake twice, the correction goes into
-`CLAUDE.md` - with the log as the memory that makes "twice" countable.
+`CLAUDE.md` - with the log as the memory that makes "twice" countable, and a check wherever the
+correction can be enforced rather than remembered.

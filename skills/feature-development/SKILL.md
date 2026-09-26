@@ -180,6 +180,11 @@ criterion, every listed edge case, the Definition of Done, and the **quality bar
 (`references/definition-of-done.md`): tests pass, no open severe defects, coverage adequate for every
 important AC - a token test that skips an AC doesn't count.
 
+Also run every `scope: project` entry of `checks` in `.claude/quality-check.config.json` (type
+checker, build-level linters): a failure there is a defect like a failing test, and it goes through the
+fix loop the same way. The file-scope checks already ran on each write (`check-conventions` hook);
+never disable or loosen a check to get past it - a check you believe is wrong is the user's call.
+
 ### 3.3 Fix loop (when the bar isn't met)
 
 For EACH distinct issue:
@@ -218,11 +223,13 @@ Templates for both files: `references/report-and-logs.md`.
    fixed or not - and one per correction the user made to your work in this run, to
    `docs/knowledge/experience-log.md`, using the reference's template (each entry names its `Class`).
    Step 0 of the next workflow searches it, so a known dead end is not retried.
-   **Then promote repeats**: any class now in the log twice or more that `CLAUDE.md` doesn't already
-   cover gets one proposed `CLAUDE.md` line, asked via `AskUserQuestion` with `header` `"CLAUDE.md"` -
-   never written without a yes. **Yes** → append it under a `## Common mistakes` heading in the
-   project-root `CLAUDE.md` (create the heading, or the file, if missing) and add `- Promoted: CLAUDE.md`
-   to the log entry. **Not now** → add `- Promotion: declined <date>` to the log entry. Method: the
+   **Then promote repeats**: any class now in the log twice or more that no check and no `CLAUDE.md`
+   line already covers gets one proposal - a **check** in `.claude/quality-check.config.json` when a
+   machine can see the mistake in the code (`AskUserQuestion`, `header` `"Check"`), otherwise one
+   `CLAUDE.md` line (`header` `"CLAUDE.md"`), never written without a yes. **Yes** → write the check
+   (log `- Promoted: check <name>`) or append the line under `## Common mistakes` in the project-root
+   `CLAUDE.md`, creating the heading or file if missing (log `- Promoted: CLAUDE.md`). **Not now** → add
+   `- Promotion: declined <date>` to the log entry. Method: the
    reference → "Promoting a Repeat to CLAUDE.md".
 4. `docs/intents/<feature-slug>.md`: `status: done`, `changelog: docs/changelog/<feature-slug>.md`,
    `updated`, and a Decision log line. A workflow stopped at an issue raised to the user never gets

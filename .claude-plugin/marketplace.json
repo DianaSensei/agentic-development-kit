@@ -9,25 +9,25 @@
       "name": "adk-adlc",
       "source": "./",
       "description": "The agentic development lifecycle (ADLC) core: intent to plan to reviewed change to monitored release, on GitHub or GitLab.",
-      "version": "0.8.0"
+      "version": "0.9.0"
     },
     {
       "name": "adk-backend",
       "source": "./plugins/adk-backend",
       "description": "Backend stack: Java/Spring, databases, messaging, API contracts, monitoring, Toolbox MCP.",
-      "version": "0.8.0"
+      "version": "0.9.0"
     },
     {
       "name": "adk-desktop",
       "source": "./plugins/adk-desktop",
       "description": "Desktop stack: Tauri + React, Rust, UI/UX.",
-      "version": "0.8.0"
+      "version": "0.9.0"
     },
     {
       "name": "adk-architecture",
       "source": "./plugins/adk-architecture",
       "description": "Architecture, design principles, proposals, legacy modernization, docs, security, MCP development.",
-      "version": "0.8.0"
+      "version": "0.9.0"
     }
   ]
 }

@@ -1,7 +1,7 @@
 {
   "name": "adk-backend",
   "description": "Backend stack skills for the agentic-development-kit ADLC: Java/Spring Boot, databases (SQL, Redis, Elasticsearch), messaging (Kafka, RabbitMQ), API contracts, monitoring, and a Toolbox MCP server for database connections - plus the Java, storage and API-spec implementer agents.",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "author": {
     "name": "DianaSensei"
   },
