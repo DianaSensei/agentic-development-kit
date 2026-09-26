@@ -18,6 +18,7 @@ another unit, and a decision you make outside it overrides the plan the user app
 - `plan_excerpt`: the chosen proposal's parts that bear on the unit, verbatim.
 - `base_commit`: the commit the lead agent's working tree is at.
 - `plugin_root`: where this plugin's `skills/` and `agents/` are.
+- `skills`: the technical skills that own the unit's files, named by the lead agent.
 - Possibly `specialist`: the Tier-2 agent the plan assigned the unit to (`java-ecosystem-engineer`,
   `tauri-react-engineer`, ...).
 - Possibly `context_files`: files the unit needs that are not in `base_commit` (an API contract
@@ -37,8 +38,9 @@ commit it.
 
 ## Step 1 - Read the skills that own this code (mandatory, before writing anything)
 
-Read `CLAUDE.md`, then, for every file in `unit.files`, the technical skill that owns it:
-`<plugin_root>/skills/<name>/SKILL.md`, in full. If `plugin_root` was not passed, try
+Read `CLAUDE.md`, then every skill in `skills`: `<plugin_root>/skills/<name>/SKILL.md`, in full.
+Your edits are not checked by the workflow's skill gate the way the lead's are, so this read is the
+only thing that holds you to the project's conventions. If `plugin_root` was not passed, try
 `.claude/skills/<name>/SKILL.md`, then `Glob` for `**/skills/<name>/SKILL.md`. A skill you cannot
 find goes in `open_questions`; do not write its code from memory as if you had read it. Where a
 skill and the plan disagree on a convention, the skill wins; where they disagree on what to build,
@@ -55,7 +57,10 @@ one unit, and you report in the shape below.
   `outside_files_needed`. The lead agent does that part after applying every unit, so two units
   never edit the same file.
 - Write tests for each acceptance criterion and edge case the unit owns, in the style the owning
-  skill and the project use, and run them. A failing test is fixed or reported; up to 5 attempts
+  skill and the project use. Run them with the project's documented test command, exactly as
+  `CLAUDE.md` or the build file gives it: a variable or flag you add to make them pass (a
+  `PYTHONPATH`, a working directory) is a setup the lead's run of the whole suite will not have, so
+  fix the code or the test instead, or report it. A failing test is fixed or reported; up to 5 attempts
   for each distinct issue, then report it with what each attempt tried.
 - No decision that belongs to the user: a design choice the plan does not settle goes in
   `open_questions`, with `checkpoint.required` true, and the unit stops there.

@@ -31,13 +31,16 @@ All of these, or the plan is built sequentially as usual:
   `context_files`. If a unit would need a whole uncommitted module to build on, it depends on
   that work: build that first, sequentially, and leave the unit out of the parallel set.
 - Read the owning skills yourself as usual (3.1). The agents read them too: they run in their own
-  context, where your reads do not count.
+  context, where your reads do not count, and the workflow's skill gate does not check a
+  subagent's edits. Naming the skills in the prompt is what makes them read.
 
 ## Dispatch
 
 One `unit-implementer` per unit, **all in a single message** so they run at the same time. Each
 prompt carries, with these literal labels: `unit` (id, task, `files`, the acceptance criteria and
-edge cases it owns), `plan_excerpt`, `base_commit`, `plugin_root`, `context_files` if any, and
+edge cases it owns), `plan_excerpt`, `base_commit`, `plugin_root`, `skills` (the technical skills
+that own the unit's files: the ones you read for it, and any the project's `skill_map` in
+`.claude/quality-check.config.json` names for those paths), `context_files` if any, and
 `specialist` when `task_breakdown` assigned the unit to a Tier-2 agent that exists. Write project
 paths relative to the repository root: the agent works in its worktree, and an absolute path into
 your tree points it at your copy instead. The agent's
@@ -61,13 +64,16 @@ For each unit, in the plan's order:
 4. `git apply --check` fails: the units overlapped after all. Apply nothing from it; build that
    unit sequentially in the working tree, using its branch as a reference, and log it for the
    Step 4 report.
-5. Clean up once the patch is applied or abandoned: `git worktree remove <path>` and
-   `git branch -D <branch>`. They are this workflow's own temporary branch and worktree, nothing
-   else; never remove one you did not create.
+5. Clean up once the patch is applied or abandoned: `git worktree remove --force <path>` and
+   `git branch -D <branch>`. `--force` because the unit's test run leaves untracked caches behind;
+   the unit's work is in its commit, already applied. They are this workflow's own temporary
+   worktree and branch, nothing else; never remove one you did not create.
 
 Then make the edits the units reported in `outside_files_needed` (the shared registry lines),
-run the whole test suite (Step 3.2 as usual: the units' own tests passed in isolation, which says
-nothing about them together), and continue.
+run the whole test suite with the project's documented command (Step 3.2 as usual: the units' own
+tests passed in isolation, which says nothing about them together), and continue. Look for
+conventions the units settled differently (an import style, a fixture, a helper each wrote for
+itself): each agent chose alone, and the change should read as one piece.
 
 ## Reporting
 
@@ -79,4 +85,5 @@ sequentially after a failed apply and why, and any outside-scope path a unit ask
 - `"worktree": {"baseRef": "head"}` in `.claude/settings.json` makes worktrees branch from the
   local HEAD instead of the default branch. The agent resets to `base_commit` either way, so it is
   a convenience, not a requirement.
-- Worktrees are created under the project; Claude Code keeps them out of `git status`.
+- The worktrees live under `.claude/worktrees/`, and `git status` lists them while they exist.
+  Adding `.claude/worktrees/` to `.gitignore` keeps them out of it.
