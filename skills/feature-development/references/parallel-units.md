@@ -38,10 +38,12 @@ All of these, or the plan is built sequentially as usual:
 
 One `unit-implementer` per unit, **all in a single message** so they run at the same time. Each
 prompt carries, with these literal labels: `unit` (id, task, `files`, the acceptance criteria and
-edge cases it owns), `plan_excerpt`, `base_commit`, `plugin_root`, `skills` (the technical skills
-that own the unit's files: the ones you read for it, and any the project's `skill_map` in
-`.claude/quality-check.config.json` names for those paths), `context_files` if any, and
-`specialist` when `task_breakdown` assigned the unit to a Tier-2 agent that exists. Write project
+edge cases it owns), `plan_excerpt`, `base_commit`, `skill_paths` (the technical skills that
+own the unit's files, each with the path of the `SKILL.md` you read: the ones you read for it, and
+any the project's `skill_map` in `.claude/quality-check.config.json` names for those paths),
+`context_files` if any, and
+`specialist` with `specialist_path` when `task_breakdown` assigned the unit to a Tier-2 agent
+that exists. Write project
 paths relative to the repository root: the agent works in its worktree, and an absolute path into
 your tree points it at your copy instead. The agent's
 frontmatter sets `isolation: worktree`; each result names its worktree's path and branch.

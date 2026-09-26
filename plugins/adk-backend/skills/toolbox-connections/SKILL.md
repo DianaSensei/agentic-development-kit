@@ -17,7 +17,7 @@ Manages `mcp/toolbox/`'s connections/tools only (see Boundaries) - full CRUD on 
 ## Step 1 - Orient
 
 ```bash
-claude mcp list | grep '^plugin:agentic-development-kit:toolbox'
+claude mcp list | grep '^plugin:adk-backend:toolbox'
 ```
 
 Its `--config-folder` value is the live connections directory. No such line = not enabled

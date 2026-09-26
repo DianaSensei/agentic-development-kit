@@ -85,7 +85,7 @@ here in the main thread:
 
 No intent in Step 0 → back-fill one now, so every plan and changelog has an intent to point back to:
 write `docs/intents/<feature-slug>.md` from `intent-capture`'s `references/intent-template.md` (in this
-plugin's `skills/`), filled from the confirmed Step 1 output. Status `accepted`, originator the user,
+plugin's `skills/`, next to this skill), filled from the confirmed Step 1 output. Status `accepted`, originator the user,
 Decision log line "back-filled from the request; accepted by asking to build it". Problem and outcome
 only - acceptance criteria stay in the plan.
 
@@ -160,11 +160,13 @@ built sequentially here instead.
 
 Two things the dispatch does not do for you:
 
-- **State `plugin_root: <resolved path>` in the Task prompt, using that literal label.** Tier-2 agents
-  are told to read the technical skill that owns the code before writing it - the same rule as above -
-  and to look for a `plugin_root` value from the caller before falling back to searching. They cannot
-  locate this plugin's `skills/` directory from the user's project on their own, and a differently
-  worded prompt gives their search ladder nothing to find.
+- **State `skill_paths:` in the Task prompt, using that literal label**: each technical skill the task
+  touches, with the absolute path of the `SKILL.md` you read (the Skill tool reports each skill's base
+  directory). Tier-2 agents are told to read the technical skill that owns the code before writing it -
+  the same rule as above - and to look for `skill_paths` from the caller before falling back to
+  searching. The kit's skills live in several plugins (this core, `adk-backend`, `adk-desktop`,
+  `adk-architecture`), which an agent cannot locate from the user's project on its own, and a
+  differently worded prompt gives their search ladder nothing to find.
 - **Materialise `api-spec-designer`'s output.** It is read-only by design and returns
   `openapi_spec_fragment` / `asyncapi_spec_fragment` as strings. `api-contract-skill` requires the
   contract to exist as a real file before any code is written, so write them to

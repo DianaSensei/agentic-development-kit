@@ -36,7 +36,7 @@
 #       file's content, and try again from step 2
 #
 # Find <connections-dir> with:
-#   claude mcp list | grep '^plugin:agentic-development-kit:toolbox' \
+#   claude mcp list | grep '^plugin:adk-backend:toolbox' \
 #     | grep -oE -- '--config-folder [^ ]+' | awk '{print $2}'
 
 set -u

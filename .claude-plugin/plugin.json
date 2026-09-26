@@ -1,7 +1,7 @@
 {
-  "name": "agentic-development-kit",
-  "description": "An AI-native SDLC for Claude Code: intents before code, feature/bug-fix/refactor workflows with checkpoints and hook-enforced gates, an independent reviewer and a maintain loop for GitHub Actions and GitLab CI, evals and a learning loop - plus technology skills for the stacks it covers. Quiet in any project that has not opted in.",
-  "version": "0.6.0",
+  "name": "adk-sdlc",
+  "description": "An AI-native SDLC for Claude Code: intents before code, feature/bug-fix/refactor workflows with checkpoints and hook-enforced gates, an independent reviewer and a maintain loop for GitHub Actions and GitLab CI, evals and a learning loop. Technology skills come from the adk-backend, adk-desktop and adk-architecture plugins in the same marketplace (agentic-development-kit). Quiet in any project that has not opted in.",
+  "version": "0.7.0",
   "author": {
     "name": "DianaSensei"
   },

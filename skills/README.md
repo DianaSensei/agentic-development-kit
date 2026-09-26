@@ -6,6 +6,14 @@ subdirectory is one skill: a `SKILL.md` (name, description, and core method) plu
 name and description automatically and picks the matching one for a given task - nothing here needs to
 be invoked by hand.
 
+**Four plugins, one library.** This directory holds the SDLC core's skills (the
+`adk-sdlc` plugin). The technical skills ship as separate plugins from the same
+marketplace, so a project installs only the stacks it uses: `adk-backend`
+([`plugins/adk-backend/skills/`](../plugins/adk-backend/skills/)), `adk-desktop`
+([`plugins/adk-desktop/skills/`](../plugins/adk-desktop/skills/)) and `adk-architecture`
+([`plugins/adk-architecture/skills/`](../plugins/adk-architecture/skills/)). The tables below list
+all of them together, linked to where each lives.
+
 ## How This Library Is Organized
 
 Two different kinds of skill live side by side here, and it matters which kind you're looking at:
@@ -40,29 +48,29 @@ off to the right orchestrator, so in practice you rarely need to name a workflow
 | Skill | Use For |
 |-------|---------|
 | [`intent-capture`](./intent-capture/SKILL.md) | An idea, pain point, or alert not yet being built - records the problem, evidence, and desired outcome as `docs/intents/<slug>.md` (no solution, no code), reviews the intent backlog, and records accept/reject decisions. The workflows above take an intent as their input |
-| [`architecture-designer`](./architecture-designer/SKILL.md) | System design, from a single service to distributed microservices decomposition, deployment topology (VM/cloud/hybrid), ADRs |
-| [`solution-design-principles`](./solution-design-principles/SKILL.md) | SOLID, DRY/KISS/YAGNI, method decomposition (SLAP), Command-Query Separation/TOCTOU, Well-Architected pillars, 12-Factor, VM/cloud portability - judging whether a design/codebase follows sound engineering principles |
-| [`api-contract-skill`](./api-contract-skill/SKILL.md) | REST/GraphQL/RPC/async message contract design, before implementation |
-| [`ui-ux-design-skill`](./ui-ux-design-skill/SKILL.md) | UI/UX design (usability, accessibility, responsive/cross-platform) before implementation |
-| [`legacy-modernizer`](./legacy-modernizer/SKILL.md) | Legacy and inherited codebases: reverse-engineer a spec from an undocumented system, then plan the incremental migration (strangler fig, branch by abstraction) |
-| [`technical-proposal-writer`](./technical-proposal-writer/SKILL.md) | Writing/reviewing a technical proposal, RFC, or "đề xuất kỹ thuật" that argues a decision to stakeholders - problem, alternatives, risks, plan, timeline |
+| [`architecture-designer`](../plugins/adk-architecture/skills/architecture-designer/SKILL.md) | System design, from a single service to distributed microservices decomposition, deployment topology (VM/cloud/hybrid), ADRs |
+| [`solution-design-principles`](../plugins/adk-architecture/skills/solution-design-principles/SKILL.md) | SOLID, DRY/KISS/YAGNI, method decomposition (SLAP), Command-Query Separation/TOCTOU, Well-Architected pillars, 12-Factor, VM/cloud portability - judging whether a design/codebase follows sound engineering principles |
+| [`api-contract-skill`](../plugins/adk-backend/skills/api-contract-skill/SKILL.md) | REST/GraphQL/RPC/async message contract design, before implementation |
+| [`ui-ux-design-skill`](../plugins/adk-desktop/skills/ui-ux-design-skill/SKILL.md) | UI/UX design (usability, accessibility, responsive/cross-platform) before implementation |
+| [`legacy-modernizer`](../plugins/adk-architecture/skills/legacy-modernizer/SKILL.md) | Legacy and inherited codebases: reverse-engineer a spec from an undocumented system, then plan the incremental migration (strangler fig, branch by abstraction) |
+| [`technical-proposal-writer`](../plugins/adk-architecture/skills/technical-proposal-writer/SKILL.md) | Writing/reviewing a technical proposal, RFC, or "đề xuất kỹ thuật" that argues a decision to stakeholders - problem, alternatives, risks, plan, timeline |
 
 ## Language & Framework Implementation
 
 | Skill | Use For |
 |-------|---------|
-| [`java-spring-skill`](./java-spring-skill/SKILL.md) | Java + Spring Boot business logic, data access, security, cloud/resilience, package structure, code style |
-| [`rust-engineer`](./rust-engineer/SKILL.md) | Idiomatic Rust - ownership, lifetimes, traits, async/tokio |
-| [`tauri-react-skill`](./tauri-react-skill/SKILL.md) | Tauri (Rust backend) + React (frontend) desktop app implementation |
+| [`java-spring-skill`](../plugins/adk-backend/skills/java-spring-skill/SKILL.md) | Java + Spring Boot business logic, data access, security, cloud/resilience, package structure, code style |
+| [`rust-engineer`](../plugins/adk-desktop/skills/rust-engineer/SKILL.md) | Idiomatic Rust - ownership, lifetimes, traits, async/tokio |
+| [`tauri-react-skill`](../plugins/adk-desktop/skills/tauri-react-skill/SKILL.md) | Tauri (Rust backend) + React (frontend) desktop app implementation |
 
 ## Data & Messaging Infrastructure
 
 | Skill | Use For |
 |-------|---------|
-| [`database-skill`](./database-skill/SKILL.md) | RDBMS (Oracle/PostgreSQL/MySQL) and NoSQL (MongoDB/DynamoDB/Cassandra/ScyllaDB) design and optimization |
-| [`messaging-skill`](./messaging-skill/SKILL.md) | Broker messaging - Kafka (topics/partitions, consumer groups, delivery semantics) and RabbitMQ (exchanges, routing, dead-letter, durability), and choosing between them |
-| [`redis-skill`](./redis-skill/SKILL.md) | Redis caching, distributed locks, lightweight queues, leaderboards |
-| [`elasticsearch-skill`](./elasticsearch-skill/SKILL.md) | Elasticsearch index/mapping design, Query DSL, aggregations |
+| [`database-skill`](../plugins/adk-backend/skills/database-skill/SKILL.md) | RDBMS (Oracle/PostgreSQL/MySQL) and NoSQL (MongoDB/DynamoDB/Cassandra/ScyllaDB) design and optimization |
+| [`messaging-skill`](../plugins/adk-backend/skills/messaging-skill/SKILL.md) | Broker messaging - Kafka (topics/partitions, consumer groups, delivery semantics) and RabbitMQ (exchanges, routing, dead-letter, durability), and choosing between them |
+| [`redis-skill`](../plugins/adk-backend/skills/redis-skill/SKILL.md) | Redis caching, distributed locks, lightweight queues, leaderboards |
+| [`elasticsearch-skill`](../plugins/adk-backend/skills/elasticsearch-skill/SKILL.md) | Elasticsearch index/mapping design, Query DSL, aggregations |
 
 ## Quality, Security & Documentation
 
@@ -71,18 +79,18 @@ off to the right orchestrator, so in practice you rarely need to name a workflow
 | [`test-master`](./test-master/SKILL.md) | Test plans, mocking strategy, coverage analysis, performance/security test design, Testcontainers setup |
 | [`code-review-skill`](./code-review-skill/SKILL.md) | The proactive self-check Claude runs before reporting any code change done - checked by the `Stop` gate in [`hooks/`](../hooks/README.md) rather than left to memory |
 | [`independent-review`](./independent-review/SKILL.md) | Reviewing a PR/branch as a session that did NOT write it - against its intent and plan, then correctness via `code-review-skill`'s checklist, ending in a risk summary for the approver. Read-only, never approves. Runs in CI via [`ci/`](../ci/README.md) |
-| [`security-skill`](./security-skill/SKILL.md) | Implementing secure code - auth, input validation, hashing, OWASP prevention |
-| [`security-audit`](./security-audit/SKILL.md) | Auditing existing code/infrastructure for vulnerabilities into a report - read-only, carries no `Edit`/`Write` tool |
-| [`monitoring-expert`](./monitoring-expert/SKILL.md) | Production observability - logging, metrics, tracing, alerting, capacity forecasting |
-| [`code-documenter`](./code-documenter/SKILL.md) | Docstrings/comments, API docs, doc sites, user guides - any language or framework |
+| [`security-skill`](../plugins/adk-architecture/skills/security-skill/SKILL.md) | Implementing secure code - auth, input validation, hashing, OWASP prevention |
+| [`security-audit`](../plugins/adk-architecture/skills/security-audit/SKILL.md) | Auditing existing code/infrastructure for vulnerabilities into a report - read-only, carries no `Edit`/`Write` tool |
+| [`monitoring-expert`](../plugins/adk-backend/skills/monitoring-expert/SKILL.md) | Production observability - logging, metrics, tracing, alerting, capacity forecasting |
+| [`code-documenter`](../plugins/adk-architecture/skills/code-documenter/SKILL.md) | Docstrings/comments, API docs, doc sites, user guides - any language or framework |
 
 ## MCP & Integrations
 
 | Skill | Use For |
 |-------|---------|
 | [`code-host`](./code-host/SKILL.md) | Connecting the project's GitHub or GitLab through the vendor's MCP server, and the code-host operations the SDLC uses (read a pull/merge request, post a finding on a line, keep one summary comment, open a request) with each provider's tool for each |
-| [`mcp-developer`](./mcp-developer/SKILL.md) | Building a new MCP server/client - protocol lifecycle, transports, OAuth 2.1 authorization (SDK APIs come from live docs, not a snapshot here) |
-| [`toolbox-connections`](./toolbox-connections/SKILL.md) | Configure this plugin's own bundled toolbox MCP - add/remove a database connection or a custom query/tool |
+| [`mcp-developer`](../plugins/adk-architecture/skills/mcp-developer/SKILL.md) | Building a new MCP server/client - protocol lifecycle, transports, OAuth 2.1 authorization (SDK APIs come from live docs, not a snapshot here) |
+| [`toolbox-connections`](../plugins/adk-backend/skills/toolbox-connections/SKILL.md) | Configure `adk-backend`'s bundled toolbox MCP - add/remove a database connection or a custom query/tool |
 
 ## Conventions Used Across These Skills
 
@@ -91,9 +99,9 @@ off to the right orchestrator, so in practice you rarely need to name a workflow
 - **`references/` is progressive disclosure** - a skill's `SKILL.md` stays lean; deep detail (code
   patterns, decision tables, troubleshooting trees) lives in `references/*.md`, loaded only when the
   matching step is actually reached, listed in each skill's Reference Guide table.
-- **`metadata:` on every skill** - a fixed block after `description`, present on all 29. Claude Code
+- **`metadata:` on every skill** - a fixed block after `description`, present on every skill in all four plugins. Claude Code
   does not read it; it exists so the library can be audited mechanically. `related-skills` in
-  particular is checked both ways: every name must resolve to a directory under `skills/`, and every
+  particular is checked both ways: every name must resolve to a skill in one of the kit's four plugins, and every
   skill must be reachable from at least one other, so a skill cannot silently fall out of the graph.
   The vocabulary is closed - `domain` (`workflow`, `requirements`, `software-design`,
   `api-architecture`, `java-backend`, `language`, `desktop-app`, `design`, `database`, `messaging`,

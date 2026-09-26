@@ -89,7 +89,7 @@ For any SQL connection, request an account with read-only permissions, not an ad
 Always go through `validate.sh` rather than writing a connection/tool file directly:
 
 ```bash
-DIR="$(claude mcp list | grep '^plugin:agentic-development-kit:toolbox' \
+DIR="$(claude mcp list | grep '^plugin:adk-backend:toolbox' \
   | grep -oE -- '--config-folder [^ ]+' | awk '{print $2}')"
 ./validate.sh snapshot "$DIR"   # before making any change
 # ... write/edit/delete the file(s) ...

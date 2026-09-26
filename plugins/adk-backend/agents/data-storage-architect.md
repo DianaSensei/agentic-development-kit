@@ -34,9 +34,9 @@ a reason, but the final decision always belongs to the user.
 When choosing where to store a new entity (if not already constrained by a detected
 technology), **read `database-skill` first** - its "Choosing a Family" section is the
 maintained version of this decision and covers families and failure modes this summary does
-not. Your working directory is the USER'S PROJECT, so use the `plugin_root` the caller passed;
-failing that try `.claude/skills/database-skill/SKILL.md`, then `Glob` for
-`**/skills/database-skill/SKILL.md`. Same for `redis-skill` and `elasticsearch-skill` when the
+not. Your working directory is the USER'S PROJECT, so use the path the caller passed in
+`skill_paths`; failing that try `.claude/skills/database-skill/SKILL.md`, then `Glob` for
+`**/skills/database-skill/SKILL.md` and `~/.claude/plugins/cache/*/*/*/skills/database-skill/SKILL.md`. Same for `redis-skill` and `elasticsearch-skill` when the
 answer lands there, and `tauri-react-skill` for local desktop storage.
 
 The deciding criterion, which is easy to skip past: **how stable the access pattern already

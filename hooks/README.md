@@ -122,6 +122,10 @@ bundled default entirely (not merged field-by-field).
   lint/test issues you notice) that `session-context.sh` can add to its reminders. Some of it
   conflicts with other teams' conventions, so a project turns it on deliberately in its own config.
 - `skill_map` - ordered `{match, skill}` rows; first ERE match against the repo-relative path wins.
+  The skill is looked up across the kit's plugins (`kit_roots` in `common.sh`): this core, then the
+  stack plugins (`adk-backend`, `adk-desktop`, `adk-architecture`) that are installed for the user
+  or for this project, per Claude Code's install registry. A row whose skill is in a stack plugin
+  this project does not have is skipped, never enforced.
   **Edit this per project**: remove stacks you do not use, add your own.
 - `checkpoint_gate.header`, `.workflows` - the exact `AskUserQuestion` header to look for, and which
   workflow skills' Step 3/4 it gates.

@@ -95,13 +95,56 @@ transcript_tail_from() {
 }
 
 # resolve_skill <skill-name> - path to that skill's SKILL.md, or nothing.
-# Checks the plugin's own `skills/` first (where these skills actually live once
-# installed as a plugin), then falls back to a project that vendored the skill
+# Checks the kit's plugins first (kit_roots), then falls back to a project that vendored the skill
 # locally (`.claude/skills/` or `skills/` inside the project itself) - e.g. a
 # project-local override of one skill, or the older standalone layout.
+# kit_roots - the root of every plugin in this kit that this project has: this
+# one, then its stack plugins (adk-backend, adk-desktop, adk-architecture). They
+# ship separately, so a technical skill a workflow gate names usually lives in a
+# sibling plugin, not here. Two layouts:
+#   repository / --plugin-dir   <kit>/plugins/<plugin>/
+#   installed from marketplace  <cache>/<marketplace>/<plugin>/<version>/; which
+#                               siblings count comes from Claude Code's install
+#                               registry: installed for the user, or for this
+#                               project. The cache alone is not proof - an
+#                               uninstalled version stays there, marked
+#                               `.orphaned_at`, which is the fallback check when
+#                               there is no registry.
+# An installed copy of this plugin carries the whole repository, `plugins/`
+# included, so there only the siblings count: a stack plugin the user did not
+# install must not have its skills demanded by a gate.
+kit_roots() {
+  local d registry marketplace
+  printf '%s\n' "$PLUGIN_ROOT"
+  if [[ "$PLUGIN_ROOT" != */plugins/cache/* ]]; then
+    for d in "$PLUGIN_ROOT"/plugins/*/; do
+      [ -d "$d" ] && printf '%s\n' "${d%/}"
+    done
+    return
+  fi
+  marketplace="$(basename "$(dirname "$(dirname "$PLUGIN_ROOT")")")"
+  registry="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/plugins/installed_plugins.json"
+  if [ -f "$registry" ]; then
+    jq -r --arg m "@$marketplace" --arg p "$PROJECT_DIR" '
+      .plugins // {} | to_entries[]
+      | select((.key | startswith("adk-")) and (.key | endswith($m)))
+      | .value[] | select(.scope == "user" or .projectPath == $p) | .installPath' \
+      "$registry" 2>/dev/null | sort -u | while read -r d; do [ -d "$d" ] && (cd "$d" && pwd); done
+    return
+  fi
+  for d in "$PLUGIN_ROOT"/../../adk-*/; do
+    [ -d "$d" ] || continue
+    d="$(ls -d "$d"*/ 2>/dev/null | sort -V | while read -r v; do [ -e "$v.orphaned_at" ] || echo "$v"; done | tail -n 1)"
+    [ -n "$d" ] && (cd "$d" && pwd)
+  done
+}
+
 resolve_skill() {
   local name="$1" root
-  for root in "$PLUGIN_ROOT/skills" "$PROJECT_DIR/.claude/skills" "$PROJECT_DIR/skills"; do
+  while read -r root; do
+    [ -f "$root/skills/$name/SKILL.md" ] && { printf '%s' "$root/skills/$name/SKILL.md"; return; }
+  done < <(kit_roots)
+  for root in "$PROJECT_DIR/.claude/skills" "$PROJECT_DIR/skills"; do
     [ -f "$root/$name/SKILL.md" ] && { printf '%s' "$root/$name/SKILL.md"; return; }
   done
 }
@@ -112,7 +155,10 @@ resolve_skill() {
 # cannot actually dispatch must no-op rather than block on it forever.
 resolve_agent() {
   local name="$1" root
-  for root in "$PLUGIN_ROOT/agents" "$PROJECT_DIR/.claude/agents" "$PROJECT_DIR/agents"; do
+  while read -r root; do
+    [ -f "$root/agents/$name.md" ] && { printf '%s' "$root/agents/$name.md"; return; }
+  done < <(kit_roots)
+  for root in "$PROJECT_DIR/.claude/agents" "$PROJECT_DIR/agents"; do
     [ -f "$root/$name.md" ] && { printf '%s' "$root/$name.md"; return; }
   done
 }
@@ -128,7 +174,7 @@ resolve_agent() {
 # tool call, or to the Skill tool's `skill` argument, matches only real use.
 #
 # The `skill` value carries the plugin namespace once this kit is installed as a
-# plugin - `"skill":"agentic-development-kit:bug-fix"`, not `"skill":"bug-fix"` -
+# plugin - `"skill":"adk-sdlc:bug-fix"`, not `"skill":"bug-fix"` -
 # so the prefix is optional here. Without it, the installed plugin's gates never
 # saw a workflow start: the checkpoint gate silently never fired.
 skill_ref_pattern() {
@@ -150,7 +196,9 @@ last_code_edit_line() {
 }
 
 # project_opted_in - true when this project chose the kit: its own settings
-# enable the plugin (installed from any marketplace name), or it carries the
+# enable the plugin (installed from any marketplace name; `agentic-development-kit`
+# is the core's name before 0.7, still honored so an upgraded repository stays
+# opted in until its settings are updated), or it carries the
 # kit's config at .claude/quality-check.config.json, which project-setup writes.
 # A plugin installed at user scope is present in every repository on the machine;
 # what it injects into a session belongs only in the repositories that asked.
@@ -160,7 +208,7 @@ project_opted_in() {
   for f in "$PROJECT_DIR/.claude/settings.json" "$PROJECT_DIR/.claude/settings.local.json"; do
     [ -f "$f" ] || continue
     jq -e '(.enabledPlugins // {}) | to_entries
-           | any((.key | startswith("agentic-development-kit@")) and .value == true)' "$f" >/dev/null 2>&1 \
+           | any((.key | startswith("adk-sdlc@") or startswith("agentic-development-kit@")) and .value == true)' "$f" >/dev/null 2>&1 \
       && return 0
   done
   return 1
