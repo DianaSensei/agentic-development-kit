@@ -83,6 +83,7 @@ def intents(root):
             "created": created, "decided": decided,
             "seen_again": sum(1 for _, l in log if "seen again" in l),
             "plan": fm.get("plan") or "", "changelog": fm.get("changelog") or "",
+            "signal_band": fm.get("signal_band") or "", "resolution": fm.get("resolution") or "",
         })
     return rows
 
@@ -122,6 +123,10 @@ def compute(root):
         key = r["originator"]
         recurring[key] = recurring.get(key, 0) + 1 + r["seen_again"]
 
+    done = [r for r in rows if r["status"] == "done"]
+    met = sum(1 for r in done if r["resolution"] == "met")
+    not_met = sum(1 for r in done if r["resolution"] == "not-met")
+
     return {
         "plan": {
             "intents": len(rows),
@@ -142,6 +147,14 @@ def compute(root):
             "promoted_to_claude_md": len(re.findall(r"^- Promoted: CLAUDE\.md", log, re.M)),
             "promotions_declined": len(re.findall(r"^- Promotion: declined", log, re.M)),
         },
+        "bets": {
+            "done": len(done),
+            "met": met,
+            "not_met": not_met,
+            "resolution_rate": round(met / (met + not_met), 2) if met + not_met else None,
+            "awaiting_verdict": sum(1 for r in done if r["signal_band"] and not r["resolution"]),
+            "unmeasured": sum(1 for r in done if not r["signal_band"]),
+        },
         "maintain": {
             "monitoring_intents": len(monitoring),
             "median_days_to_triage": med(triage),
@@ -159,7 +172,7 @@ def show(v):
 
 
 def markdown(m):
-    p, b, l, mt = m["plan"], m["build"], m["learning"], m["maintain"]
+    p, b, l, mt, bt = m["plan"], m["build"], m["learning"], m["maintain"], m["bets"]
     rows = [
         ("Plan", "Intents", show(p["intents"]), "every change starts as one"),
         ("Plan", "By status", show(p["by_status"]), ""),
@@ -167,6 +180,9 @@ def markdown(m):
         ("Plan", "Median days to decision", show(p["median_days_to_decision"]), f"created to accepted or rejected, {p['decisions_measured']} measured"),
         ("Build", "Median days plan to changelog", show(b["median_days_plan_to_changelog"]), f"approved plan to shipped change, {b['changes_measured']} measured"),
         ("Build", "Plan revisions per change", show(b["mean_plan_revisions"]), "commits to a plan after its first; rework in design"),
+        ("Outcome", "Bets met", show(bt["resolution_rate"]), f"of shipped intents judged by their signal band: {bt['met']} met, {bt['not_met']} not met"),
+        ("Outcome", "Awaiting a verdict", show(bt["awaiting_verdict"]), "done, with a signal band, not judged yet"),
+        ("Outcome", "Shipped, never checked", show(bt["unmeasured"]), f"of {bt['done']} done intents, no signal band - nobody will learn whether they worked"),
         ("Learn", "Experience-log entries", show(l["experience_log_entries"]), f"{l['user_corrections']} of them user corrections"),
         ("Learn", "Mistakes seen twice or more", show(l["repeated_classes"]), "class: count"),
         ("Learn", "Promoted to CLAUDE.md", show(l["promoted_to_claude_md"]), f"{l['promotions_declined']} declined"),

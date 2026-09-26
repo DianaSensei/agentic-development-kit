@@ -4,27 +4,31 @@
 #
 #   1. detect, deterministically: control bands (check-bands.py) and, when the
 #      CI says so, a failed pipeline on the default branch
-#   2. only if a `propose` problem was found: Claude writes each one up as a
+#   2. judge bets, deterministically: a `done` intent whose `signal_band` is
+#      in bands.yaml gets `resolution: met | not-met` once it has been done
+#      ADK_RESOLVE_AFTER_DAYS days (default 14) - resolve-bets.py
+#   3. only if a `propose` problem was found: Claude writes each one up as a
 #      `proposed` intent under docs/intents/ (propose-intents.md) - no MCP
 #      server, no shell beyond the intent checker, no writes elsewhere
-#   3. verify: nothing outside docs/intents/ changed, every intent passes
+#   4. verify: nothing outside docs/intents/ changed, every intent passes
 #      check-intent.sh - or nothing is published
-#   4. publish: commit to the standing triage branch, push with git, and open
+#   5. publish: commit to the standing triage branch, push with git, and open
 #      its pull/merge request through the provider's MCP server if none is open
 #
 # The CI templates (.github/workflows/maintain.yml, ci/gitlab/maintain.yml)
 # map their variables onto the environment below and call this script.
 #
 # Publishing needs: ADK_PROVIDER, ADK_PROJECT, ADK_CODEHOST_TOKEN
-#   (+ ADK_CODEHOST_URL for GitLab), a Claude credential, and an `origin`
-#   remote this job can push to.
+#   (+ ADK_CODEHOST_URL for GitLab) and an `origin` remote this job can push
+#   to; writing intents also needs a Claude credential, judging bets does not.
 # Optional: ADK_BANDS_FILE (bands.yaml), BANDS_ENV (NAME=value lines for the
 #   band commands - exported to the check only, every value redacted from the
 #   evidence), ADK_FAILED_NAME / ADK_FAILED_URL / ADK_FAILED_REF /
 #   ADK_FAILED_SHA / ADK_FAILED_LOG_FILE (a failed pipeline to record),
 #   ADK_DEFAULT_BRANCH (else asked of the remote), ADK_QUEUE_BRANCH,
 #   ADK_RUN_URL, ADK_MODEL, ADK_GIT_NAME, ADK_GIT_EMAIL, ADK_CODEHOST_BOT_LOGIN,
-#   ADK_WORK_DIR, ADK_REDACT (more values to redact, one per line).
+#   ADK_WORK_DIR, ADK_REDACT (more values to redact, one per line),
+#   ADK_RESOLVE_AFTER_DAYS.
 set -euo pipefail
 
 KIT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -104,29 +108,48 @@ print(sum(1 for r in results if r["tier"] == "propose" and r["status"] in ("brea
 EOF
 )"
 
-if [ "$propose" = "0" ]; then
+# Bets: `done` intents whose success signal a band measures, judged once they
+# have been done long enough. Deterministic - no model.
+AFTER_DAYS="${ADK_RESOLVE_AFTER_DAYS:-14}"
+python3 "$KIT/maintain/resolve-bets.py" "$RESULTS" --after-days "$AFTER_DAYS" --dry-run > "$WORK/bets.txt"
+resolvable="$(grep -c '^would-resolve ' "$WORK/bets.txt" || true)"
+if [ -s "$WORK/bets.txt" ]; then
+  { echo; echo "### Bets"; echo; sed 's/^/- /' "$WORK/bets.txt"; } >> "$SUMMARY"
+fi
+
+if [ "$propose" = "0" ] && [ "$resolvable" = "0" ]; then
   summary
-  echo "Nothing to propose."
+  echo "Nothing to propose or resolve."
   exit 0
 fi
 
-# 2. Write the intents - only with everything needed to publish them.
-has_credential=""
-for v in ANTHROPIC_API_KEY CLAUDE_CODE_OAUTH_TOKEN ANTHROPIC_AUTH_TOKEN CLAUDE_CODE_USE_BEDROCK CLAUDE_CODE_USE_VERTEX CLAUDE_CODE_USE_FOUNDRY; do
-  [ -n "${!v:-}" ] && has_credential=1
-done
-[ "${ADK_CLAUDE_AUTH:-}" = "preconfigured" ] && has_credential=1
+# 3. Everything below publishes, so it needs the code host.
 missing=""
-[ -n "$has_credential" ] || missing="a Claude credential (ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN)"
 for v in ADK_PROVIDER ADK_PROJECT ADK_CODEHOST_TOKEN; do
   [ -n "${!v:-}" ] || missing="${missing:+$missing, }$v"
 done
 if [ -n "$missing" ]; then
   summary
-  note warning "Maintain: intents not proposed" "Problems were found (see the summary) but nothing was written up - missing: $missing."
+  note warning "Maintain: nothing published" "Problems or bets to record were found (see the summary) but nothing was published - missing: $missing."
   exit 0
 fi
-command -v claude >/dev/null || { note error "Maintain" "Claude Code is not installed"; exit 1; }
+# Writing intents also needs Claude; resolving bets does not.
+write_intents=""
+if [ "$propose" != "0" ]; then
+  has_credential=""
+  for v in ANTHROPIC_API_KEY CLAUDE_CODE_OAUTH_TOKEN ANTHROPIC_AUTH_TOKEN CLAUDE_CODE_USE_BEDROCK CLAUDE_CODE_USE_VERTEX CLAUDE_CODE_USE_FOUNDRY; do
+    [ -n "${!v:-}" ] && has_credential=1
+  done
+  [ "${ADK_CLAUDE_AUTH:-}" = "preconfigured" ] && has_credential=1
+  if [ -z "$has_credential" ]; then
+    note warning "Maintain: intents not proposed" "Problems were found (see the summary) but no ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN is set to write them up."
+  elif ! command -v claude >/dev/null; then
+    note error "Maintain" "Claude Code is not installed"; exit 1
+  else
+    write_intents=1
+  fi
+  if [ -z "$write_intents" ] && [ "$resolvable" = "0" ]; then summary; exit 0; fi
+fi
 
 # The queue branch carries intents proposed in earlier runs that nobody has
 # triaged yet; starting from it lets this run update those instead of
@@ -149,22 +172,27 @@ else
   git checkout --quiet -B "$QUEUE_BRANCH" "origin/$default_branch"
 fi
 
+python3 "$KIT/maintain/resolve-bets.py" "$RESULTS" --after-days "$AFTER_DAYS" --run-url "${ADK_RUN_URL:-}" > "$WORK/resolved.txt"
+cat "$WORK/resolved.txt"
+
 model_args=()
 [ -n "${ADK_MODEL:-}" ] && model_args=(--model "$ADK_MODEL")
-(
-  # Claude needs no code-host access to write files; keep every token out of its environment.
-  unset ADK_CODEHOST_TOKEN BANDS_ENV GH_TOKEN GITHUB_TOKEN GITLAB_TOKEN ADK_GITLAB_TOKEN
-  claude -p "Follow ${KIT}/maintain/propose-intents.md.
-The results file is ${RESULTS}. The kit is at ${KIT}.
-Run URL: ${ADK_RUN_URL:-(none)}" \
-    --plugin-dir "$KIT" --add-dir "$KIT" --add-dir "$WORK" \
-    --strict-mcp-config \
-    --allowedTools "Read,Glob,Grep,Skill,Edit(docs/intents/**),Bash(bash ${KIT}/skills/intent-capture/scripts/check-intent.sh *)" \
-    "${model_args[@]}" > "$WORK/claude.txt"
-) || { note error "Maintain" "Claude did not finish writing the intents"; cat "$WORK/claude.txt" 2>/dev/null || true; exit 1; }
-cat "$WORK/claude.txt"
+if [ -n "$write_intents" ]; then
+  (
+    # Claude needs no code-host access to write files; keep every token out of its environment.
+    unset ADK_CODEHOST_TOKEN BANDS_ENV GH_TOKEN GITHUB_TOKEN GITLAB_TOKEN ADK_GITLAB_TOKEN
+    claude -p "Follow ${KIT}/maintain/propose-intents.md.
+  The results file is ${RESULTS}. The kit is at ${KIT}.
+  Run URL: ${ADK_RUN_URL:-(none)}" \
+      --plugin-dir "$KIT" --add-dir "$KIT" --add-dir "$WORK" \
+      --strict-mcp-config \
+      --allowedTools "Read,Glob,Grep,Skill,Edit(docs/intents/**),Bash(bash ${KIT}/skills/intent-capture/scripts/check-intent.sh *)" \
+      "${model_args[@]}" > "$WORK/claude.txt"
+  ) || { note error "Maintain" "Claude did not finish writing the intents"; cat "$WORK/claude.txt" 2>/dev/null || true; exit 1; }
+  cat "$WORK/claude.txt"
+fi
 
-# 3. The model's output is checked, not trusted.
+# 4. Every change is checked, the model's included, before anything is published.
 outside="$(git status --porcelain --untracked-files=all | awk '{print $NF}' | grep -v '^docs/intents/' || true)"
 if [ -n "$outside" ]; then
   note error "Maintain" "Files outside docs/intents/ changed - nothing published: $(echo $outside)"
@@ -175,18 +203,23 @@ if [ -z "$changed" ]; then summary; echo "No intent changed."; exit 0; fi
 # shellcheck disable=SC2086
 bash "$KIT/skills/intent-capture/scripts/check-intent.sh" $changed
 
-# 4. Publish.
+# 5. Publish.
 git add docs/intents
-git commit --quiet -m "Maintain: propose intents from monitoring ($(date -u +%Y-%m-%d))"
+git commit --quiet -m "Maintain: intents from monitoring and resolved bets ($(date -u +%Y-%m-%d))"
 git push --quiet origin "HEAD:refs/heads/$QUEUE_BRANCH"
 
 cat > "$WORK/change-body.md" <<'EOF'
-Problems found by the maintain loop, each written up as a `proposed` intent. Triage them here: accept (`intent-capture` Decide mode, or edit `status`), reject with a reason, or edit before merging. Merging records the decisions; accepted intents then go through the normal workflows. New findings keep arriving on this branch until it is merged.
+The maintain loop's triage queue.
+
+- **Problems** it found are written up as `proposed` intents. Accept (`intent-capture` Decide mode, or edit `status`), reject with a reason, or edit before merging; accepted intents then go through the normal workflows.
+- **Bets** it judged: a `done` intent whose `signal_band` was measured after shipping gets `resolution: met` or `not-met`. A bet that was not met is worth a new intent - the change shipped but did not do what it was for.
+
+Merging records it all. New findings keep arriving on this branch until it is merged.
 EOF
 bash "$KIT/codehost/install.sh" "$ADK_PROVIDER" "$WORK/bin"
 PATH="$WORK/bin:$PATH" python3 "$KIT/codehost/codehost.py" ensure-change \
   --head "$QUEUE_BRANCH" --base "$default_branch" \
   --title "Proposed intents from monitoring" --body-file "$WORK/change-body.md"
 
-{ echo; echo "Proposed or updated:"; printf -- '- `%s`\n' $changed; } >> "$SUMMARY"
+{ echo; echo "Changed on the triage branch:"; printf -- '- `%s`\n' $changed; } >> "$SUMMARY"
 summary

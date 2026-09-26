@@ -10,6 +10,7 @@ on:
       - "codehost/**"
       - "ci/**"
       - "maintain/**"
+      - "skills/intent-capture/scripts/**"
       - ".github/workflows/pipeline-tests.yml"
   push:
     branches: [main]
@@ -31,14 +32,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Install test dependencies
+        run: python -m pip install --quiet pyyaml jsonschema
       - name: Code-host tests
         run: python -m unittest discover -s codehost/tests -v
+      - name: Maintain-loop tests
+        run: python -m unittest discover -s maintain/tests -v
       - name: Script syntax
         run: for f in ci/*.sh maintain/*.sh codehost/*.sh; do bash -n "$f"; done
       - name: GitLab CI templates
         run: |
           set -euo pipefail
-          python -m pip install --quiet pyyaml jsonschema
           curl -fsSL -o "$RUNNER_TEMP/gitlab-ci.json" \
             https://gitlab.com/gitlab-org/gitlab/-/raw/master/app/assets/javascripts/editor/schema/ci.json
           python - "$RUNNER_TEMP/gitlab-ci.json" ci/gitlab/*.yml <<'EOF'
