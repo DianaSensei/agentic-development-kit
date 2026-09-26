@@ -64,6 +64,9 @@ Press on four things:
   write "none yet"; never imply evidence exists.
 - **An observable outcome.** How would someone other than the originator tell, after the change, that it
   worked? A target number the originator did not give is "needs confirmation", never an invented one.
+  When the project has a `bands.yaml` and one of its bands measures that signal, put the band's name in
+  `signal_band`: the maintain loop then checks, after the change ships, whether the bet paid off. No
+  band fits → leave it empty; never invent one.
 - **Non-goals.** What this intent deliberately leaves out - the cheapest scope control available.
 
 ### Step 4 - Check it against the readiness bar
@@ -124,7 +127,10 @@ frontmatter of every `docs/intents/*.md` and present one table grouped by status
 - the oldest `proposed` intents;
 - `plan` or `changelog` links pointing at a file that does not exist;
 - counts of `accepted` vs `rejected` - the acceptance rate says whether intents are being raised at the
-  right level of readiness.
+  right level of readiness;
+- `done` intents with `resolution: not-met` - shipped, but the success signal says the problem is still
+  there; each is a candidate for a new intent - and `done` ones with no `signal_band`, whose outcome
+  nobody will ever check.
 
 ## Decide
 
@@ -146,7 +152,7 @@ file after the edit.
 | `accepted` | a person, via Decide | approved to build |
 | `rejected` | a person, via Decide | turned down, reason recorded |
 | `in-progress` | the orchestrator, at its CHECKPOINT | an approach was chosen; `plan` linked |
-| `done` | the orchestrator, at knowledge capture | shipped; `changelog` linked |
+| `done` | the orchestrator, at knowledge capture | shipped; `changelog` linked. Later the maintain loop sets `resolution: met / not-met` from `signal_band` |
 | `superseded` | a person, via Decide | replaced by `superseded_by` |
 
 ## Boundaries

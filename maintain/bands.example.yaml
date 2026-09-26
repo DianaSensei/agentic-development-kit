@@ -20,6 +20,13 @@ bands:
     command: gh issue list --label P1 --state open --json number --jq length
     max: 3
 
+  # A signal band: intents set `signal_band: checkout-success-rate`, and the loop
+  # judges them against it once they have been done 14 days (maintain/README.md).
+  - name: checkout-success-rate
+    command: "curl -sf \"$PROM_URL/api/v1/query?query=sum(rate(checkout_total{result=\\\"ok\\\"}[1d]))/sum(rate(checkout_total[1d]))*100\" | jq -r '.data.result[0].value[1]'"
+    min: 99
+    tier: observe
+
   - name: disk-free-pct
     command: df --output=pcent / | tail -1 | tr -dc '0-9' | awk '{print 100 - $1}'
     min: 15

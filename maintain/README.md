@@ -87,6 +87,28 @@ gets a new intent, `monitoring-<name>-<date>.md`, which references the old one. 
 `maintain/proposed-intents` carries intents nobody has triaged yet, so a finding is never proposed
 twice while its PR is open.
 
+## Bets: did the change work?
+
+An intent is a bet: a problem, and a *Success signal* that says whether solving it worked. `done` only
+says the change shipped. When an intent's `signal_band` names a band in `bands.yaml`, each run of the
+loop also judges it - deterministically, with no model - once it has been `done` for
+`ADK_RESOLVE_AFTER_DAYS` days (default 14):
+
+| The band | The intent gets |
+|---|---|
+| in range | `resolution: met` |
+| out of range | `resolution: not-met` - shipped, but the problem is still there: a candidate for a new intent |
+| broken, or not in `bands.yaml` | nothing; listed in the job summary |
+
+The verdict lands in the frontmatter and a Decision log line, on the same triage branch and request as
+proposed intents, so a person sees it before it is merged. [`resolve-bets.py`](./resolve-bets.py) does
+it; it needs code-host access to publish but no Claude credential. `metrics/` reports the share of
+judged bets that were met, and how many shipped intents have no signal band at all - changes whose
+outcome nobody will ever check.
+
+A signal band is an ordinary band. Give it `tier: observe` when being out of range should not also
+raise a new intent on its own.
+
 ## Cost and schedule
 
 The caller checks every 6 hours. The check itself is free; Claude runs only when a `propose` band is

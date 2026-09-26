@@ -7,6 +7,8 @@
 # Prints one line per problem; exits 1 if any file has one.
 
 KEYS="title status type originator created updated plan changelog superseded_by"
+# Added after the first release; intents written before them stay valid without.
+OPTIONAL_KEYS="signal_band resolution"
 SECTIONS="Problem|Evidence|Desired outcome|Success signal|Non-goals|Affected systems|Constraints|Originator's idea (non-binding)|Open questions|Decision log"
 STATUSES="draft proposed accepted rejected in-progress done superseded"
 TYPES="feature bug refactor unknown"
@@ -31,7 +33,7 @@ for f in "$@"; do
     printf '%s\n' "$present" | grep -qx "$k" || fail "$f" "missing frontmatter key '$k'"
   done
   for k in $present; do
-    one_of "$k" "$KEYS" || fail "$f" "unexpected frontmatter key '$k'$( [ "$k" = slug ] && echo ' (the slug is the filename)')"
+    one_of "$k" "$KEYS $OPTIONAL_KEYS" || fail "$f" "unexpected frontmatter key '$k'$( [ "$k" = slug ] && echo ' (the slug is the filename)')"
   done
 
   val() { printf '%s\n' "$fm" | sed -n "s/^$1:[[:space:]]*//p" | head -n1; }
@@ -45,6 +47,13 @@ for f in "$@"; do
     case "$(val "$k")" in null|'~'|'""'|"''") fail "$f" "$k: leave it empty rather than writing a null" ;; esac
   done
   [ "$status" != "done" ] || [ -n "$(val changelog)" ] || fail "$f" "done without a changelog link"
+  resolution="$(val resolution)"
+  [ -z "$resolution" ] || one_of "$resolution" "met not-met" || fail "$f" "resolution '$resolution' is not met or not-met (or empty)"
+  [ -z "$resolution" ] || [ "$status" = "done" ] || fail "$f" "resolution is set but status is not done"
+  [ -z "$resolution" ] || [ -n "$(val signal_band)" ] || fail "$f" "resolution without the signal_band it was judged by"
+  for k in signal_band resolution; do
+    case "$(val "$k")" in null|'~'|'""'|"''") fail "$f" "$k: leave it empty rather than writing a null" ;; esac
+  done
 
   printf '%s\n' "$body" | grep -q '^# ' || fail "$f" "missing the '# <title>' heading"
 

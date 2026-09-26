@@ -14,6 +14,7 @@ python3 metrics/sdlc-metrics.py path/to/repo --json
 | Plan | Median days to decision | each intent's *Decision log* | How long ideas wait for a person |
 | Build | Median days plan to changelog | git dates of `docs/plans/<slug>.md` and its `changelog` | Approved plan to shipped change - the playbook's "plan approval to merged PR" |
 | Build | Plan revisions per change | commits to a plan after its first | Design rework after approval |
+| Outcome | Bets met, awaiting a verdict, shipped but never checked | `signal_band` and `resolution` on `done` intents, set by the maintain loop | Whether shipped changes did what they were for - not just whether they merged |
 | Learn | Experience-log entries, user corrections | `docs/knowledge/experience-log.md` | How often Claude needs correcting |
 | Learn | Mistakes seen twice or more, promotions | `Class`, `Promoted`, `Promotion: declined` lines | Whether repeated mistakes turn into `CLAUDE.md` rules |
 | Maintain | Intents raised by monitoring, days to triage, repeat problems | `originator: monitoring/...` intents | Whether the maintain loop's findings get handled, and which keep coming back |
