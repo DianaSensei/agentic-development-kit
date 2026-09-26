@@ -42,9 +42,16 @@ assigning work. This means adding a new Tier-2 agent to this directory doesn't r
 | [`data-storage-architect`](./agents/data-storage-architect.md) | Designs data storage for ANY technology (Oracle/PostgreSQL/MySQL/Redis/MongoDB/Elasticsearch/local SQLite). Auto-detects the technology in use, always presents tradeoffs, never decides unilaterally. | `solution-architect` |
 | [`java-ecosystem-engineer`](./agents/java-ecosystem-engineer.md) | Implements + self-tests Java Spring Boot business/functional flows (MVC/WebFlux, Spring Data, Security, Kafka, RabbitMQ, resilience). | `data-storage-architect` + `api-spec-designer` (if applicable) |
 | [`tauri-react-engineer`](./agents/tauri-react-engineer.md) | Implements + self-tests Tauri (Rust commands) + React (UI) for a cross-platform desktop app. | `data-storage-architect` (if persisted data is needed) + `api-spec-designer` (if applicable) |
+| [`unit-implementer`](./agents/unit-implementer.md) | Implements + self-tests ONE independent unit of the approved plan in its own git worktree (`isolation: worktree`), in parallel with the plan's other units, and commits it on the worktree's branch. Follows the Tier-2 specialist the plan named for the unit, if any. | The CHECKPOINT, for a plan with a `## Parallel units` section |
 
 Every implementing (Tier 2) agent writes AND runs its own tests for the part it did before reporting
 done, leaving no verification work for a later step.
+
+**Parallel units.** Tier-2 agents dispatched as usual write into the user's working tree, so two of
+them at once would collide. Independent units therefore go to `unit-implementer`, one per unit, each
+in a worktree of its own; the lead agent applies each unit's commit to the working tree as an
+uncommitted change, then runs the whole test suite. The rules, including which units qualify, are in
+`skills/feature-development/references/parallel-units.md`.
 
 ## Locating this plugin's own files from inside an agent
 

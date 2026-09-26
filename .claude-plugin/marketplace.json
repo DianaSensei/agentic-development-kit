@@ -9,7 +9,7 @@
       "name": "agentic-development-kit",
       "source": "./",
       "description": "An AI-native SDLC for Claude Code: intent to plan to reviewed change to monitored release, on GitHub or GitLab.",
-      "version": "0.5.0"
+      "version": "0.6.0"
     }
   ]
 }

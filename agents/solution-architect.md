@@ -74,7 +74,10 @@ without calling `solution-architect` again.
    - **Task breakdown**: a list of concrete work items needed to implement this proposal,
      each item assigned to exactly 1 Tier-2 agent (per `project_type_detected`), clearly
      marking which must be done sequentially (depends on a prior item) and which can run in
-     parallel (independent, doesn't touch the same file/resource).
+     parallel (independent, doesn't touch the same file/resource). List each item's `files`:
+     parallel items are built at the same time in separate worktrees, so a file two of them
+     touch - a shared registry, route table, lockfile or config line - makes them sequential,
+     or goes in a separate item after both.
 3. If there's only 1 reasonable direction (no significant tradeoff to choose between), it's
    fine to provide just 1 proposal - but it must still include all the sections above.
 4. Never pick a proposal as the final decision yourself - you may only mark one proposal as
@@ -108,8 +111,9 @@ without calling `solution-architect` again.
           "task": "...",
           "assigned_agent": "agent name taken from Step 0.5 (must exactly match the 'name' in the frontmatter of the discovered agent, do NOT invent a nonexistent agent name)",
           "role_description": "Specific description of what this agent will do in this task (not just restating the agent's general description) - detailed enough for the user to decide whether to keep/drop/change the agent/change scope after selecting the proposal",
+          "files": ["paths this task creates or changes; a directory ending in / for a new module"],
           "depends_on": ["id of a prior task, empty if not dependent"],
-          "can_run_parallel_with": ["id of another task if independent, empty if not"]
+          "can_run_parallel_with": ["id of another task if independent AND no path in files overlaps, empty if not"]
         }
       ]
     }

@@ -76,6 +76,17 @@ Then [expected result]
 - [ ] Integration tests for API endpoint
 - [ ] E2E test for complete user flow
 
+## Parallel units
+Only when two or more units are independent and touch disjoint files
+(`parallel-units.md`); omit the section otherwise.
+
+| Unit | Task | Files |
+|------|------|-------|
+| U1 | [What it builds] | `src/export/`, `tests/export/` |
+| U2 | [What it builds] | `src/import/`, `tests/import/` |
+
+After both: [the shared edits no unit makes, e.g. registering both routes in `src/routes.py`]
+
 ## Out of Scope
 - [Feature/capability explicitly not included]
 - [Future enhancement to consider later]
@@ -102,5 +113,6 @@ records what was actually built.
 | Acceptance Criteria | How to verify | Yes |
 | Error Handling | Failure cases | Yes |
 | Implementation TODO | Action items | Yes |
+| Parallel units | Independent units built at the same time | Only when they exist |
 | Out of Scope | Prevent scope creep | Recommended |
 | Open Questions | Track decisions | As needed |
