@@ -54,7 +54,8 @@ every file this workflow writes. Check `status` first:
 
 This skill's own `references/` cover requirement-gathering *method* (not technology) - load each when its
 step is reached: `ears-syntax.md`, `interview-questions.md`, `acceptance-criteria.md`,
-`specification-template.md`, `diagram-guide.md`, `definition-of-done.md`, `report-and-logs.md`.
+`specification-template.md`, `diagram-guide.md`, `definition-of-done.md`, `report-and-logs.md`,
+`parallel-units.md`.
 
 **Optional pre-discovery**: if the feature touches 3+ system layers (auth, DB, UI...), the codebase is
 unfamiliar/undocumented, or technical facts are needed before requirements can be asked intelligently -
@@ -115,6 +116,10 @@ only - acceptance criteria stay in the plan.
    `references/specification-template.md`, opening with a line `Intent: docs/intents/<feature-slug>.md`.
    This is the durable record; it does not replace presenting the proposal to the user in conversation.
 4. `solution-architect` may mark one `recommended` - fine to relay, but never choose on the user's behalf.
+5. **Parallel units**: where `task_breakdown` has two or more substantial tasks with no `depends_on`
+   between them and disjoint `files`, list them in the plan under `## Parallel units` (id, task,
+   files) and name them when you present it. The CHECKPOINT then approves running them in parallel
+   (3.1); a plan without the section is built sequentially. Rules: `references/parallel-units.md`.
 
 **CHECKPOINT (required)**: present the full proposal, then confirm via `AskUserQuestion` with `header`
 set exactly to `"Checkpoint"` (options: one per proposal, plus "Revise" - free text always available via
@@ -145,6 +150,13 @@ exists (`java-ecosystem-engineer`, `tauri-react-engineer`, `data-storage-archite
 it may go through the Task tool instead of being implemented inline - those agents write and run their own
 tests for the piece they own. Not required: anything without a matching Tier-2 agent is implemented
 directly under the read-the-`SKILL.md` rule above.
+
+**Parallel units**: when the approved plan has a `## Parallel units` section, build those units first,
+at the same time: one `unit-implementer` per unit, dispatched in a single message, each in its own git
+worktree. Then apply each unit's commit to the working tree, make the shared edits they report, and
+run the full tests before anything else. Preconditions, dispatch prompt, applying and cleaning up:
+`references/parallel-units.md`, read in full before dispatching. A unit that does not apply cleanly is
+built sequentially here instead.
 
 Two things the dispatch does not do for you:
 
