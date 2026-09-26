@@ -471,7 +471,12 @@ def publish_review(host, args):
     footer = "Reviewed"
     if args.head_sha:
         footer += f" commit {args.head_sha[:7]}"
-    lines.append(f"<sub>{footer} by the kit's `independent-review` skill. Updated on every push.</sub>")
+    footer += " by the kit's `independent-review` skill"
+    run = result.get("run") or {}
+    if run.get("total_cost_usd") is not None:
+        footer += f" (${run['total_cost_usd']:.2f}"
+        footer += f", {run['num_turns']} turns)" if run.get("num_turns") is not None else ")"
+    lines.append(f"<sub>{footer}. Updated on every push.</sub>")
     body = "\n".join(lines)
     if args.summary_out:
         with open(args.summary_out, "w", encoding="utf-8") as f:

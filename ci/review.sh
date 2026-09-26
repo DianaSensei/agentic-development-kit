@@ -19,7 +19,11 @@
 # Optional: ADK_HEAD_SHA, ADK_CHANGE_TITLE, ADK_CHANGE_BODY, ADK_SOURCE_BRANCH,
 #           ADK_TARGET_BRANCH, ADK_CODEHOST_BOT_LOGIN, ADK_MODEL,
 #           ADK_EXTRA_INSTRUCTIONS, ADK_FAIL_ON_BLOCKING (true|false),
-#           ADK_WORK_DIR (default: a new temporary directory)
+#           ADK_WORK_DIR (default: a new temporary directory),
+#           OTEL_EXPORTER_OTLP_ENDPOINT (+ _HEADERS): export the run's metrics,
+#           events and traces there (ci/common.sh adk_telemetry)
+# Leaves in ADK_WORK_DIR: transcript.jsonl (the reviewer's full trajectory),
+#           result.json (findings, counts, cost), summary.md (as posted).
 #
 # Exit: 0 reviewed; 1 failed, or blocking findings with ADK_FAIL_ON_BLOCKING;
 #       3 skipped - no Claude credential (a warning, never a red check: fork
@@ -27,6 +31,8 @@
 set -euo pipefail
 
 KIT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=ci/common.sh
+. "$KIT/ci/common.sh"
 WORK="${ADK_WORK_DIR:-$(mktemp -d)}"
 mkdir -p "$WORK"
 
@@ -34,13 +40,7 @@ note() { # note <level> <title> <text> - an annotation the CI shows
   if [ "${GITHUB_ACTIONS:-}" = "true" ]; then echo "::$1 title=$2::$3"; else echo "$1: $2 - $3" >&2; fi
 }
 
-has_credential=""
-for v in ANTHROPIC_API_KEY CLAUDE_CODE_OAUTH_TOKEN ANTHROPIC_AUTH_TOKEN CLAUDE_CODE_USE_BEDROCK CLAUDE_CODE_USE_VERTEX CLAUDE_CODE_USE_FOUNDRY; do
-  [ -n "${!v:-}" ] && has_credential=1
-done
-# A self-hosted runner where Claude Code is already signed in says so explicitly.
-[ "${ADK_CLAUDE_AUTH:-}" = "preconfigured" ] && has_credential=1
-if [ -z "$has_credential" ]; then
+if ! adk_has_claude_credential; then
   note warning "Independent review skipped" "No ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN is available to this job (see ci/README.md in the kit). Pipelines for forks never receive secrets."
   exit 3
 fi
@@ -115,21 +115,29 @@ EOF
 
 model_args=()
 [ -n "${ADK_MODEL:-}" ] && model_args=(--model "$ADK_MODEL")
+adk_telemetry review
+# The whole trajectory - every file read, every tool call - is kept as
+# transcript.jsonl: the CI templates attach it to the run, so a finding can be
+# traced to what the reviewer actually looked at.
 claude -p "$(cat "$WORK/prompt.md")" \
   --plugin-dir "$KIT" --add-dir "$KIT" --add-dir "$WORK" \
   --strict-mcp-config \
   --settings "$settings" \
   --allowedTools "Read,Grep,Glob,Skill,Task,Agent" \
-  --output-format json --json-schema "$schema" \
-  "${model_args[@]}" > "$WORK/claude.json" || true
+  --output-format stream-json --verbose --json-schema "$schema" \
+  "${model_args[@]}" < /dev/null > "$WORK/transcript.jsonl" || true
+adk_run_result "$WORK/transcript.jsonl" "$WORK/claude.json" || echo '{}' > "$WORK/claude.json"
+stats="$(adk_run_stats "$WORK/claude.json")"
+echo "Reviewer run: ${stats:-no result}"
 
-python3 - "$WORK/claude.json" "$WORK/result.json" <<'EOF' || { note error "Independent review" "The reviewer returned no structured result - see $WORK/claude.json"; exit 1; }
+python3 - "$WORK/claude.json" "$WORK/result.json" <<'EOF' || { note error "Independent review" "The reviewer returned no structured result - see $WORK/transcript.jsonl"; exit 1; }
 import json, sys
 with open(sys.argv[1]) as f:
     out = json.load(f)
 result = out.get("structured_output")
 if out.get("is_error") or not isinstance(result, dict) or "summary_markdown" not in result:
     sys.exit(1)
+result["run"] = {k: out.get(k) for k in ("total_cost_usd", "num_turns", "duration_ms")}
 with open(sys.argv[2], "w") as f:
     json.dump(result, f)
 EOF
@@ -140,7 +148,10 @@ PATH="$WORK/bin:$PATH" python3 "$KIT/codehost/codehost.py" publish-review \
   --change "$ADK_CHANGE_ID" --result "$WORK/result.json" --diff "$WORK/review.diff" \
   --head-sha "${ADK_HEAD_SHA:-}" --summary-out "$WORK/summary.md" \
   || { note error "Independent review" "The review ran but could not be posted - its summary is in the job log below"; cat "$WORK/summary.md" 2>/dev/null || true; exit 1; }
-[ -n "${GITHUB_STEP_SUMMARY:-}" ] && cat "$WORK/summary.md" >> "$GITHUB_STEP_SUMMARY"
+if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+  cat "$WORK/summary.md" >> "$GITHUB_STEP_SUMMARY"
+  printf '\n<sub>Reviewer run: %s. Transcript: the `adk-review-transcript` artifact.</sub>\n' "$stats" >> "$GITHUB_STEP_SUMMARY"
+fi
 
 # 4. The gate.
 blocking="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["blocking"])' "$WORK/result.json")"

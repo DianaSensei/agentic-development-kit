@@ -65,6 +65,22 @@ through [`@zereight/mcp-gitlab`](https://github.com/zereight/gitlab-mcp), pinned
 only accepts OAuth sign-in, which a pipeline cannot complete. A missing variable is a warning (exit code
 3, allowed to fail), not a red pipeline.
 
+## Traces and cost
+
+Every run keeps the reviewer's **full trajectory** - each file it read, each tool call, its final
+answer - as `transcript.jsonl`, attached to the run for 14 days (the `adk-review-transcript` artifact
+on GitHub, `adk-artifacts/` on GitLab), next to `result.json` and the summary as posted. When a
+finding looks wrong, that is where to see why. The summary comment ends with what the run cost
+(`$0.41, 15 turns`).
+
+To send the runs to your own observability stack, give the job an OpenTelemetry collector:
+`OTEL_EXPORTER_OTLP_ENDPOINT`, and `OTEL_EXPORTER_OTLP_HEADERS` for its credential - repository
+secrets passed by the caller on GitHub (commented lines in the caller), masked variables on GitLab.
+Claude Code's metrics, events and (beta) traces then go there, labelled `adk.run=review`,
+`adk.provider`, `adk.project` and `adk.change`. Tool parameters and content stay out unless you also set
+`OTEL_LOG_TOOL_DETAILS` / `OTEL_LOG_TOOL_CONTENT`: a pull request's code is not the collector's to keep
+by default. Any `OTEL_*` variable you set yourself wins over the kit's defaults.
+
 ## Options
 
 | GitHub input / GitLab input | Default | |

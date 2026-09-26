@@ -76,3 +76,11 @@ adk-independent-review:
       export ADK_CODEHOST_URL="$CI_API_V4_URL"
       export ADK_WORK_DIR=/tmp/adk-review
       bash /tmp/adk/ci/review.sh
+  # The reviewer's full trajectory, for anyone asking why it reported what it did.
+  after_script:
+    - mkdir -p adk-artifacts && cp /tmp/adk-review/transcript.jsonl /tmp/adk-review/result.json /tmp/adk-review/summary.md adk-artifacts/ 2>/dev/null || true
+  artifacts:
+    when: always
+    expire_in: 14 days
+    paths:
+      - adk-artifacts/

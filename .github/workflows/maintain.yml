@@ -40,6 +40,12 @@ on:
         required: false
       CLAUDE_CODE_OAUTH_TOKEN:
         required: false
+      OTEL_EXPORTER_OTLP_ENDPOINT:
+        description: "OpenTelemetry collector to export the run's metrics, events and traces to (optional)."
+        required: false
+      OTEL_EXPORTER_OTLP_HEADERS:
+        description: "The collector's credential, e.g. Authorization=Bearer <token> (optional)."
+        required: false
       BANDS_ENV:
         description: "Environment for the band commands, as NAME=value lines (metrics URLs, API tokens). Exported for the check only; every value is redacted from the evidence."
         required: false
@@ -103,6 +109,8 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          OTEL_EXPORTER_OTLP_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_ENDPOINT }}
+          OTEL_EXPORTER_OTLP_HEADERS: ${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}
           BANDS_ENV: ${{ secrets.BANDS_ENV }}
           # For band commands that call `gh`; redacted from the evidence like BANDS_ENV.
           GH_TOKEN: ${{ github.token }}
@@ -119,3 +127,17 @@ jobs:
           ADK_MODEL: ${{ inputs.model }}
           ADK_WORK_DIR: ${{ runner.temp }}/maintain/work
         run: bash "$RUNNER_TEMP/maintain/adk/maintain/run.sh"
+
+      # The run's full trajectory - what Claude read and did - for anyone asking
+      # why it reported what it did.
+      - name: Keep the transcript
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: adk-maintain-run
+          path: |
+            ${{ runner.temp }}/maintain/work/transcript.jsonl
+            ${{ runner.temp }}/maintain/work/results.json
+            ${{ runner.temp }}/maintain/work/summary.md
+          retention-days: 14
+          if-no-files-found: ignore
