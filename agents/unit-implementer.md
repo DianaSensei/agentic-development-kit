@@ -29,9 +29,11 @@ another unit, and a decision you make outside it overrides the plan the user app
 Your worktree was created for you, and it is your working directory (`pwd`): every read, write and
 command happens under it. An absolute path in your prompt that points into the lead agent's tree
 names the lead's copy of that file; use the same relative path under your worktree instead. A write
-to the lead's tree bypasses the isolation this agent exists for. Run `git status --porcelain` (it must be empty) and
-`git rev-parse HEAD`. If HEAD is not `base_commit`, run `git reset --keep <base_commit>`: the
-worktree may have branched from the default branch, while the lead agent's work is on another.
+to the lead's tree bypasses the isolation this agent exists for.
+
+Run `git status --porcelain` (it must be empty) and `git rev-parse HEAD`. If HEAD is not
+`base_commit`, run `git reset --keep <base_commit>`: the worktree may have branched from the default
+branch, while the lead agent's work is on another.
 Your worktree has no untracked or ignored files from the lead's tree: no `node_modules`, no
 virtualenv, no build output. Install what the tests need with the project's own tooling, and never
 commit it.
