@@ -174,7 +174,7 @@ resolve_agent() {
 # tool call, or to the Skill tool's `skill` argument, matches only real use.
 #
 # The `skill` value carries the plugin namespace once this kit is installed as a
-# plugin - `"skill":"adk-sdlc:bug-fix"`, not `"skill":"bug-fix"` -
+# plugin - `"skill":"adk-adlc:bug-fix"`, not `"skill":"bug-fix"` -
 # so the prefix is optional here. Without it, the installed plugin's gates never
 # saw a workflow start: the checkpoint gate silently never fired.
 skill_ref_pattern() {
@@ -196,9 +196,9 @@ last_code_edit_line() {
 }
 
 # project_opted_in - true when this project chose the kit: its own settings
-# enable the plugin (installed from any marketplace name; `agentic-development-kit`
-# is the core's name before 0.7, still honored so an upgraded repository stays
-# opted in until its settings are updated), or it carries the
+# enable the plugin (installed from any marketplace name; the core's earlier
+# names - `agentic-development-kit` before 0.7, `adk-sdlc` in 0.7 - still count,
+# so an upgraded repository stays opted in until its settings are updated), or it carries the
 # kit's config at .claude/quality-check.config.json, which project-setup writes.
 # A plugin installed at user scope is present in every repository on the machine;
 # what it injects into a session belongs only in the repositories that asked.
@@ -208,7 +208,7 @@ project_opted_in() {
   for f in "$PROJECT_DIR/.claude/settings.json" "$PROJECT_DIR/.claude/settings.local.json"; do
     [ -f "$f" ] || continue
     jq -e '(.enabledPlugins // {}) | to_entries
-           | any((.key | startswith("adk-sdlc@") or startswith("agentic-development-kit@")) and .value == true)' "$f" >/dev/null 2>&1 \
+           | any((.key | startswith("adk-adlc@") or startswith("adk-sdlc@") or startswith("agentic-development-kit@")) and .value == true)' "$f" >/dev/null 2>&1 \
       && return 0
   done
   return 1

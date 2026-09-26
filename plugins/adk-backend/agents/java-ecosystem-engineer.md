@@ -25,7 +25,7 @@ only summarises. Read the ones your task touches - always `java-spring-skill`, p
 when implementing against a contract, `security-skill` for auth/validation code.
 
 Your working directory is the USER'S PROJECT, not this plugin, and the kit's skills are spread
-over several plugins (the SDLC core, `adk-backend`, `adk-desktop`, `adk-architecture`), so
+over several plugins (the ADLC core, `adk-backend`, `adk-desktop`, `adk-architecture`), so
 `skills/<name>/SKILL.md` finds nothing on a normal install. Use the path the caller passed in
 `skill_paths`; for a skill it did not list, try `.claude/skills/<name>/SKILL.md`, then `Glob` for
 `**/skills/<name>/SKILL.md` and `~/.claude/plugins/cache/*/*/*/skills/<name>/SKILL.md`. If a skill genuinely cannot be found, say so in `open_questions`

@@ -23,7 +23,7 @@ project_opted_in || exit 0
 # {"session_context":{"general_guidelines":true}}.
 if [ "$(jq_cfg '.session_context.general_guidelines' false)" = "true" ]; then
   cat <<'TXT'
-[adk-sdlc] General Guidelines:
+[adk-adlc] General Guidelines:
 - Never use the em dash "—". Use plain dash "-" instead.
 - When writing commit messages, NEVER auto-add your agent name as co-author.
 - Never manually modify CHANGELOG.md files or any files that are marked as auto-generated.
@@ -62,7 +62,7 @@ done
 # that nothing will enforce.
 [ -n "${ROUTER}${ORCHESTRATORS}${REVIEW}" ] || exit 0
 
-echo "[adk-sdlc] Rules enforced by hooks in this project:"
+echo "[adk-adlc] Rules enforced by hooks in this project:"
 
 [ -n "$ROUTER" ] && cat <<'TXT'
 - Any request to WRITE OR CHANGE code starts at the `workflow-router` skill, which classifies it and
