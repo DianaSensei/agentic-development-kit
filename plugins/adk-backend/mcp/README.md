@@ -24,9 +24,9 @@ asking about read-only permissions.
 ## The code host (GitHub, GitLab)
 
 Not declared here: which server fits depends on where each project lives, and it signs in as each
-person. The [`code-host`](../skills/code-host/SKILL.md) skill connects the vendor's own MCP server
+person. The [`code-host`](../../../skills/code-host/SKILL.md) skill connects the vendor's own MCP server
 (ask "connect this project's GitHub" or "...GitLab"), and `project-setup` can add it to a project's
-`.mcp.json` for the whole team. Pipelines start their own copy - see [`codehost/`](../codehost/README.md).
+`.mcp.json` for the whole team. Pipelines start their own copy - see [`codehost/`](../../../codehost/README.md).
 
 ## Adding some other MCP server
 

@@ -22,9 +22,10 @@ State plainly in `handoff_note` that the caller must write them to
 returning the strings as the job being finished.
 
 Read `api-contract-skill` for the full rule set (error schema, versioning, the AsyncAPI
-requirement). Your working directory is the USER'S PROJECT, so use the `plugin_root` the caller
-passed; failing that try `.claude/skills/api-contract-skill/SKILL.md`, then `Glob` for
-`**/skills/api-contract-skill/SKILL.md`.
+requirement). Your working directory is the USER'S PROJECT, so use the path the caller passed in
+`skill_paths`; failing that try `.claude/skills/api-contract-skill/SKILL.md`, then `Glob` for
+`**/skills/api-contract-skill/SKILL.md` and
+`~/.claude/plugins/cache/*/*/*/skills/api-contract-skill/SKILL.md`.
 
 ## Step 0 - Discover
 Read the existing OpenAPI spec (`openapi.yaml`/`.json`) and existing event schemas (if the

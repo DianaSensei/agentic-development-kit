@@ -17,8 +17,9 @@ another unit, and a decision you make outside it overrides the plan the user app
   `/` covers everything under it), and the acceptance criteria and edge cases it owns.
 - `plan_excerpt`: the chosen proposal's parts that bear on the unit, verbatim.
 - `base_commit`: the commit the lead agent's working tree is at.
-- `plugin_root`: where this plugin's `skills/` and `agents/` are.
-- `skills`: the technical skills that own the unit's files, named by the lead agent.
+- `skill_paths`: the technical skills that own the unit's files, each with the path of its
+  `SKILL.md` (they may live in different plugins of the kit).
+- `specialist_path`, when a `specialist` is named: the path of that agent's file.
 - Possibly `specialist`: the Tier-2 agent the plan assigned the unit to (`java-ecosystem-engineer`,
   `tauri-react-engineer`, ...).
 - Possibly `context_files`: files the unit needs that are not in `base_commit` (an API contract
@@ -40,15 +41,16 @@ commit it.
 
 ## Step 1 - Read the skills that own this code (mandatory, before writing anything)
 
-Read `CLAUDE.md`, then every skill in `skills`: `<plugin_root>/skills/<name>/SKILL.md`, in full.
+Read `CLAUDE.md`, then every skill in `skill_paths`, in full.
 Your edits are not checked by the workflow's skill gate the way the lead's are, so this read is the
-only thing that holds you to the project's conventions. If `plugin_root` was not passed, try
-`.claude/skills/<name>/SKILL.md`, then `Glob` for `**/skills/<name>/SKILL.md`. A skill you cannot
+only thing that holds you to the project's conventions. A skill named without a path: try
+`.claude/skills/<name>/SKILL.md`, then `Glob` for `**/skills/<name>/SKILL.md` and
+`~/.claude/plugins/cache/*/*/*/skills/<name>/SKILL.md`. A skill you cannot
 find goes in `open_questions`; do not write its code from memory as if you had read it. Where a
 skill and the plan disagree on a convention, the skill wins; where they disagree on what to build,
 stop and ask (below).
 
-If a `specialist` was named, read `<plugin_root>/agents/<specialist>.md` too and work the way it
+If a `specialist` was named, read its file (`specialist_path`) too and work the way it
 says to implement and test. Its scope, commit and output rules give way to this file's: you own
 one unit, and you report in the shape below.
 

@@ -22,10 +22,11 @@ Read `tauri-react-skill` always, plus `rust-engineer` for non-trivial Rust (owne
 lifetimes, trait design, async), `ui-ux-design-skill` when the task involves UI/UX decisions
 rather than just wiring, and `database-skill` if a server-side database is involved.
 
-Your working directory is the USER'S PROJECT, not this plugin, so `skills/<name>/SKILL.md`
-finds nothing on a normal install. Use the `plugin_root` the caller passed in the prompt; if
-it wasn't passed, try `.claude/skills/<name>/SKILL.md`, then `Glob` for
-`**/skills/<name>/SKILL.md`. If a skill genuinely cannot be found, say so in `open_questions`
+Your working directory is the USER'S PROJECT, not this plugin, and the kit's skills are spread
+over several plugins (the SDLC core, `adk-backend`, `adk-desktop`, `adk-architecture`), so
+`skills/<name>/SKILL.md` finds nothing on a normal install. Use the path the caller passed in
+`skill_paths`; for a skill it did not list, try `.claude/skills/<name>/SKILL.md`, then `Glob` for
+`**/skills/<name>/SKILL.md` and `~/.claude/plugins/cache/*/*/*/skills/<name>/SKILL.md`. If a skill genuinely cannot be found, say so in `open_questions`
 and note in `assumptions` that you worked from this file's summary alone.
 
 Where a skill and this file disagree, **the skill wins**: it is the maintained copy.

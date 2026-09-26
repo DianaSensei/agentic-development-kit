@@ -10,7 +10,7 @@
 #   snapshot/check/restore flow (see the "Adding or editing a connection
 #   safely" section of ../README.md). To do it by hand:
 #   1. Find the live directory: `claude mcp list | grep
-#      '^plugin:agentic-development-kit:toolbox'` shows the exact
+#      '^plugin:adk-backend:toolbox'` shows the exact
 #      --config-folder path.
 #   2. `../validate.sh snapshot <that path>` - saves the current working
 #      state so a mistake below is recoverable.

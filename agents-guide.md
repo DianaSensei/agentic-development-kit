@@ -38,10 +38,10 @@ assigning work. This means adding a new Tier-2 agent to this directory doesn't r
 
 | Agent | Specialty | Called after |
 |-------|--------------|---------|
-| [`api-spec-designer`](./agents/api-spec-designer.md) | API contracts - synchronous REST (OpenAPI) + asynchronous message contracts (Kafka/RabbitMQ/Pub-Sub, AsyncAPI-style). Defines the contract only, does not implement the server/broker. | `solution-architect` |
-| [`data-storage-architect`](./agents/data-storage-architect.md) | Designs data storage for ANY technology (Oracle/PostgreSQL/MySQL/Redis/MongoDB/Elasticsearch/local SQLite). Auto-detects the technology in use, always presents tradeoffs, never decides unilaterally. | `solution-architect` |
-| [`java-ecosystem-engineer`](./agents/java-ecosystem-engineer.md) | Implements + self-tests Java Spring Boot business/functional flows (MVC/WebFlux, Spring Data, Security, Kafka, RabbitMQ, resilience). | `data-storage-architect` + `api-spec-designer` (if applicable) |
-| [`tauri-react-engineer`](./agents/tauri-react-engineer.md) | Implements + self-tests Tauri (Rust commands) + React (UI) for a cross-platform desktop app. | `data-storage-architect` (if persisted data is needed) + `api-spec-designer` (if applicable) |
+| [`api-spec-designer`](./plugins/adk-backend/agents/api-spec-designer.md) | API contracts - synchronous REST (OpenAPI) + asynchronous message contracts (Kafka/RabbitMQ/Pub-Sub, AsyncAPI-style). Defines the contract only, does not implement the server/broker. | `solution-architect` |
+| [`data-storage-architect`](./plugins/adk-backend/agents/data-storage-architect.md) | Designs data storage for ANY technology (Oracle/PostgreSQL/MySQL/Redis/MongoDB/Elasticsearch/local SQLite). Auto-detects the technology in use, always presents tradeoffs, never decides unilaterally. | `solution-architect` |
+| [`java-ecosystem-engineer`](./plugins/adk-backend/agents/java-ecosystem-engineer.md) | Implements + self-tests Java Spring Boot business/functional flows (MVC/WebFlux, Spring Data, Security, Kafka, RabbitMQ, resilience). | `data-storage-architect` + `api-spec-designer` (if applicable) |
+| [`tauri-react-engineer`](./plugins/adk-desktop/agents/tauri-react-engineer.md) | Implements + self-tests Tauri (Rust commands) + React (UI) for a cross-platform desktop app. | `data-storage-architect` (if persisted data is needed) + `api-spec-designer` (if applicable) |
 | [`unit-implementer`](./agents/unit-implementer.md) | Implements + self-tests ONE independent unit of the approved plan in its own git worktree (`isolation: worktree`), in parallel with the plan's other units, and commits it on the worktree's branch. Follows the Tier-2 specialist the plan named for the unit, if any. | The CHECKPOINT, for a plan with a `## Parallel units` section |
 
 Every implementing (Tier 2) agent writes AND runs its own tests for the part it did before reporting
@@ -63,11 +63,14 @@ is itself the project being worked on, which is exactly the case an author dogfo
 
 The subagents here therefore never hardcode a plugin-relative path. Instead:
 
-1. **The caller passes the path.** `feature-development` runs in the main thread, already knows where
-   it read its own `SKILL.md` from, and passes the resolved `plugin_root` (plus, for
-   `solution-architect`, the discovered Tier-2 agent list) into the Task prompt.
+1. **The caller passes the paths.** `feature-development` runs in the main thread and knows where each
+   skill it read lives - the core's workflow skills and the technical skills of `adk-backend`,
+   `adk-desktop` and `adk-architecture` are in different plugin directories - so it passes them as
+   `skill_paths` (plus, for `solution-architect`, the discovered Tier-2 agent list) into the Task
+   prompt.
 2. **Failing that, the agent searches.** `.claude/skills/<name>/SKILL.md` and `.claude/agents/*.md`
-   for a project that vendored them, then a `Glob` for `**/skills/<name>/SKILL.md`.
+   for a project that vendored them, then a `Glob` for `**/skills/<name>/SKILL.md` and the plugin
+   cache, `~/.claude/plugins/cache/*/*/*/skills/<name>/SKILL.md`.
 3. **Failing that, it says so** in `open_questions` rather than proceeding on guessed knowledge -
    silently continuing is what turns a path bug into a wrong design.
 
