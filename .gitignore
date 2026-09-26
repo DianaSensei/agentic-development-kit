@@ -13,3 +13,9 @@ evals/results/
 # Bytecode Python writes next to maintain/ and metrics/ scripts when they run.
 __pycache__/
 *.pyc
+
+# `claude plugin eval` replays a case's history_file as a session named by its
+# (zeroed) session id and leaves that raw transcript in the case directory. It
+# carries the session context, the local environment and paths; the committed
+# history is the sanitized history.jsonl (evals/clean-history.py).
+evals/**/????????-????-????-????-????????????.jsonl
