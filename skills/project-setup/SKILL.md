@@ -1,6 +1,6 @@
 ---
 name: project-setup
-description: Sets up a project repository for this kit and the AI-native SDLC in one pass - a one-page CLAUDE.md built from the repo's real commands and layout, a REVIEW.md the independent reviewer reads, a CODEOWNERS for the policy files, a committed .claude/settings.json (secret-file deny rules, lockfile protection, the kit enabled for every teammate), a quality-check config whose skill_map matches the stack, the code host's MCP server in .mcp.json, and the independent-review CI job for GitHub Actions or GitLab CI. Detects what exists first, shows the plan, never overwrites - existing files only receive additions. Use when the user asks to set up, bootstrap, onboard, or "install the kit into" a project, or to add the playbook files (CLAUDE.md, REVIEW.md, CODEOWNERS, settings) to a repo. Not for configuring Claude Code's own personal settings (that is update-config) and not for writing application code.
+description: Sets up a project repository for this kit and the AI-native SDLC in one pass - a one-page CLAUDE.md built from the repo's real commands and layout, a REVIEW.md the independent reviewer reads, a CODEOWNERS for the policy files, a committed .claude/settings.json (secret-file deny rules, lockfile protection, the kit enabled for every teammate), a quality-check config whose skill_map matches the stack and whose checks run the project's own linters and rules on every file Claude writes, the code host's MCP server in .mcp.json, and the independent-review CI job for GitHub Actions or GitLab CI. Detects what exists first, shows the plan, never overwrites - existing files only receive additions. Use when the user asks to set up, bootstrap, onboard, or "install the kit into" a project, or to add the playbook files (CLAUDE.md, REVIEW.md, CODEOWNERS, settings) to a repo. Not for configuring Claude Code's own personal settings (that is update-config) and not for writing application code.
 metadata:
   domain: workflow
   triggers: set up project, bootstrap repo, onboard repository, add CLAUDE.md, add REVIEW.md, install kit in project
@@ -48,6 +48,8 @@ A quick inventory, no writes:
   follow-ups.
 - Stack: manifest and build files, languages by file extension, test and lint commands with where each
   was found.
+- Checkers already in use: linter, formatter, type checker and rule-tool configurations, and the
+  commands the project runs them with (`references/conventions.md` → "Detect, never introduce").
 - Layout: source, test, migration, generated (`dist/`, `build/`, `gen/`, `*_pb2.py`, ...) and vendored
   directories.
 - Sensitive names, by file name only: `.env*`, `*.pem`, `*.key`, `secrets/`, `credentials*`. Their
@@ -73,7 +75,7 @@ Each file per its reference; read the reference before writing that file.
 | `REVIEW.md` | `references/review-md.md` | What the independent reviewer must always check, severity overrides, paths it skips |
 | `CODEOWNERS` | below | Only with the user's handles |
 | `.claude/settings.json` | `references/settings.md` | Deny rules, lockfile protection, the kit enabled; strict JSON, merged key by key into an existing file |
-| `.claude/quality-check.config.json` | below | Only if missing |
+| `.claude/quality-check.config.json` | below, and `references/conventions.md` for `checks` | Only if missing; an existing one gets a `checks` list if it has none |
 | `.mcp.json` | below | The code host's MCP server, only if no server there is one already |
 | GitHub: `.github/workflows/independent-review.yml` | below | Only if no reviewer workflow exists |
 | GitLab: `.gitlab-ci.yml` | below | One `include:` item added; only if the kit's review template is not included yet |
@@ -105,8 +107,11 @@ in the report under its path, so the user can create it with one paste.
 
 **`.claude/quality-check.config.json`**: copy this plugin's `hooks/quality-check.config.json`, then cut
 `skill_map` down to rows whose files exist in this repo (a Python-only project keeps only the SQL and
-migration rows, if it has migrations). Keep every `mode` at `warn` - blocking is a decision the team
-makes after watching the gates, not a default.
+migration rows, if it has migrations), and fill `checks` with the project's own checkers, per
+`references/conventions.md` - only tools it already uses, run the way it already runs them. Keep every
+`mode` at `warn` - blocking is a decision the team makes after watching the gates, not a default.
+Before writing a check, run it once on one existing file: a command that errors for reasons other
+than the file (a missing config, a wrong path) is fixed or left out, never shipped broken.
 
 **`.mcp.json`**: add a `codehost` server as `code-host` Step 3 gives it for the project scope - GitHub's
 remote server with `"Authorization": "Bearer ${GITHUB_PAT}"`, or GitLab's `https://<host>/api/v4/mcp`
@@ -155,6 +160,9 @@ do:
   `ADK_GITLAB_TOKEN` - a project access token with the Reporter role and the `api` scope, which the
   pipeline posts the review with; "Pipelines must succeed" in the merge request settings.
 - `CODEOWNERS` handles, if skipped.
+- Checks: any listed check the project's CI does not run yet, with the exact step to add; checkers the
+  stack usually has but this repository does not (a team decision, not added); and rules in
+  `CLAUDE.md` or `REVIEW.md` a script or semgrep rule could check instead.
 
 ## Boundaries
 

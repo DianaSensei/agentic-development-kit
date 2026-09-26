@@ -10,6 +10,7 @@ on:
       - "codehost/**"
       - "ci/**"
       - "maintain/**"
+      - "hooks/**"
       - "skills/intent-capture/scripts/**"
       - ".github/workflows/pipeline-tests.yml"
   push:
@@ -40,6 +41,8 @@ jobs:
         run: python -m unittest discover -s maintain/tests -v
       - name: CI runner helper tests
         run: python -m unittest discover -s ci/tests -v
+      - name: Hook tests
+        run: python -m unittest discover -s hooks/tests -v
       - name: Script syntax
         run: for f in ci/*.sh maintain/*.sh codehost/*.sh; do bash -n "$f"; done
       - name: GitLab CI templates

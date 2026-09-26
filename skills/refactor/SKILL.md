@@ -120,7 +120,9 @@ A safe refactor requires test coverage of the CURRENT behavior before touching a
 ## Step 5 - Confirm Behavior Is Unchanged (required, the core difference from the other two workflows)
 
 1. Re-run the ENTIRE relevant test suite (not just the refactored area's tests) - confirm nothing else
-   in the system broke.
+   in the system broke. Run every `scope: project` entry of `checks` in
+   `.claude/quality-check.config.json` too (type checker, build-level linters); a refactor that fails
+   one is not done, and loosening the check is never the fix.
 2. Cross-check the "Behavior Preservation Checklist" from Step 3 - confirm every item still holds.
 3. Where possible, compare concrete output before/after (e.g. run the same input, compare the response)
    for concrete evidence beyond "tests pass" - tests can miss a case.
@@ -147,11 +149,13 @@ No separate confirmation checkpoint is needed here - proceed straight to Step 7 
 3. **Experience log** (cumulative, append-only): `docs/knowledge/experience-log.md`, same format as
    `feature-development` - record which refactor pattern was effective/ineffective for this type of pain
    point, plus one entry per correction the user made to your work in this run.
-   **Then promote repeats**: any class now in the log twice or more that `CLAUDE.md` doesn't already
-   cover gets one proposed `CLAUDE.md` line, asked via `AskUserQuestion` with `header` `"CLAUDE.md"` -
-   never written without a yes. **Yes** → append it under a `## Common mistakes` heading in the
-   project-root `CLAUDE.md` (create the heading, or the file, if missing) and add `- Promoted: CLAUDE.md`
-   to the log entry. **Not now** → add `- Promotion: declined <date>` to the log entry. Method:
+   **Then promote repeats**: any class now in the log twice or more that no check and no `CLAUDE.md`
+   line already covers gets one proposal - a **check** in `.claude/quality-check.config.json` when a
+   machine can see the mistake in the code (`AskUserQuestion`, `header` `"Check"`), otherwise one
+   `CLAUDE.md` line (`header` `"CLAUDE.md"`), never written without a yes. **Yes** → write the check
+   (log `- Promoted: check <name>`) or append the line under `## Common mistakes` in the project-root
+   `CLAUDE.md`, creating the heading or file if missing (log `- Promoted: CLAUDE.md`). **Not now** → add
+   `- Promotion: declined <date>` to the log entry. Method:
    `feature-development`'s `references/report-and-logs.md` (in this plugin's `skills/`) → "Promoting a
    Repeat to CLAUDE.md".
 4. Started from an intent → set it `status: done`, `changelog: docs/changelog/<refactor-slug>.md`,
