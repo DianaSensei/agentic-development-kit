@@ -42,6 +42,15 @@ then on, Claude Code checks this repo's `version` field in the background each s
 reload when it changes - no reinstalling needed. To check manually instead: `/plugin marketplace update
 agentic-development-kit`.
 
+### Releasing
+
+The version is chosen in the pull request. When a PR changes anything the plugin ships - everything
+except `evals/`, `.github/` and the repository README/LICENSE - the **Version check** fails until
+`version` is raised in both `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json`: patch
+for a fix, minor for a new capability, major for a change users must act on. Merging it releases it:
+[`release.yml`](./.github/workflows/release.yml) tags `v<version>` and creates the GitHub release.
+Without the bump, installed plugins would never see the change.
+
 ## What's in it
 
 Each directory sits at the plugin root, where Claude Code's
