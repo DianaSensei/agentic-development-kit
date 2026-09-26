@@ -1,6 +1,6 @@
 # Agentic Development Kit
 
-Claude Code plugins for AI-assisted software development: an SDLC core (workflows with checkpoints,
+Claude Code plugins for AI-assisted software development: an agentic development lifecycle (ADLC) core (workflows with checkpoints,
 quality-check hooks, a tiered subagent pipeline, an independent reviewer and a maintain loop for CI)
 and three stack plugins with the technology skills it reads. Works with GitHub and GitLab: the few
 steps that touch the code host go through its own MCP server.
@@ -11,7 +11,7 @@ project installs only the stacks it uses, and a project in an uncovered stack st
 
 | Plugin | What it carries |
 |---|---|
-| `adk-sdlc` | The SDLC core: `workflow-router`, `intent-capture`, `feature-development`, `bug-fix`, `refactor`, `project-setup`, `code-review-skill`, `independent-review`, `test-master`, `code-host`; the hooks; the Tier-1 agents and `unit-implementer`; `ci/`, `codehost/`, `maintain/`, `metrics/`. |
+| `adk-adlc` | The ADLC core: `workflow-router`, `intent-capture`, `feature-development`, `bug-fix`, `refactor`, `project-setup`, `code-review-skill`, `independent-review`, `test-master`, `code-host`; the hooks; the Tier-1 agents and `unit-implementer`; `ci/`, `codehost/`, `maintain/`, `metrics/`. |
 | `adk-backend` | Java/Spring Boot, databases, messaging (Kafka, RabbitMQ), Redis, Elasticsearch, API contracts, monitoring, the Toolbox MCP server for database connections, and the `java-ecosystem-engineer`, `data-storage-architect` and `api-spec-designer` agents. |
 | `adk-desktop` | Tauri + React, Rust, UI/UX design, and the `tauri-react-engineer` agent. |
 | `adk-architecture` | Architecture design, design principles, technical proposals, legacy modernization, code documentation, application security and security audits, MCP server development. |
@@ -20,7 +20,7 @@ project installs only the stacks it uses, and a project in an uncovered stack st
 
 ```
 /plugin marketplace add DianaSensei/agentic-development-kit
-/plugin install adk-sdlc@agentic-development-kit
+/plugin install adk-adlc@agentic-development-kit
 /plugin install adk-backend@agentic-development-kit        # the stacks you use
 /plugin install adk-desktop@agentic-development-kit
 /plugin install adk-architecture@agentic-development-kit
@@ -34,21 +34,26 @@ the stack plugins under `plugins/`), plus `--plugin-dir /path/to/agentic-develop
 for each stack whose skills the session should list.
 
 **Upgrading from 0.6 or earlier**, when the kit was one plugin named `agentic-development-kit`: that
-plugin is now `adk-sdlc`, and its technology skills and the Toolbox MCP server moved to the stack
+plugin is now `adk-adlc`, and its technology skills and the Toolbox MCP server moved to the stack
 plugins. The old name no longer exists in the marketplace, so it will not update again:
 
 ```
 /plugin uninstall agentic-development-kit@agentic-development-kit
-/plugin install adk-sdlc@agentic-development-kit
+/plugin install adk-adlc@agentic-development-kit
 /plugin install adk-backend@agentic-development-kit      # and the other stacks you use
 ```
 
 In each repository, replace `"agentic-development-kit@agentic-development-kit": true` in
-`.claude/settings.json`'s `enabledPlugins` with `"adk-sdlc@agentic-development-kit": true` plus the
+`.claude/settings.json`'s `enabledPlugins` with `"adk-adlc@agentic-development-kit": true` plus the
 stack plugins it uses (`project-setup` does this when run again). Until then the old key still counts
 as opting the repository in. Toolbox connections live in each plugin's data directory: copy yours from
 `~/.claude/plugins/data/agentic-development-kit*/connections/` to
 `~/.claude/plugins/data/adk-backend*/connections/`.
+
+**Upgrading from 0.7**, where the core was briefly named `adk-sdlc`: it is now `adk-adlc`, for the
+agentic development lifecycle it covers. Run `/plugin uninstall adk-sdlc@agentic-development-kit` and
+`/plugin install adk-adlc@agentic-development-kit`, and update the key in `enabledPlugins` the same
+way (the old key still counts as opting in until you do). The stack plugins keep their names.
 
 **The kit stays quiet until a project opts in.** Installed this way (user scope), its skills are
 available everywhere, but its session reminders - route code changes through `workflow-router`,

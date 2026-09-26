@@ -6,8 +6,8 @@ subdirectory is one skill: a `SKILL.md` (name, description, and core method) plu
 name and description automatically and picks the matching one for a given task - nothing here needs to
 be invoked by hand.
 
-**Four plugins, one library.** This directory holds the SDLC core's skills (the
-`adk-sdlc` plugin). The technical skills ship as separate plugins from the same
+**Four plugins, one library.** This directory holds the ADLC core's skills (the
+`adk-adlc` plugin). The technical skills ship as separate plugins from the same
 marketplace, so a project installs only the stacks it uses: `adk-backend`
 ([`plugins/adk-backend/skills/`](../plugins/adk-backend/skills/)), `adk-desktop`
 ([`plugins/adk-desktop/skills/`](../plugins/adk-desktop/skills/)) and `adk-architecture`

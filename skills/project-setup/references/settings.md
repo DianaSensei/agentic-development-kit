@@ -33,7 +33,7 @@ report a settings error at the next start.
     }
   },
   "enabledPlugins": {
-    "adk-sdlc@agentic-development-kit": true,
+    "adk-adlc@agentic-development-kit": true,
     "<stack plugin>@agentic-development-kit": true
   }
 }
@@ -64,7 +64,7 @@ Notes for the report:
   `grep -r` across the directory. Turning on the sandbox closes that gap, which is a team decision:
   mention it, don't enable it.
 - `enabledPlugins` enables the kit, but a plugin from a GitHub marketplace still needs each person to
-  install it once (`/plugin install adk-sdlc@agentic-development-kit`, and each stack
+  install it once (`/plugin install adk-adlc@agentic-development-kit`, and each stack
   plugin enabled here the same way).
 - The marketplace entry points at GitHub whatever host the project itself uses. A team that mirrors the
   kit on its own git server (a GitLab project, say) registers the mirror instead:
@@ -78,8 +78,9 @@ Merge key by key, never replace the file:
   not added.
 - Objects (`extraKnownMarketplaces`, `enabledPlugins`): add each of the kit's keys that is absent. If a kit key is
   present and set to `false`, someone turned it off - leave it and say so. A key for the core's old
-  name, `agentic-development-kit@agentic-development-kit` (before 0.7), is replaced by
-  `adk-sdlc@agentic-development-kit` with the same value; say so in the report.
+  names, `agentic-development-kit@agentic-development-kit` (before 0.7) or
+  `adk-sdlc@agentic-development-kit` (0.7), is replaced by `adk-adlc@agentic-development-kit` with
+  the same value; say so in the report.
 - Every other key stays exactly as it is.
 
 Then parse the result (`jq empty .claude/settings.json`). A settings file that fails to parse breaks

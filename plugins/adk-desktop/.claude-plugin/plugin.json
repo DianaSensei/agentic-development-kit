@@ -1,7 +1,7 @@
 {
   "name": "adk-desktop",
-  "description": "Desktop stack skills for the agentic-development-kit SDLC: Tauri + React apps, Rust, and UI/UX design - plus the Tauri/React implementer agent.",
-  "version": "0.7.0",
+  "description": "Desktop stack skills for the agentic-development-kit ADLC: Tauri + React apps, Rust, and UI/UX design - plus the Tauri/React implementer agent.",
+  "version": "0.8.0",
   "author": {
     "name": "DianaSensei"
   },

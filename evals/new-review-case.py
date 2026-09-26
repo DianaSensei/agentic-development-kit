@@ -113,7 +113,7 @@ set -euo pipefail
 here="$(cd "$(dirname "${{BASH_SOURCE[0]}}")" && pwd)"
 export GIT_AUTHOR_NAME=eval GIT_AUTHOR_EMAIL=eval@example.com GIT_COMMITTER_NAME=eval GIT_COMMITTER_EMAIL=eval@example.com
 # The project opted into the kit, as project-setup leaves it.
-mkdir -p .claude && printf '{{"enabledPlugins":{{"adk-sdlc@agentic-development-kit":true}}}}\\n' > .claude/settings.json
+mkdir -p .claude && printf '{{"enabledPlugins":{{"adk-adlc@agentic-development-kit":true}}}}\\n' > .claude/settings.json
 git init -q -b main
 cp -a "$here/seed/base/." .
 git add -A && git commit -qm "Base" --allow-empty
