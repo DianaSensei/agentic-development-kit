@@ -28,10 +28,15 @@
 #   ADK_DEFAULT_BRANCH (else asked of the remote), ADK_QUEUE_BRANCH,
 #   ADK_RUN_URL, ADK_MODEL, ADK_GIT_NAME, ADK_GIT_EMAIL, ADK_CODEHOST_BOT_LOGIN,
 #   ADK_WORK_DIR, ADK_REDACT (more values to redact, one per line),
-#   ADK_RESOLVE_AFTER_DAYS.
+#   ADK_RESOLVE_AFTER_DAYS, OTEL_EXPORTER_OTLP_ENDPOINT (+ _HEADERS) to export
+#   the intent writer's metrics, events and traces (ci/common.sh adk_telemetry).
+# Leaves in ADK_WORK_DIR: results.json, summary.md and, when Claude ran,
+#   transcript.jsonl - its full trajectory.
 set -euo pipefail
 
 KIT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=ci/common.sh
+. "$KIT/ci/common.sh"
 WORK="${ADK_WORK_DIR:-$(mktemp -d)}"
 mkdir -p "$WORK"
 RESULTS="$WORK/results.json"
@@ -136,12 +141,7 @@ fi
 # Writing intents also needs Claude; resolving bets does not.
 write_intents=""
 if [ "$propose" != "0" ]; then
-  has_credential=""
-  for v in ANTHROPIC_API_KEY CLAUDE_CODE_OAUTH_TOKEN ANTHROPIC_AUTH_TOKEN CLAUDE_CODE_USE_BEDROCK CLAUDE_CODE_USE_VERTEX CLAUDE_CODE_USE_FOUNDRY; do
-    [ -n "${!v:-}" ] && has_credential=1
-  done
-  [ "${ADK_CLAUDE_AUTH:-}" = "preconfigured" ] && has_credential=1
-  if [ -z "$has_credential" ]; then
+  if ! adk_has_claude_credential; then
     note warning "Maintain: intents not proposed" "Problems were found (see the summary) but no ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN is set to write them up."
   elif ! command -v claude >/dev/null; then
     note error "Maintain" "Claude Code is not installed"; exit 1
@@ -177,6 +177,7 @@ cat "$WORK/resolved.txt"
 
 model_args=()
 [ -n "${ADK_MODEL:-}" ] && model_args=(--model "$ADK_MODEL")
+adk_telemetry maintain
 if [ -n "$write_intents" ]; then
   (
     # Claude needs no code-host access to write files; keep every token out of its environment.
@@ -187,9 +188,13 @@ if [ -n "$write_intents" ]; then
       --plugin-dir "$KIT" --add-dir "$KIT" --add-dir "$WORK" \
       --strict-mcp-config \
       --allowedTools "Read,Glob,Grep,Skill,Edit(docs/intents/**),Bash(bash ${KIT}/skills/intent-capture/scripts/check-intent.sh *)" \
-      "${model_args[@]}" > "$WORK/claude.txt"
-  ) || { note error "Maintain" "Claude did not finish writing the intents"; cat "$WORK/claude.txt" 2>/dev/null || true; exit 1; }
-  cat "$WORK/claude.txt"
+      --output-format stream-json --verbose \
+      "${model_args[@]}" < /dev/null > "$WORK/transcript.jsonl"
+  ) || { note error "Maintain" "Claude did not finish writing the intents - see transcript.jsonl"; exit 1; }
+  adk_run_result "$WORK/transcript.jsonl" "$WORK/claude.json" || echo '{}' > "$WORK/claude.json"
+  python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("result", ""))' "$WORK/claude.json"
+  stats="$(adk_run_stats "$WORK/claude.json")"
+  printf '\n<sub>Intent writer run: %s.</sub>\n' "${stats:-no result}" >> "$SUMMARY"
 fi
 
 # 4. Every change is checked, the model's included, before anything is published.

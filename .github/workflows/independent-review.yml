@@ -38,6 +38,12 @@ on:
         required: false
       CLAUDE_CODE_OAUTH_TOKEN:
         required: false
+      OTEL_EXPORTER_OTLP_ENDPOINT:
+        description: "OpenTelemetry collector to export the run's metrics, events and traces to (optional)."
+        required: false
+      OTEL_EXPORTER_OTLP_HEADERS:
+        description: "The collector's credential, e.g. Authorization=Bearer <token> (optional)."
+        required: false
 
 jobs:
   review:
@@ -80,6 +86,8 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          OTEL_EXPORTER_OTLP_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_ENDPOINT }}
+          OTEL_EXPORTER_OTLP_HEADERS: ${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}
           ADK_PROVIDER: github
           ADK_PROJECT: ${{ github.repository }}
           ADK_CHANGE_ID: ${{ github.event.pull_request.number }}
@@ -97,3 +105,17 @@ jobs:
           ADK_FAIL_ON_BLOCKING: ${{ inputs.fail_on_blocking }}
           ADK_WORK_DIR: ${{ runner.temp }}/review
         run: bash "$RUNNER_TEMP/adk/ci/review.sh" || { rc=$?; [ "$rc" -eq 3 ] || exit "$rc"; }
+
+      # The run's full trajectory - what Claude read and did - for anyone asking
+      # why it reported what it did.
+      - name: Keep the transcript
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: adk-review-transcript
+          path: |
+            ${{ runner.temp }}/review/transcript.jsonl
+            ${{ runner.temp }}/review/result.json
+            ${{ runner.temp }}/review/summary.md
+          retention-days: 14
+          if-no-files-found: ignore

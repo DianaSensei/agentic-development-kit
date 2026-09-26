@@ -109,6 +109,13 @@ outcome nobody will ever check.
 A signal band is an ordinary band. Give it `tier: observe` when being out of range should not also
 raise a new intent on its own.
 
+## Traces
+
+When Claude writes intents, its full trajectory is kept as `transcript.jsonl` with the run (the
+`adk-maintain-run` artifact on GitHub, `adk-artifacts/` on GitLab), and the job summary ends with the
+run's cost. An OpenTelemetry collector works the same way as for the reviewer - see
+[`ci/README.md`](../ci/README.md#traces-and-cost); runs are labelled `adk.run=maintain`.
+
 ## Cost and schedule
 
 The caller checks every 6 hours. The check itself is free; Claude runs only when a `propose` band is

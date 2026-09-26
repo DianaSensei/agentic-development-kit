@@ -68,6 +68,13 @@ spec:
       export ADK_GIT_EMAIL="adk-maintain@${CI_SERVER_HOST}"
       export ADK_WORK_DIR=/tmp/adk-maintain
       bash /tmp/adk/maintain/run.sh
+  after_script:
+    - mkdir -p adk-artifacts && cp /tmp/adk-maintain/transcript.jsonl /tmp/adk-maintain/results.json /tmp/adk-maintain/summary.md adk-artifacts/ 2>/dev/null || true
+  artifacts:
+    when: always
+    expire_in: 14 days
+    paths:
+      - adk-artifacts/
 
 adk-maintain:
   extends: .adk-maintain
