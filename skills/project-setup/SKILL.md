@@ -62,7 +62,10 @@ A quick inventory, no writes:
 Present one table - file, action (create / add to / skip), and what goes in - then confirm with
 `AskUserQuestion`, `header` `"Setup"`, options "Apply" / "Change something". Ask for `CODEOWNERS`
 handles in the same call (free text via "Other"), e.g. who owns the agent's policy files and who
-accepts intents. If the user already said to proceed without questions, skip the confirmation, skip
+accepts intents, and how the gates start (`header` `"Gates"`): **"Warn first (Recommended)"** - every
+gate reports and nothing stops, so the team sees what they would catch - or **"Block"** - the skill,
+checkpoint, quality and convention gates hold the agent until their rule is met. Blocking is the
+stronger guarantee; warning first avoids blocking on a gate nobody has watched misfire yet. If the user already said to proceed without questions, skip the confirmation, skip
 `CODEOWNERS`, and say both in the report.
 
 ## Step 3 - Write
@@ -108,8 +111,13 @@ in the report under its path, so the user can create it with one paste.
 **`.claude/quality-check.config.json`**: copy this plugin's `hooks/quality-check.config.json`, then cut
 `skill_map` down to rows whose files exist in this repo (a Python-only project keeps only the SQL and
 migration rows, if it has migrations), and fill `checks` with the project's own checkers, per
-`references/conventions.md` - only tools it already uses, run the way it already runs them. Keep every
-`mode` at `warn` - blocking is a decision the team makes after watching the gates, not a default.
+`references/conventions.md` - only tools it already uses, run the way it already runs them. Set
+`quality_gate.test_command` to an ERE matching the test command Step 1 found (`make test`,
+`./gradlew test`), so the quality gate recognises a real test run after the last edit; a repository
+with no tests gets `quality_gate.require_test_run: false`. Every `mode` follows the *Gates* answer:
+`warn` for all, or `block` for `skill_gate`, `checkpoint_gate`, `quality_gate` and
+`convention_checks` (the others stay `warn`). Without an answer - the user said to proceed without
+questions - `warn`.
 Before writing a check, run it once on one existing file: a command that errors for reasons other
 than the file (a missing config, a wrong path) is fixed or left out, never shipped broken.
 
