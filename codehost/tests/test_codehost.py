@@ -220,6 +220,35 @@ class GitLabTests(unittest.TestCase):
         self.assertFalse([c for c in e.calls() if c["error"]])
 
 
+class ApproveTests(unittest.TestCase):
+    def test_github_approves_even_after_an_earlier_review(self):
+        e = Env("github", ADK_CODEHOST_BOT_LOGIN="github-actions[bot]")
+        e.review()  # an earlier, submitted review by the same account
+        code, out, err = e.run("approve", "--change", "7", "--head-sha", "abc", "--body", "tier docs")
+        self.assertEqual((code, out.strip()), (0, "approved"), err)
+        states = [r["state"] for r in e.state_json()["reviews"]]
+        self.assertEqual(states, ["COMMENTED", "APPROVED"])
+
+    def test_gitlab_approves_at_the_reviewed_head_only(self):
+        e = Env("gitlab")
+        code, _, err = e.run("approve", "--change", "7", "--head-sha", "h" * 40, "--body", "tier docs")
+        self.assertEqual(code, 0, err)
+        self.assertEqual(len(e.state_json()["approvals"]), 1)
+        self.assertIn("tier docs", e.state_json()["notes"][0]["body"])
+        code, _, err = e.run("approve", "--change", "7", "--head-sha", "0" * 40, "--body", "x")
+        self.assertEqual(code, 1)
+        self.assertIn("does not match HEAD", err)
+
+    def test_note_file_lands_in_the_summary(self):
+        e = Env("github", ADK_CODEHOST_BOT_LOGIN="github-actions[bot]")
+        note = e.file("note.md", "**Autonomy:** no tier applies - a person approves.\n")
+        result = e.file("result.json", {"blocking": 0, "suggestions": 0, "questions": 0,
+                                        "summary_markdown": "## Independent review", "findings": []})
+        code, _, err = e.run("publish-review", "--change", "7", "--result", result, "--note-file", note)
+        self.assertEqual(code, 0, err)
+        self.assertIn("**Autonomy:** no tier applies", e.state_json()["comments"][0]["body"])
+
+
 class ErrorTests(unittest.TestCase):
     def test_bad_provider(self):
         e = Env("github")

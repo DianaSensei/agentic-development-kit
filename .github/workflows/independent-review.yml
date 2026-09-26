@@ -95,6 +95,7 @@ jobs:
           ADK_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           ADK_CHANGE_TITLE: ${{ github.event.pull_request.title }}
           ADK_CHANGE_BODY: ${{ github.event.pull_request.body }}
+          ADK_CHANGE_AUTHOR: ${{ github.event.pull_request.user.login }}
           ADK_SOURCE_BRANCH: ${{ github.head_ref }}
           ADK_TARGET_BRANCH: ${{ github.base_ref }}
           ADK_CODEHOST_TOKEN: ${{ github.token }}
