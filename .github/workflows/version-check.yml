@@ -1,0 +1,31 @@
+# Installed plugins update only when `version` in .claude-plugin/plugin.json
+# changes. A PR that changes anything the plugin ships must raise it - in both
+# manifests - or its change never reaches people who already have the kit
+# installed. Merging the bump to main is the release (release.yml tags it).
+#
+# It also runs on every push to main: two PRs can both raise the version to the
+# same number and merge cleanly, and the second one's change would then ship
+# under a version that is already released. That turns main red instead.
+name: Version check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Shipped change without a version bump?
+        env:
+          BASE_SHA: ${{ github.event_name == 'push' && github.event.before || github.event.pull_request.base.sha }}
+        run: python3 .github/scripts/version_check.py check "$BASE_SHA"
