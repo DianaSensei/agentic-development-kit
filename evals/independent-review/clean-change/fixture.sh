@@ -2,6 +2,9 @@
 # A repo with an accepted intent and a chosen plan on main, and a branch that
 # implements it. Only the branch's change differs between the two review cases.
 set -euo pipefail
+# The project opted into the kit, as project-setup leaves it - without that the
+# kit's session reminders stay silent (hooks/common.sh project_opted_in).
+mkdir -p .claude && printf '{"enabledPlugins":{"agentic-development-kit@agentic-development-kit":true}}\n' > .claude/settings.json
 git init -q -b main
 export GIT_AUTHOR_NAME=eval GIT_AUTHOR_EMAIL=eval@example.com GIT_COMMITTER_NAME=eval GIT_COMMITTER_EMAIL=eval@example.com
 mkdir -p src/checkout tests docs/intents docs/plans

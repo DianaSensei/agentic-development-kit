@@ -1,6 +1,6 @@
 {
   "name": "agentic-development-kit",
-  "description": "Skill library (workflow orchestration + per-technology knowledge), a tiered subagent pipeline, quality-check hooks, and a bundled database MCP for AI-assisted software development. Technology-agnostic core; stack-specific knowledge lives in its own skills.",
+  "description": "An AI-native SDLC for Claude Code: intents before code, feature/bug-fix/refactor workflows with checkpoints and hook-enforced gates, an independent reviewer and a maintain loop for GitHub Actions and GitLab CI, evals and a learning loop - plus technology skills for the stacks it covers. Quiet in any project that has not opted in.",
   "version": "0.1.2",
   "author": {
     "name": "DianaSensei"

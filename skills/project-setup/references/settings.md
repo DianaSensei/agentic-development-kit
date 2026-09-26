@@ -47,7 +47,7 @@ Keep only the rules that match this repo:
 | `deny` `Read(.env)`, `Read(.env.*)` | a `.env*` file exists, or `.gitignore` lists one | Secrets never enter the model's context. Always write both: a `.env` created later is covered too |
 | `deny` `Read(/secrets/**)`, and each `*.pem` / `*.key` path found, anchored the same way | that path exists | Same |
 | `deny` `Edit(<lockfile name>)` for each lockfile present | a lockfile exists | Lockfiles change only through the package manager; a hand edit desyncs them from the manifest |
-| `extraKnownMarketplaces` + `enabledPlugins` | always | Every teammate is offered this kit, with its gates and workflows, when they open the repo |
+| `extraKnownMarketplaces` + `enabledPlugins` | always | Every teammate is offered this kit, with its gates and workflows, when they open the repo. It is also what opts the repo in: the kit's session reminders appear only where a project enables it |
 
 **Path anchors decide what a rule covers.** A bare name follows gitignore rules and matches at any depth:
 `Read(.env)` covers the root `.env` and every package's `.env` in a monorepo. `/path` is anchored to
