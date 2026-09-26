@@ -97,7 +97,7 @@ def github(tool, a, s):
         if m == "create":
             if any(r["pr"] == pr and r["user"]["login"] == VIEWER and r["state"] == "PENDING" for r in s["reviews"]):
                 raise Fail("User can only have one pending review per pull request")
-            state = "COMMENTED" if a.get("event") else "PENDING"
+            state = {"APPROVE": "APPROVED", "REQUEST_CHANGES": "CHANGES_REQUESTED"}.get(a.get("event"), "COMMENTED") if a.get("event") else "PENDING"
             s["reviews"].append({"id": next_id(s), "pr": pr, "state": state, "user": {"login": VIEWER},
                                  "body": a.get("body", ""), "comments": []})
             return "pending pull request created" if state == "PENDING" else "pull request review submitted successfully"
@@ -176,6 +176,11 @@ def gitlab(tool, a, s):
         t = {"id": f"d{next_id(s)}", "iid": iid, "body": a["body"], "position": pos}
         s["threads"].append(t)
         return {"id": t["id"], "notes": [{"body": a["body"], "position": pos}]}
+    if tool == "approve_merge_request":
+        if a.get("sha") and a["sha"] != refs["head_sha"]:
+            raise Fail("GitLab API error: 409 SHA does not match HEAD of source branch")
+        s.setdefault("approvals", []).append({"iid": iid, "by": VIEWER})
+        return {"approved": True}
     if tool == "list_merge_requests":
         items = [m for m in s["mrs"] if m["state"] == a.get("state", "opened")
                  and (not a.get("source_branch") or m["source_branch"] == a["source_branch"])

@@ -5,9 +5,12 @@
 #   1. diff the change with git            - no code-host API needed
 #   2. Claude reviews it, read-only, with no MCP server and no way to post:
 #      it returns the summary, the counts and each finding as structured output
-#   3. codehost.py posts them through the provider's MCP server: an inline
-#      comment per finding it can place, one summary comment edited in place
-#   4. optional gate on blocking findings
+#   3. autonomy: the project's policy (.claude/autonomy.json, from the base
+#      commit) says whether this change may skip human approval - ci/autonomy.py
+#   4. codehost.py posts them through the provider's MCP server: an inline
+#      comment per finding it can place, one summary comment edited in place,
+#      and an approval only for a tier in approve mode
+#   5. optional gate on blocking findings
 #
 # The CI templates (.github/workflows/independent-review.yml,
 # ci/gitlab/independent-review.yml) only map their CI's variables onto the
@@ -20,6 +23,7 @@
 #           ADK_TARGET_BRANCH, ADK_CODEHOST_BOT_LOGIN, ADK_MODEL,
 #           ADK_EXTRA_INSTRUCTIONS, ADK_FAIL_ON_BLOCKING (true|false),
 #           ADK_WORK_DIR (default: a new temporary directory),
+#           ADK_CHANGE_AUTHOR (for autonomy tiers limited to authors),
 #           OTEL_EXPORTER_OTLP_ENDPOINT (+ _HEADERS): export the run's metrics,
 #           events and traces there (ci/common.sh adk_telemetry)
 # Leaves in ADK_WORK_DIR: transcript.jsonl (the reviewer's full trajectory),
@@ -142,18 +146,35 @@ with open(sys.argv[2], "w") as f:
     json.dump(result, f)
 EOF
 
-# 3. Post it, through the provider's MCP server.
+# 3. Autonomy: may this change skip human approval? The project's policy decides,
+#    read from the BASE commit - a change never grants itself autonomy - and
+#    only for a clean review (ci/autonomy.py). No policy, no note.
+: > "$WORK/autonomy.md"
+if git show "${ADK_DIFF_BASE}:.claude/autonomy.json" > "$WORK/autonomy-policy.json" 2>/dev/null; then
+  python3 "$KIT/ci/autonomy.py" decide --policy "$WORK/autonomy-policy.json" --diff "$WORK/review.diff" \
+    --result "$WORK/result.json" --author "${ADK_CHANGE_AUTHOR:-}" --out "$WORK/autonomy.json" > "$WORK/autonomy.md"
+fi
+
+# 4. Post it, through the provider's MCP server.
 bash "$KIT/codehost/install.sh" "$ADK_PROVIDER" "$WORK/bin"
 PATH="$WORK/bin:$PATH" python3 "$KIT/codehost/codehost.py" publish-review \
   --change "$ADK_CHANGE_ID" --result "$WORK/result.json" --diff "$WORK/review.diff" \
-  --head-sha "${ADK_HEAD_SHA:-}" --summary-out "$WORK/summary.md" \
+  --head-sha "${ADK_HEAD_SHA:-}" --summary-out "$WORK/summary.md" --note-file "$WORK/autonomy.md" \
   || { note error "Independent review" "The review ran but could not be posted - its summary is in the job log below"; cat "$WORK/summary.md" 2>/dev/null || true; exit 1; }
 if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
   cat "$WORK/summary.md" >> "$GITHUB_STEP_SUMMARY"
   printf '\n<sub>Reviewer run: %s. Transcript: the `adk-review-transcript` artifact.</sub>\n' "$stats" >> "$GITHUB_STEP_SUMMARY"
 fi
 
-# 4. The gate.
+if [ -f "$WORK/autonomy.json" ] && python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); sys.exit(0 if d["eligible"] and d["mode"] == "approve" else 1)' "$WORK/autonomy.json"; then
+  tier="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["tier"])' "$WORK/autonomy.json")"
+  PATH="$WORK/bin:$PATH" python3 "$KIT/codehost/codehost.py" approve --change "$ADK_CHANGE_ID" \
+    --head-sha "${ADK_HEAD_SHA:-}" \
+    --body "Approved by the project's autonomy policy, tier \`$tier\` (.claude/autonomy.json) - not by a person. The independent review found nothing blocking and no open question." \
+    || note warning "Autonomy" "Tier $tier allows approval, but the code host refused it - a person approves this one (on GitHub, check \"Allow GitHub Actions to create and approve pull requests\")."
+fi
+
+# 5. The gate.
 blocking="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["blocking"])' "$WORK/result.json")"
 echo "Independent review: $blocking blocking finding(s)."
 if [ "${ADK_FAIL_ON_BLOCKING:-false}" = "true" ] && [ "$blocking" != "0" ]; then

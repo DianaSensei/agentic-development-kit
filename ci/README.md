@@ -81,6 +81,37 @@ Claude Code's metrics, events and (beta) traces then go there, labelled `adk.run
 `OTEL_LOG_TOOL_DETAILS` / `OTEL_LOG_TOOL_CONTENT`: a pull request's code is not the collector's to keep
 by default. Any `OTEL_*` variable you set yourself wins over the kit's defaults.
 
+## Autonomy tiers
+
+By default a person approves every change; the reviewer's summary says so. A project can name kinds of
+change that may skip that - **autonomy tiers**, the step the ADLC calls "loops over gates" - in
+`.claude/autonomy.json` (start from [`autonomy.example.json`](./autonomy.example.json)):
+
+| Key | Meaning |
+|---|---|
+| `mode` | `off`; `report` - the summary says what the tier would have done, and nothing more; `approve` - the pipeline approves the change on the code host |
+| `paths` | globs (`docs/**`, `**/*.md`); every changed file must match one |
+| `max_changed_lines`, `max_changed_files` | size limits; `max_changed_lines` is required |
+| `authors` | optional: only changes by these accounts (`dependabot[bot]`); GitHub supplies the author, so on GitLab a tier with `authors` never applies |
+
+[`autonomy.py`](./autonomy.py) decides, deterministically - the reviewer model only returns its counts.
+Whatever the policy says, a change is **never** eligible when:
+- the review did not run, or reported a blocking finding or a question;
+- it touches what steers the agent or the pipeline: `.claude/`, `CLAUDE.md`, `REVIEW.md`, `CODEOWNERS`,
+  `.mcp.json`, CI configuration, `bands.yaml`, `docs/intents/`.
+
+The policy is read from the **base** commit, so a change cannot grant itself autonomy, and `.claude/` is
+under the policy owners in `CODEOWNERS`. An approval by policy says so, on the change and in the summary,
+and branch protection and CI still decide whether the change merges.
+
+**The risk, plainly:** a tier trusts the reviewer's counts, and a change's own text can try to talk a
+reviewer out of a finding - the planted-defects eval checks that it holds, but no eval makes it certain.
+Keep tiers to changes whose worst case is cheap to undo, prefer `authors` for bot changes, and run each
+tier in `report` for a few weeks, comparing what it would have approved with what people decided, before
+switching it to `approve`. On GitHub, approving needs "Allow GitHub Actions to create and approve pull
+requests" and counts as the one approval branch protection asks for; on GitLab it is the project access
+token's approval, subject to your approval rules.
+
 ## Options
 
 | GitHub input / GitLab input | Default | |

@@ -14,6 +14,8 @@ Subcommands:
   upsert-comment  the same summary-comment logic for any marker and body
   ensure-change   find the open pull/merge request from --head into --base,
                   or open one
+  approve         approve the change - only ever called for a tier of the
+                  project's autonomy policy in approve mode (ci/autonomy.py)
 
 Environment:
   ADK_PROVIDER           github | gitlab
@@ -337,6 +339,14 @@ class GitHub:
             pass
         return posted, failed
 
+    def approve(self, change, head_sha, body):
+        # A review created with an event is submitted in one call - no pending
+        # review, so the server's oldest-review lookup never comes into it.
+        args = self._repo(method="create", pullNumber=int(change), event="APPROVE", body=body)
+        if head_sha:
+            args["commitID"] = head_sha
+        self.mcp.call("pull_request_review_write", args)
+
     def find_change(self, head, base):
         prs = self.mcp.call_json("list_pull_requests", self._repo(
             head=f"{self.owner}:{head}", base=base, state="open", perPage=10))
@@ -401,6 +411,13 @@ class GitLab:
                 failed.append((f, p, str(e)))
         return posted, failed
 
+    def approve(self, change, head_sha, body):
+        args = self._mr(change)
+        if head_sha:
+            args["sha"] = head_sha  # refuses if the merge request moved since the review
+        self.mcp.call("approve_merge_request", args)
+        self.mcp.call("create_merge_request_note", self._mr(change, body=body))
+
     def find_change(self, head, base):
         mrs = self.mcp.call_json("list_merge_requests", dict(
             project_id=self.project, source_branch=head, target_branch=base, state="opened"))
@@ -464,6 +481,11 @@ def publish_review(host, args):
     unplaced += [(f, reason) for f, _, reason in failed]
 
     lines = [REVIEW_MARKER, (result.get("summary_markdown") or "").rstrip(), ""]
+    if args.note_file:
+        with open(args.note_file, encoding="utf-8") as f:
+            extra = f.read().strip()
+        if extra:
+            lines += [extra, ""]
     if unplaced:
         lines += [f"<sub>{len(unplaced)} finding(s) are listed above but not inline:</sub>", ""]
         lines += [f"- `{f['path']}:{f['line']}` - {reason}" for f, reason in unplaced]
@@ -496,6 +518,11 @@ def upsert_comment(host, args):
     print(host.upsert_comment(args.change, args.marker, body))
 
 
+def approve(host, args):
+    host.approve(args.change, args.head_sha, args.body)
+    print("approved")
+
+
 def ensure_change(host, args):
     url = host.find_change(args.head, args.base)
     if url:
@@ -515,6 +542,11 @@ def main(argv=None):
     p.add_argument("--diff", help="the reviewed diff; findings outside it are not placed inline")
     p.add_argument("--head-sha", default="")
     p.add_argument("--summary-out", help="also write the posted summary here")
+    p.add_argument("--note-file", help="a paragraph to add to the summary, e.g. the autonomy decision")
+    p = sub.add_parser("approve")
+    p.add_argument("--change", required=True)
+    p.add_argument("--head-sha", default="")
+    p.add_argument("--body", required=True)
     p = sub.add_parser("upsert-comment")
     p.add_argument("--change", required=True)
     p.add_argument("--marker", required=True)
@@ -533,7 +565,7 @@ def main(argv=None):
         return 2
     try:
         {"publish-review": publish_review, "upsert-comment": upsert_comment,
-         "ensure-change": ensure_change}[args.cmd](host, args)
+         "ensure-change": ensure_change, "approve": approve}[args.cmd](host, args)
         return 0
     except CodeHostError as e:
         print(f"codehost: {e}", file=sys.stderr)

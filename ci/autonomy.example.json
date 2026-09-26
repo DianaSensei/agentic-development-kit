@@ -1,0 +1,19 @@
+{
+  "$comment": "Copy to .claude/autonomy.json. Which reviewed changes may skip human approval. Every tier starts in report mode; move one to approve only after weeks of its reports matching what people decided. See ci/README.md#autonomy-tiers.",
+  "tiers": [
+    {
+      "name": "docs",
+      "mode": "report",
+      "paths": ["docs/**", "**/*.md"],
+      "max_changed_lines": 200,
+      "max_changed_files": 10
+    },
+    {
+      "name": "lockfile-bumps",
+      "mode": "report",
+      "paths": ["package.json", "package-lock.json"],
+      "max_changed_lines": 400,
+      "authors": ["dependabot[bot]", "renovate[bot]"]
+    }
+  ]
+}
