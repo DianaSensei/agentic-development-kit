@@ -225,7 +225,9 @@ in 3.1: `references/compare-builds.md`, read in full first.
 
 **Parallel units**: when the approved plan has a `## Parallel units` section, build them in **waves**:
 every unit whose dependencies are done, at the same time - one `unit-implementer` per unit, dispatched
-in a single message, each in its own git worktree (a wave of one unit you build yourself). After each
+in a single message, each in its own git worktree (a wave of one unit you build yourself), each with its
+`ticket` and, when the ticket is **tight**, the Agent tool's `model` set to `models.build` (default
+`sonnet`; a loose ticket gets no `model`). After each
 wave: apply its units, make the shared edits they report, run the full tests, and snapshot the tree for
 the next wave to start from. A unit that stops on a question is answered - from the plan, or by asking
 the user - and resumed with `SendMessage`, not redone. Waves, snapshots, dispatch prompt, answering and
