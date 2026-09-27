@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: proposes-from-rewrites
+context:
+  scaffold_script: fixture.sh
+execution:
+  max_turns: 30
+  allowed_tools: [Read, Glob, Grep, Skill]

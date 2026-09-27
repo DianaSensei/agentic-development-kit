@@ -83,5 +83,13 @@ TXT
   severe findings. A Stop hook checks that the skill was read after your last code edit.
 TXT
 
+# The user's personal profile (skills/reflect): one line when enough evidence is
+# waiting to be reviewed. Counting lines is cheap; reading them is reflect's job.
+PROFILE="${ADK_PROFILE_DIR:-$HOME/.claude/adk-profile}"
+if [ -f "$PROFILE/signals.md" ] && [ -n "$(resolve_skill reflect)" ]; then
+  WAITING="$(awk '/^## reflected /{n=0; next} /^- /{n++} END{print n+0}' "$PROFILE/signals.md" 2>/dev/null)"
+  [ "${WAITING:-0}" -ge 5 ] && echo "- $WAITING signals about how the user works are waiting in their profile; when a task ends, offer to \`reflect\` on them (they approve each change)."
+fi
+
 # The last conditional above may be false; never let that become the hook's exit code.
 exit 0

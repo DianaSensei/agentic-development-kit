@@ -63,6 +63,7 @@ should reflect what shipped, not what was originally planned.
 
 - Class: <kebab-case name for the KIND of mistake, e.g. unbounded-retry, wrong-test-command>
 - Source: fix-loop | user-correction
+- Scope: project | personal
 - Area: <paths or modules it happened in>
 - Cause: ...
 - Attempts used: X/5 (n/a for a user correction)
@@ -75,6 +76,12 @@ issue's "approaches that didn't work" list is exactly what saves time the next t
 appears, in this project or another. Also append one entry per **user correction** in this run: each
 time the user told you a convention, command, assumption, or piece of output was wrong. Those are the
 mistakes most likely to happen again, because nothing in the code records them.
+
+**`Scope` says whose rule it is.** `project`: the project's convention, command or fact, true for
+anyone working here - the learning loop below may turn it into a `CLAUDE.md` line or a check. `personal`:
+this user's taste ("I prefer early returns", "show me the recommendation first") that the project does
+not require - it is never promoted into the project; it goes to the user's own profile instead, as a
+signal (`reflect`'s Note mode), when they have one. When unsure, ask which it is.
 
 **`Class` is what makes a repeat findable.** Name the kind of mistake, not this instance, and reuse an
 existing class when one fits - check first with `grep -h '^- Class:' docs/knowledge/experience-log.md |
@@ -98,8 +105,9 @@ problem at hand (`grep -n -i -A8 '<path or keyword>'`). For each match:
 After appending, count each class you just wrote:
 `grep -c '^- Class: <class>$' docs/knowledge/experience-log.md`.
 
-At 2 or more - the same mistake has now happened twice - and when neither a check nor a line in
-`CLAUDE.md` already covers it, first ask whether a machine could catch it.
+Only `Scope: project` entries count here: a personal preference belongs in the user's profile, not in
+rules every teammate gets. At 2 or more - the same mistake has now happened twice - and when neither a
+check nor a line in `CLAUDE.md` already covers it, first ask whether a machine could catch it.
 
 **A check, when it can be one.** A mistake visible in the code itself - a forbidden call, a missing
 wrapper, a file in the wrong layer, an unformatted file - is caught every time by a check and only
