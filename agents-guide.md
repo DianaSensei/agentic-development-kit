@@ -53,7 +53,10 @@ in a worktree of its own, in **waves** by their dependencies: every unit whose d
 runs at once; the lead applies each unit's commit to the working tree as an uncommitted change, runs
 the whole test suite, and snapshots the tree (a commit on no branch) for the next wave to start from.
 A unit that meets a decision it does not own commits its work in progress and asks; the lead answers
-from the plan or asks the user, and resumes the same agent with `SendMessage` instead of redoing it. The rules, including which units qualify, are in
+from the plan or asks the user, and resumes the same agent with `SendMessage` instead of redoing it.
+When two proposals are close, the user can choose at the CHECKPOINT to build both: one
+`unit-implementer` per candidate, measured the same way (whole test suite, checks, size, review), and
+the user picks from the facts (`skills/feature-development/references/compare-builds.md`). The rules, including which units qualify, are in
 `skills/feature-development/references/parallel-units.md`.
 
 ## Locating this plugin's own files from inside an agent

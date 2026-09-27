@@ -171,7 +171,10 @@ cannot. Step 3 may dispatch a Tier-2 specialist when one exists for the task. Th
 plan declares are built in waves by their dependencies - every unit whose dependencies are done at the
 same time, by `unit-implementer` agents each in a git worktree of its own - and applied to the working
 tree after each wave. A unit that meets an open decision asks and is resumed with the answer, not
-redone. `bug-fix` and `refactor` stay in-session, since
+redone. When two proposals are close and building them would settle it, the Checkpoint offers "Build
+the top two and compare": both are built in worktrees, measured the same way (the whole test suite,
+checks, acceptance criteria, size, a review), and you pick from the table. It costs about twice the
+implementation, so it is never the default. `bug-fix` and `refactor` stay in-session, since
 their checkpoints are simpler.
 
 ## Companion tools

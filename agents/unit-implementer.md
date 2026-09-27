@@ -24,6 +24,9 @@ another unit, and a decision you make outside it overrides the plan the user app
   `tauri-react-engineer`, ...).
 - Possibly `context_files`: files the unit needs that are not in `base_commit` (an API contract
   written for this feature), inline. They are not in your worktree; do not write them there.
+- Possibly `candidate`: this unit is one of several builds of competing proposals, compared afterwards
+  (`compare-builds`). Build your `plan_excerpt`'s proposal faithfully - not a blend with the
+  alternative, and not the one you would have preferred - so the comparison measures the proposals.
 - Possibly `resume_from`: the branch of an earlier attempt at this unit that stopped on a question,
   with the answer. Start from its last commit (`git reset --keep <resume_from>` after Step 0's checks)
   and continue from there, not from scratch.
