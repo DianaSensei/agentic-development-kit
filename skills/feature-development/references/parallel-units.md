@@ -59,10 +59,17 @@ below. Between waves:
 
 ## Dispatch
 
+The kit's dispatch gate denies a `unit-implementer` dispatch until this file has been read in the
+session, and until the prompt carries `lane`, `base_commit` and `ticket` (or `candidate`). A denial
+names what is missing.
+
 One `unit-implementer` per unit, **all in a single message** so they run at the same time. Its
 `subagent_type` is `adk-adlc:unit-implementer` - a plugin's agents carry the plugin's prefix. Each
 prompt carries, with these literal labels: `unit` (id, task, `files`, the acceptance criteria and
-edge cases it owns), `ticket` (the unit's ticket from the plan's `## Tickets`), `plan_excerpt`, `base_commit`, `skill_paths` (the technical skills that
+edge cases it owns), `lane` (the unit's `files` again, as a JSON array on one line - `lane:
+["src/shop/orders.py", "scripts/"]` - which the lane guard reads), `ticket` (the unit's ticket from the
+plan's `## Tickets`, inline: the plan is usually uncommitted, so it is not in the unit's worktree),
+`plan_excerpt`, `base_commit`, `skill_paths` (the technical skills that
 own the unit's files, each with the path of the `SKILL.md` you read: the ones you read for it, and
 any the project's `skill_map` in `.claude/quality-check.config.json` names for those paths),
 `context_files` if any, and

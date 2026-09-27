@@ -102,11 +102,11 @@ defect for the fix loop, unless it is an improvement the ticket could not forese
 
 ## Lanes
 
-A unit writes its `files` to `adk-lane` in its worktree's git directory before its first edit, and the
-kit's lane guard hook denies any edit outside them - or into your working tree - as it happens. So a
-unit that needs another file says so in `outside_files_needed` or stops with a `plan_mismatch`, instead
-of editing a file another unit owns. Bash writes are not guarded; the scope check when you apply the
-unit stays.
+Every unit prompt carries `lane: [...]`, the unit's `files` as a JSON array (`parallel-units.md` →
+"Dispatch"). The kit's lane guard reads it from the unit's own transcript and denies an edit outside
+those paths - or into your working tree - as it happens. So a unit that needs another file says so in
+`outside_files_needed` or stops with a `plan_mismatch`, instead of editing a file another unit owns.
+Bash writes are not guarded; the scope check when you apply the unit stays.
 
 ## In the plan
 

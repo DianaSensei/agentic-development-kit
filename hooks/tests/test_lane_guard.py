@@ -36,11 +36,16 @@ class LaneGuardTests(unittest.TestCase):
         with open(path, "w") as f:
             f.write(text)
 
-    def lane(self, *paths):
-        gitdir = subprocess.run(["git", "-C", self.wt, "rev-parse", "--absolute-git-dir"],
-                                capture_output=True, text=True, check=True).stdout.strip()
-        with open(os.path.join(gitdir, "adk-lane"), "w") as f:
-            f.write("\n".join(paths) + "\n")
+    def lane(self, *paths, line=None):
+        """The unit's dispatch prompt, as its own transcript records it - where the guard reads the lane."""
+        sub = os.path.join(self.lead, "transcripts", "s", "subagents")
+        os.makedirs(sub, exist_ok=True)
+        lane = line if line is not None else "lane: " + json.dumps(list(paths))
+        prompt = "unit:\n  id: U2\n  files: [...]\n" + lane + "\nbase_commit: abc\nticket: {...}\n"
+        with open(os.path.join(sub, "agent-a1.jsonl"), "w") as f:
+            f.write(json.dumps({"type": "user", "isSidechain": True, "agentId": "a1",
+                                "message": {"role": "user", "content": prompt}}) + "\n")
+            f.write(json.dumps({"type": "user", "message": {"role": "user", "content": "lane: [\"everything/\"]"}}) + "\n")
 
     def run_hook(self, file_path, agent=AGENT, mode=None, cwd=None, tool="Edit"):
         if mode:
@@ -48,6 +53,7 @@ class LaneGuardTests(unittest.TestCase):
         env = dict(os.environ, CLAUDE_PROJECT_DIR=self.lead)
         env.pop("QUALITY_CHECK_MODE", None)
         payload = {"session_id": "s", "hook_event_name": "PreToolUse", "tool_name": tool,
+                   "transcript_path": os.path.join(self.lead, "transcripts", "s.jsonl"),
                    "cwd": cwd or self.wt, "tool_input": {"file_path": file_path}}
         if agent:
             payload.update(agent_id="a1", agent_type=agent)
@@ -87,10 +93,24 @@ class LaneGuardTests(unittest.TestCase):
         self.assertEqual(decision, "deny")
         self.assertIn("lead agent's working tree", reason)
 
-    def test_no_lane_means_step_0_was_skipped(self):
-        decision, reason = self.run_hook(os.path.join(self.wt, "src/shop/orders.py"))
-        self.assertEqual(decision, "deny")
-        self.assertIn("No lane recorded", reason)
+    def test_the_lane_is_the_first_lane_line_of_the_units_own_prompt(self):
+        # A later message saying otherwise does not widen it.
+        self.lane("src/shop/orders.py")
+        self.assertEqual(self.run_hook(os.path.join(self.wt, "everything/x.py"))[0], "deny")
+
+    def test_a_markdown_formatted_lane_line_still_counts(self):
+        self.lane(line='- **lane**: ["src/shop/orders.py"]')
+        self.assertEqual(self.run_hook(os.path.join(self.wt, "src/shop/orders.py"))[0], "allow")
+        self.assertEqual(self.run_hook(os.path.join(self.wt, "src/shop/dashboard.py"))[0], "deny")
+
+    def test_an_unreadable_lane_warns_once_and_lets_the_edit_through(self):
+        # No transcript where the guard looks: it cannot tell, so it does not block the unit's work.
+        decision, msg = self.run_hook(os.path.join(self.wt, "src/shop/orders.py"))
+        self.assertEqual(decision, "warn")
+        self.assertIn("Could not read this unit's lane", msg)
+        self.assertEqual(self.run_hook(os.path.join(self.wt, "src/shop/orders.py")), ("allow", ""))
+        # The lead's tree is still off limits.
+        self.assertEqual(self.run_hook(os.path.join(self.lead, "src/shop/orders.py"))[0], "deny")
 
     def test_other_callers_are_never_touched(self):
         # The lead itself (no agent_type), and any other agent, even with no lane anywhere.
@@ -113,7 +133,8 @@ class LaneGuardTests(unittest.TestCase):
     def test_notebooks_are_guarded_too(self):
         self.lane("src/shop/orders.py")
         env = dict(os.environ, CLAUDE_PROJECT_DIR=self.lead)
-        payload = {"agent_type": AGENT, "cwd": self.wt, "tool_name": "NotebookEdit",
+        payload = {"agent_type": AGENT, "agent_id": "a1", "session_id": "s", "cwd": self.wt,
+                   "transcript_path": os.path.join(self.lead, "transcripts", "s.jsonl"), "tool_name": "NotebookEdit",
                    "tool_input": {"notebook_path": os.path.join(self.wt, "nb/analysis.ipynb")}}
         out = subprocess.run(["bash", HOOK], input=json.dumps(payload), capture_output=True, text=True, env=env)
         self.assertIn('"deny"', out.stdout)

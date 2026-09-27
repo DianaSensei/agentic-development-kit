@@ -45,11 +45,11 @@ Run `git status --porcelain` (it must be empty) and `git rev-parse HEAD`. If HEA
 `base_commit`, run `git reset --keep <base_commit>`: the worktree may have branched from the default
 branch, while the lead agent's work is on another.
 
-Record your lane - the unit's `files`, one per line, exactly as given - before any edit:
-`printf '%s\n' <each path in unit.files> > "$(git rev-parse --absolute-git-dir)/adk-lane"`. The kit's
-lane guard reads it and denies an edit outside those paths, or into the lead's tree, the moment it is
-tried; without it, every edit is denied. It lives in the worktree's own git directory, so it is never
-committed.
+Your edits are held to your lane: the lead's prompt carries `lane: [...]` - the unit's `files` - and
+the kit's lane guard denies an edit outside those paths, or into the lead's tree, the moment it is
+tried. A denial is not an obstacle to route around (Bash is not a way past it): the file belongs to
+another unit or to the lead, so it goes in `outside_files_needed`, or the unit stops with a
+`plan_mismatch`.
 Your worktree has no untracked or ignored files from the lead's tree: no `node_modules`, no
 virtualenv, no build output. Install what the tests need with the project's own tooling, and never
 commit it.

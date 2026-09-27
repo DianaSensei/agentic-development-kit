@@ -180,8 +180,9 @@ what not to touch, the command that proves it done, and when to stop. A script g
 tight or loose. Planning runs on the strongest model (`models.plan`, default `opus`); a tight ticket is
 built by a cheaper one (`models.build`, default `sonnet`), a loose one by your session's model. An
 implementer whose ticket proves wrong - a cited line that is not there, a pattern that does not match -
-stops and reports a `plan_mismatch` instead of improvising around it. While it works, a hook keeps it
-in its lane - an edit outside its ticket's files, or into your working tree, is denied as it happens -
+stops and reports a `plan_mismatch` instead of improvising around it. A unit is only handed down once
+the lead has read the rules for it and its prompt carries its lane, base commit and ticket (a dispatch
+gate). While it works, a hook keeps it in its lane - an edit outside its ticket's files, or into your working tree, is denied as it happens -
 and before the work is called done, the lead checks conformance: every change inside a ticket, every
 ticket done, every interface as specified (`check_conformance.py`, then a read of each ticket against
 its diff). The independent reviewer holds the diff to the same tickets. A missing tool guarantees that; a hook reading transcripts afterwards

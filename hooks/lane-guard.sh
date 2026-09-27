@@ -8,18 +8,21 @@
 # it at the first write, while the unit can still report the need in
 # `outside_files_needed` instead of building on it.
 #
-# The lane is written by the unit itself in its Step 0: one path per line (a path
-# ending in / covers everything under it) in `adk-lane` in its worktree's own git
-# directory, where it is never committed, never shows in `git status`, and goes
-# away with the worktree.
+# The lane comes from the unit's own dispatch prompt: the lead writes a literal
+# `lane: ["path", "dir/"]` line in it (parallel-units.md; dispatch-gate.sh refuses
+# a dispatch without one), and the subagent's transcript - next to the session's,
+# under <session>/subagents/agent-<agent_id>.jsonl - starts with that prompt. The
+# unit writes nothing to set it up: an earlier version had it write a lane file,
+# and headless runs denied that write outside the working directory.
 #
 # It runs as a plugin hook, not from the agent's frontmatter: Claude Code does not
 # run hooks declared in a plugin agent's frontmatter. The hook input names the
-# calling agent (`agent_type`), so every other caller - the lead, other agents -
-# passes straight through.
+# calling agent (`agent_type`), so every other caller passes straight through.
 #
-# Bash can still write files; this guards the edit tools, which is where the work
-# is done. The apply-time scope check in parallel-units.md stays as the backstop.
+# Guarded: an edit outside the lane, and any edit into the lead's working tree.
+# When the lane cannot be read (a transcript layout this does not know), only the
+# second holds and it says so once; the apply-time scope check is the backstop,
+# as it is for Bash writes, which no edit-tool hook sees.
 #
 # `mode.lane_guard`: block (default) denies the write with the reason; warn lets
 # it through with the reason; off disables it.
@@ -68,18 +71,39 @@ case "$ABS" in
     ;;
 esac
 
-LANE="$(git -C "$WT" rev-parse --absolute-git-dir 2>/dev/null)/adk-lane"
-if [ ! -s "$LANE" ]; then
-  deny "[lane-guard] No lane recorded for this unit. Step 0: write the unit's \`files\`, one per line, to \"\$(git rev-parse --absolute-git-dir)/adk-lane\", then retry."
+# The unit's prompt: the first user message of its own transcript.
+AGENT_ID="$(jq_in '.agent_id')"
+TRANSCRIPT="$(jq_in '.transcript_path')"
+SUB=""
+if [ -n "$AGENT_ID" ] && [ -n "$TRANSCRIPT" ]; then
+  SUB="$(dirname "$TRANSCRIPT")/$(jq_in '.session_id')/subagents/agent-$AGENT_ID.jsonl"
+  [ -f "$SUB" ] || SUB="$(find "$(dirname "$TRANSCRIPT")" -name "agent-$AGENT_ID.jsonl" 2>/dev/null | head -n 1)"
+fi
+LANE=""
+if [ -n "$SUB" ] && [ -f "$SUB" ]; then
+  LANE="$(jq -r 'select(.type == "user") | .message.content
+                 | if type == "string" then . else (map(select(.type == "text") | .text) | join("\n")) end' "$SUB" 2>/dev/null \
+          | head -n 400 \
+          | sed -n 's/^[[:space:]`*-]*lane[`*]*:[[:space:]]*//p' | head -n 1 \
+          | jq -r '.[]? // empty' 2>/dev/null)"
 fi
 
-while IFS= read -r entry || [ -n "$entry" ]; do
+if [ -z "$LANE" ]; then
+  SEEN="$STATE_DIR/lane-unknown-$AGENT_ID"
+  [ -f "$SEEN" ] && exit 0
+  mkdir -p "$STATE_DIR" 2>/dev/null && : > "$SEEN" 2>/dev/null || true
+  warn "[lane-guard] Could not read this unit's lane (no \`lane:\` line found in its prompt), so edits are not checked against its files. Stay inside \`unit.files\` anyway: the lead's scope check rejects anything outside them."
+fi
+
+while IFS= read -r entry; do
   entry="${entry#./}"
   [ -n "$entry" ] || continue
   case "$entry" in
     */) case "$REL" in "$entry"*) exit 0 ;; esac ;;
     *) [ "$REL" = "$entry" ] && exit 0 ;;
   esac
-done < "$LANE"
+done <<EOF
+$LANE
+EOF
 
-deny "[lane-guard] \`$REL\` is outside this unit's files ($(grep -v '^[[:space:]]*$' "$LANE" | sed 's/^/`/; s/$/`/' | paste -sd, - | sed 's/,/, /g')). Another unit may be writing it right now. Do not edit it: report what it needs in \`outside_files_needed\` - the lead makes that change after applying every unit - or, if the unit cannot be built without it, stop with a \`plan_mismatch\`."
+deny "[lane-guard] \`$REL\` is outside this unit's files ($(printf '%s\n' "$LANE" | sed 's/^/`/; s/$/`/' | paste -sd, - | sed 's/,/, /g')). Another unit may be writing it right now. Do not edit it: report what it needs in \`outside_files_needed\` - the lead makes that change after applying every unit - or, if the unit cannot be built without it, stop with a \`plan_mismatch\`."
