@@ -83,7 +83,11 @@ log entries with `Scope: personal` and for Checkpoint choices. No profile set up
    - **retire**: a line with no evidence for 6 months, or one the user now contradicts;
    - **ask**: contradicting signals - which holds, or when each does.
    A preference a machine could check ("never `except Exception:`") is also worth a project check, but
-   only as a suggestion for the project's team: the profile stays personal.
+   only as a suggestion for the project's team: the profile stays personal. Checkpoint signals that
+   name the dimensions they traded ("reversibility over performance_and_scale") become "How I decide"
+   lines in the tradeoff rubric's words and the context they held in ("Prefer `reversibility` over
+   `performance_and_scale`, except on a request path"), because `feature-development` reads those
+   lines to order the next design's priorities.
 4. **Present** the changes as a table - change, the exact line, the evidence (dates, kinds, one
    example each) - then `AskUserQuestion`, `header` `"Profile"`, `multiSelect`, one option per change
    (rewording comes through "Other"). No changes → say what the evidence was and why nothing reaches a

@@ -92,7 +92,8 @@ A safe refactor requires test coverage of the CURRENT behavior before touching a
    the approach - `legacy-modernizer` does NOT run its own CHECKPOINT/report/changelog; this workflow
    remains the sole orchestrator.
 2. If more than one direction is reasonable, present multiple proposals with trade-offs (extent of
-   change, risk, time), similar to `feature-development` Step 2 - but instead of AC/Edge Cases in the
+   change, risk, time) - rated on `feature-development`'s tradeoff rubric (its
+   `references/tradeoff-rubric.md`) when the choice is not obvious, similar to `feature-development` Step 2 - but instead of AC/Edge Cases in the
    sense of new behavior, use a "Behavior Preservation Checklist" (the specific behaviors that MUST stay
    identical, cross-checked against the characterization tests from Step 2).
 3. Decide scope: a single-pass refactor (if small) or split into incremental small steps (if large) -

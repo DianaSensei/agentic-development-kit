@@ -76,6 +76,11 @@ Then [expected result]
 - [ ] Integration tests for API endpoint
 - [ ] E2E test for complete user flow
 
+## Tradeoffs
+The priorities with their sources, then the table from `check_proposals.py --table`: the rubric's
+dimensions in priority order, a column per proposal (`tradeoff-rubric.md`). Kept after the decision, so
+the rejected proposals keep the reasons they lost.
+
 ## Parallel units
 Only when two or more units can be built at the same time - no dependency between them, disjoint
 files (`parallel-units.md`); omit the section otherwise.
@@ -116,6 +121,7 @@ records what was actually built.
 | Acceptance Criteria | How to verify | Yes |
 | Error Handling | Failure cases | Yes |
 | Implementation TODO | Action items | Yes |
+| Tradeoffs | Why this proposal, on the rubric's dimensions | Yes, at full depth |
 | Parallel units | Independent units built at the same time | Only when they exist |
 | Out of Scope | Prevent scope creep | Recommended |
 | Open Questions | Track decisions | As needed |
