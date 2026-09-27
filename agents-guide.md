@@ -48,9 +48,15 @@ Every implementing (Tier 2) agent writes AND runs its own tests for the part it 
 done, leaving no verification work for a later step.
 
 **Parallel units.** Tier-2 agents dispatched as usual write into the user's working tree, so two of
-them at once would collide. Independent units therefore go to `unit-implementer`, one per unit, each
-in a worktree of its own; the lead agent applies each unit's commit to the working tree as an
-uncommitted change, then runs the whole test suite. The rules, including which units qualify, are in
+them at once would collide. The plan's units therefore go to `unit-implementer`, one per unit, each
+in a worktree of its own, in **waves** by their dependencies: every unit whose dependencies are done
+runs at once; the lead applies each unit's commit to the working tree as an uncommitted change, runs
+the whole test suite, and snapshots the tree (a commit on no branch) for the next wave to start from.
+A unit that meets a decision it does not own commits its work in progress and asks; the lead answers
+from the plan or asks the user, and resumes the same agent with `SendMessage` instead of redoing it.
+When two proposals are close, the user can choose at the CHECKPOINT to build both: one
+`unit-implementer` per candidate, measured the same way (whole test suite, checks, size, review), and
+the user picks from the facts (`skills/feature-development/references/compare-builds.md`). The rules, including which units qualify, are in
 `skills/feature-development/references/parallel-units.md`.
 
 ## Locating this plugin's own files from inside an agent

@@ -167,9 +167,14 @@ skills as it goes. An agent is a separate subagent with a fixed role.
 `feature-development` uses both: Steps 1 and 2 go to `business-analyst` and `solution-architect` as
 subagents precisely because those carry no `Edit`/`Write` tool, so requirements and design happen where
 code is impossible to touch. A missing tool guarantees that; a hook reading transcripts afterwards
-cannot. Step 3 may dispatch a Tier-2 specialist when one exists for the task. Independent units the
-approved plan declares are built at the same time by `unit-implementer` agents, each in a git worktree
-of its own, and applied to the working tree afterwards. `bug-fix` and `refactor` stay in-session, since
+cannot. Step 3 may dispatch a Tier-2 specialist when one exists for the task. The units the approved
+plan declares are built in waves by their dependencies - every unit whose dependencies are done at the
+same time, by `unit-implementer` agents each in a git worktree of its own - and applied to the working
+tree after each wave. A unit that meets an open decision asks and is resumed with the answer, not
+redone. When two proposals are close and building them would settle it, the Checkpoint offers "Build
+the top two and compare": both are built in worktrees, measured the same way (the whole test suite,
+checks, acceptance criteria, size, a review), and you pick from the table. It costs about twice the
+implementation, so it is never the default. `bug-fix` and `refactor` stay in-session, since
 their checkpoints are simpler.
 
 ## Companion tools
