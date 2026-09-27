@@ -72,7 +72,7 @@ every file this workflow writes. Check `status` first:
 This skill's own `references/` cover requirement-gathering *method* (not technology) - load each when its
 step is reached: `ears-syntax.md`, `interview-questions.md`, `acceptance-criteria.md`,
 `specification-template.md`, `diagram-guide.md`, `definition-of-done.md`, `report-and-logs.md`,
-`parallel-units.md`.
+`parallel-units.md`, `compare-builds.md`.
 
 **Optional pre-discovery**: if the feature touches 3+ system layers (auth, DB, UI...), the codebase is
 unfamiliar/undocumented, or technical facts are needed before requirements can be asked intelligently -
@@ -149,7 +149,9 @@ touches - then the CHECKPOINT below, which light depth never skips.
 
 **CHECKPOINT (required)**: present the full proposal, then confirm via `AskUserQuestion` with `header`
 set exactly to `"Checkpoint"` (options: one per proposal, plus "Revise" - free text always available via
-"Other"). Do not proceed to Step 3 without explicit confirmation. Presenting is not confirming - Step 3 is
+"Other"; at full depth, when two proposals are close and building would settle it, also "Build the top
+two and compare" - `references/compare-builds.md` says when, and its cost). Do not proceed to Step 3
+without explicit confirmation. Presenting is not confirming - Step 3 is
 gated on this literal call, so moving on after merely presenting will be caught.
 
 Immediately after the user decides: update `docs/plans/<feature-slug>.md` - chosen proposal to the top,
@@ -179,6 +181,10 @@ exists (`java-ecosystem-engineer`, `tauri-react-engineer`, `data-storage-archite
 it may go through the Task tool instead of being implemented inline - those agents write and run their own
 tests for the piece they own. Not required: anything without a matching Tier-2 agent is implemented
 directly under the read-the-`SKILL.md` rule above.
+
+**Compare builds**: when the user chose "Build the top two and compare" at the CHECKPOINT, build each
+candidate in its own worktree, measure them the same way, and let the user pick - before anything else
+in 3.1: `references/compare-builds.md`, read in full first.
 
 **Parallel units**: when the approved plan has a `## Parallel units` section, build them in **waves**:
 every unit whose dependencies are done, at the same time - one `unit-implementer` per unit, dispatched

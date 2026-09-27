@@ -59,7 +59,8 @@ below. Between waves:
 
 ## Dispatch
 
-One `unit-implementer` per unit, **all in a single message** so they run at the same time. Each
+One `unit-implementer` per unit, **all in a single message** so they run at the same time. Its
+`subagent_type` is `adk-adlc:unit-implementer` - a plugin's agents carry the plugin's prefix. Each
 prompt carries, with these literal labels: `unit` (id, task, `files`, the acceptance criteria and
 edge cases it owns), `plan_excerpt`, `base_commit`, `skill_paths` (the technical skills that
 own the unit's files, each with the path of the `SKILL.md` you read: the ones you read for it, and
