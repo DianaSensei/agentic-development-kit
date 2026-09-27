@@ -144,6 +144,21 @@ class CheckProposals(unittest.TestCase):
         self.assertTrue(any("priorities: missing" in p for p in probs), probs)
         self.assertTrue(any("needs its source" in p for p in probs), probs)
 
+    def test_a_cited_line_past_the_end_of_a_file_is_caught(self):
+        with tempfile.TemporaryDirectory() as root:
+            os.makedirs(os.path.join(root, "src"))
+            with open(os.path.join(root, "src", "app.py"), "w") as f:
+                f.write("x = 1\n" * 20)
+            data = output()
+            data["proposals"][0]["tradeoffs"]["reversibility"]["evidence"] = "src/app.py:40"
+            path = os.path.join(root, "out.json")
+            with open(path, "w") as f:
+                json.dump(data, f)
+            r = subprocess.run([sys.executable, SCRIPT, path], capture_output=True, text=True, cwd=root)
+            self.assertEqual(r.returncode, 1)
+            self.assertIn("a: reversibility cites src/app.py:40 (the file has 20 lines)", r.stdout)
+            self.assertNotIn("correctness_risk cites", r.stdout)  # src/app.py:10 is there
+
     def test_reads_a_json_block_inside_text(self):
         raw = "Here are the proposals.\n\n```json\n" + json.dumps(output()) + "\n```\n"
         self.assertEqual(self.run_script(None, raw=raw)[0], 0)

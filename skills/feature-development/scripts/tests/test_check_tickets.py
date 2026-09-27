@@ -32,13 +32,21 @@ def ticket(tid="task-1", **overrides):
 
 
 class CheckTickets(unittest.TestCase):
+    def setUp(self):
+        # The project the lead runs the script in: cited path:lines are checked against it.
+        self.tmp = tempfile.TemporaryDirectory()
+        os.makedirs(os.path.join(self.tmp.name, "src", "shop"))
+        with open(os.path.join(self.tmp.name, "src", "shop", "dashboard.py"), "w") as f:
+            f.write("def render(conn, customer_id):\n    \"\"\"doc\"\"\"\n    row = conn.execute('...')\n    return row\n")
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
     def run_script(self, data, raw=None):
-        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
+        path = os.path.join(self.tmp.name, "tickets.json")
+        with open(path, "w") as f:
             f.write(raw if raw is not None else json.dumps(data))
-        try:
-            r = subprocess.run([sys.executable, SCRIPT, f.name], capture_output=True, text=True)
-        finally:
-            os.unlink(f.name)
+        r = subprocess.run([sys.executable, SCRIPT, path], capture_output=True, text=True, cwd=self.tmp.name)
         return r.returncode, r.stdout
 
     def test_a_complete_ticket_is_tight(self):
@@ -93,6 +101,18 @@ class CheckTickets(unittest.TestCase):
         code, out = self.run_script({"tickets": [ticket(), ticket("task-2", tests=[])]})
         self.assertIn("tier: task-1 tight", out)
         self.assertIn("tier: task-2 loose - missing tests", out)
+
+    def test_a_cited_line_must_exist(self):
+        # The planted mistake from a headless run: a helper "at src/shop/orders.py:31" that is not there.
+        past_end = ticket(follow_pattern=[{"what": "the query", "at": "src/shop/dashboard.py:31"}])
+        code, out = self.run_script({"tickets": [past_end]})
+        self.assertEqual(code, 1)
+        self.assertIn("cites src/shop/dashboard.py:31, but src/shop/dashboard.py has 4 lines", out)
+        missing = ticket(follow_pattern=[{"what": "the helper", "at": "src/shop/util.py:3"}])
+        code, out = self.run_script({"tickets": [missing]})
+        self.assertIn("cites src/shop/util.py, which does not exist", out)
+        a_range = ticket(follow_pattern=[{"what": "the query", "at": "src/shop/dashboard.py:3-4"}])
+        self.assertEqual(self.run_script({"tickets": [a_range]})[0], 0)
 
     def test_reads_a_json_block_inside_text(self):
         raw = "Tickets for proposal-2:\n```json\n" + json.dumps({"tickets": [ticket()]}) + "\n```"

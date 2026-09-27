@@ -56,7 +56,9 @@ CHECKPOINT.
 python3 <this skill's dir>/scripts/check_tickets.py <tickets.json>
 ```
 
-It lists what is missing, then grades each ticket. A ticket is **tight** when it has an interface (or
+Run it from the project root: it also opens every `follow_pattern` file and rejects a citation of a file
+that is not there or a line past its end - the cheapest place to catch a ticket that would send an
+implementer after code that does not exist. It lists what is missing, then grades each ticket. A ticket is **tight** when it has an interface (or
 a reason for none), a pattern with a `path:line` (or a reason for none), at least one test in Given /
 When / Then, and a `done_when`. Anything else is **loose**. A problem of wording alone - a test already
 stated, just not as Given / When / Then - you may reword without changing what it asks. Anything that

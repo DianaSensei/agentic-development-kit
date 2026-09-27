@@ -4,6 +4,9 @@
     check_tickets.py <tickets.json>    list what each ticket is missing, then each ticket's tier;
                                        exit 1 if anything is missing
 
+Run it from the project root: every follow_pattern path:line is checked against the files there,
+so a ticket cannot send an implementer after a line that is not there.
+
 The input is the architect's tickets output - {"proposal_id", "tickets": [...]} - or text holding
 it in a ```json block. The format, the tiers and what a tier decides are
 references/tickets.md. A ticket is tight when an implementer on a cheaper model can build it without
@@ -13,10 +16,31 @@ the session's model.
 """
 
 import json
+import os
 import re
 import sys
 
 PATH_LINE = re.compile(r"[\w./-]+\.\w+:\d+")
+CITE = re.compile(r"([\w./-]+\.\w+):(\d+)(?:-(\d+))?")
+
+
+def cited_line_problem(cite, new_files=()):
+    """Why a path:line citation cannot be right, or None. Paths are relative to the working
+    directory - the project root, where the lead runs this. A file the ticket itself creates is
+    not checked: it does not exist yet."""
+    m = CITE.search(cite)
+    if not m:
+        return None
+    path, first, last = m.group(1), int(m.group(2)), int(m.group(3) or m.group(2))
+    if any(path == f or (f.endswith("/") and path.startswith(f)) for f in new_files):
+        return None
+    if not os.path.isfile(path):
+        return f"cites {path}, which does not exist"
+    with open(path, encoding="utf-8", errors="replace") as f:
+        count = sum(1 for _ in f)
+    if max(first, last) > count or first < 1:
+        return f"cites {path}:{m.group(0).split(':', 1)[1]}, but {path} has {count} lines"
+    return None
 REQUIRED = ("id", "task", "files")
 
 
@@ -73,6 +97,10 @@ def check_ticket(t):
             at = p.get("at") if isinstance(p, dict) else None
             if not (text(at) and PATH_LINE.search(at)):
                 problems.append(f"{tid}: follow_pattern entry {p!r} has no path:line in `at`")
+            else:
+                why = cited_line_problem(at)
+                if why:
+                    problems.append(f"{tid}: follow_pattern {why}")
             if isinstance(p, dict) and not text(p.get("what")):
                 problems.append(f"{tid}: follow_pattern entry at {at!r} does not say what to copy")
     elif not text(t.get("no_pattern_reason")):
