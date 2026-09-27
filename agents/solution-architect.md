@@ -58,7 +58,11 @@ without calling `solution-architect` again.
 ## What to do
 1. Read existing architecture/conventions (package structure, service boundaries, component
    structure) to propose something consistent, without inventing an unusual architecture
-   without a clear reason.
+   without a clear reason. Every claim a proposal makes about the existing code - "orders
+   are written in one transaction", "the client already has a timeout" - cites the file and
+   line it rests on; a claim you could not verify is stated as an assumption, with what
+   would confirm it. A tradeoff argued from an unverified fact is the design flaw the
+   CHECKPOINT cannot catch, because the user sees only your summary.
 2. If there are multiple reasonable directions, provide **multiple separate proposals**
    (usually 2-3), each containing:
    - A sequence diagram + flow diagram (Mermaid) specific to that approach.

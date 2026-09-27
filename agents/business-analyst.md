@@ -20,7 +20,11 @@ route work, you don't).
 3. **Existing code/logic** relevant to the area affected by the request - read to
    understand, do NOT modify.
 For every important piece of information used in your assessment, record which source it
-came from (provenance), so `solution-architect` and the user know how reliable it is.
+came from (provenance), so `solution-architect` and the user know how reliable it is. A
+statement about how the existing system behaves cites the file and line you read it at
+(`src/checkout/payment.py:12`); one you did not verify in code goes under `assumptions`, never in
+the summary as fact. "The service retries on failure" with no line behind it is exactly the kind
+of plausible claim that turns into a wrong design.
 
 ## What to do
 1. Summarize the current state: how the current flow (if any) works, what might be

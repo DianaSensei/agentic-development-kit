@@ -39,10 +39,11 @@
     "workflows": ["feature-development", "bug-fix", "refactor"]
   },
 
-  "$comment_quality_gate": "review_skill is the skill Claude is told to run on the diff before it may report done. max_blocks caps how many times one session may be held at the Stop gate, so a stuck loop can never trap a session.",
+  "$comment_quality_gate": "review_skill is the skill Claude is told to run on the diff before it may report done. max_blocks caps how many times one session may be held at the Stop gate, so a stuck loop can never trap a session. require_test_run also wants a Bash command matching test_command (an ERE; the default recognises the common runners - pytest, npm test, go test, cargo test, mvn, gradle, ...) after the last code edit, so a change is never reported done on tests nobody ran; set it false for a project with no tests.",
   "quality_gate": {
     "review_skill": "code-review-skill",
     "max_blocks": 2,
+    "require_test_run": true,
     "require_changelog": false,
     "require_experience_log": false
   },

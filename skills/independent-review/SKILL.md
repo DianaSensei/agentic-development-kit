@@ -28,7 +28,11 @@ Input: `$ARGUMENTS`
 - **Independence.** If this session wrote or edited any of the changed files, say so first: the review
   that follows is a self-review, and the user should open a fresh session for an independent one.
 - **Nothing speculative.** Every finding names a file and line, what goes wrong, and under what input or
-  state. A concern that cannot be tied to a line is a question, not a finding.
+  state - and the line was read in this session, not inferred from a name or a description. A concern
+  that cannot be tied to a line is a question, not a finding.
+- **Say what was verified, and how.** "Met" means you read the line that meets it. Anything taken on
+  trust - a test you did not run, behavior in a file you did not open - is "cannot tell" or goes under
+  *Not checked*, never a quiet "met".
 
 ## Mode
 
@@ -81,6 +85,15 @@ Skip when Step 2 found nothing. Otherwise, for each item, say met / not met / ca
 - **Scope**: changed files that serve neither the intent nor the plan. Not automatically wrong, but the
   approver should see them listed.
 
+Whether or not Step 2 found an intent, **check the change's own claims**. The title, description and
+commit messages say what the change does - "adds tests for X", "handles 429", "no behavior change",
+"fixes the leak" - and the approver tends to believe them. Hold each claim against the diff and
+report it met / not met under *Claims*. A claim the diff does not bear out is a finding at the line
+where it should be (or the file, when nothing is there): **blocking** when the approver would rely on
+it - tests that are claimed but absent, "no behavior change" on a change that alters behavior, a fix
+claimed for a path the diff does not touch; otherwise a **question**. A description that says too
+little is not a finding; one that says what is not there is.
+
 ## Step 4 - Check correctness
 
 Apply `code-review-skill`'s general checklist (read in Step 1) plus its per-technology part for
@@ -129,6 +142,9 @@ Markdown in this shape; omit a section only when it would be empty, except *Not 
 ### Intent
 <`docs/intents/<slug>.md` (status) and `docs/plans/<slug>.md`, or "No intent or plan linked.">
 - <outcome / non-goal / AC> - met | not met | cannot tell
+
+### Claims
+- "<claim from the title, description or commits>" - met | not met (`path:line`)
 
 ### Blocking
 - `path:line` - <what breaks, for which input>
