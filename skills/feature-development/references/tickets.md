@@ -58,8 +58,11 @@ python3 <this skill's dir>/scripts/check_tickets.py <tickets.json>
 
 It lists what is missing, then grades each ticket. A ticket is **tight** when it has an interface (or
 a reason for none), a pattern with a `path:line` (or a reason for none), at least one test in Given /
-When / Then, and a `done_when`. Anything else is **loose**. Problems go back to the architect once
-(`SendMessage`). A ticket that stays loose is built by the lead's model, never handed down as if it
+When / Then, and a `done_when`. Anything else is **loose**. A problem of wording alone - a test already
+stated, just not as Given / When / Then - you may reword without changing what it asks. Anything that
+takes knowledge of the code - a missing interface, pattern or test, a wrong `path:line` - goes back to
+the architect once (`SendMessage`): filling it in yourself is designing the ticket without having read
+what the architect read. A ticket that stays loose is built by the lead's model, never handed down as if it
 were tight.
 
 ## Who builds what: model tiers

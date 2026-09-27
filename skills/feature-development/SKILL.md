@@ -189,8 +189,8 @@ with `mode: tickets`, the chosen proposal's id, the person's decision notes, and
 of `references/tickets.md` next to this `SKILL.md`. It returns one ticket per task: the exact
 `interface`, a `follow_pattern` at a `path:line`, the `tests` as Given/When/Then, `must_not`,
 `done_when`, `stop_if`. Save them outside the repository and run `python3 <this skill's
-dir>/scripts/check_tickets.py <file>`: problems go back once, then each ticket is graded **tight** or
-**loose**. Add them to the plan as `## Tickets`, with the tiers. A ticket that changes what was approved -
+dir>/scripts/check_tickets.py <file>`: a missing interface, pattern or test goes back once (a wording
+fix you may make yourself), then each ticket is graded **tight** or **loose**. Add them to the plan as `## Tickets`, with the tiers. A ticket that changes what was approved -
 a new file, a changed acceptance criterion - goes back to the person, not into the plan. Method, tiers
 and why: `references/tickets.md`.
 
