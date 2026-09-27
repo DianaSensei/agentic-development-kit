@@ -65,9 +65,10 @@ done
 echo "[adk-adlc] Rules enforced by hooks in this project:"
 
 [ -n "$ROUTER" ] && cat <<'TXT'
-- Any request to WRITE OR CHANGE code starts at the `workflow-router` skill, which classifies it and
-  hands off to `feature-development` / `bug-fix` / `refactor`. Pure questions and read-only
-  exploration skip this.
+- Any request to WRITE OR CHANGE code starts at the `workflow-router` skill, which classifies it,
+  picks the depth the change deserves, and hands off: `quick-change` for a small change with nothing to
+  decide, otherwise `feature-development` / `bug-fix` / `refactor` at light or full depth. Pure questions
+  and read-only exploration skip this.
 TXT
 
 [ -n "$ORCHESTRATORS" ] && cat <<'TXT'

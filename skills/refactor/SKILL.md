@@ -143,7 +143,7 @@ No separate confirmation checkpoint is needed here - proceed straight to Step 7 
 ## Step 7 - Knowledge Capture (immediately after Step 6)
 
 1. Memory/MCP (if connected): record the refactor pattern applied and why.
-2. Changelog file: `docs/changelog/<refactor-slug>.md` - the original pain point, the chosen approach
+2. Changelog file (full depth; at light depth the commit is the record): `docs/changelog/<refactor-slug>.md` - the original pain point, the chosen approach
    (+ reasoning), the behavior preservation checklist, the final outcome (cross-checked against Step 5),
    and the list of files changed. This is the record of what was ACTUALLY refactored - it doesn't
    belong in `docs/decisions/` because once complete it's a change log, not a standalone decision record.
