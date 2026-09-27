@@ -12,6 +12,7 @@ on:
       - "maintain/**"
       - "hooks/**"
       - "skills/intent-capture/scripts/**"
+      - "skills/reflect/scripts/**"
       - ".github/workflows/pipeline-tests.yml"
   push:
     branches: [main]
@@ -43,6 +44,8 @@ jobs:
         run: python -m unittest discover -s ci/tests -v
       - name: Hook tests
         run: python -m unittest discover -s hooks/tests -v
+      - name: Reflect script tests
+        run: python -m unittest discover -s skills/reflect/scripts/tests -v
       - name: Script syntax
         run: for f in ci/*.sh maintain/*.sh codehost/*.sh; do bash -n "$f"; done
       - name: GitLab CI templates

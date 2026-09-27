@@ -22,7 +22,7 @@ metadata:
   role: orchestrator
   scope: end-to-end
   output-format: code-and-report
-  related-skills: workflow-router, intent-capture, code-review-skill, test-master, ui-ux-design-skill, technical-proposal-writer
+  related-skills: workflow-router, intent-capture, code-review-skill, test-master, ui-ux-design-skill, technical-proposal-writer, reflect
 ---
 
 # Feature Development Workflow
@@ -130,7 +130,10 @@ Immediately after the user decides: update `docs/plans/<feature-slug>.md` - chos
 marked (`## ✅ Chosen: <name>`); rejected ones below, each wrapped in
 `<details><summary>Rejected: <name></summary> ... </details>` so they render collapsed. In
 `docs/intents/<feature-slug>.md` set `status: in-progress`, `plan: docs/plans/<feature-slug>.md`,
-`updated`, and add a Decision log line naming the chosen proposal.
+`updated`, and add a Decision log line naming the chosen proposal. When the user said why they chose it,
+keep their reason in their words on that line - and, if they have a personal profile
+(`~/.claude/adk-profile/`), note the choice there as a `checkpoint` signal (`reflect`'s Note mode). Do
+not ask for a reason just to record one.
 
 ## Step 3 - Implement + Test (loop until the quality bar is met)
 
@@ -223,7 +226,9 @@ Templates for both files: `references/report-and-logs.md`.
    fixed or not - and one per correction the user made to your work in this run, to
    `docs/knowledge/experience-log.md`, using the reference's template (each entry names its `Class`).
    Step 0 of the next workflow searches it, so a known dead end is not retried.
-   **Then promote repeats**: any class now in the log twice or more that no check and no `CLAUDE.md`
+   Each entry carries `Scope: project | personal`; a `personal` one is also noted in the user's profile
+   as a signal, if they have one (`reflect`'s Note mode), and never promoted into the project.
+   **Then promote repeats**: any `project` class now in the log twice or more that no check and no `CLAUDE.md`
    line already covers gets one proposal - a **check** in `.claude/quality-check.config.json` when a
    machine can see the mistake in the code (`AskUserQuestion`, `header` `"Check"`), otherwise one
    `CLAUDE.md` line (`header` `"CLAUDE.md"`), never written without a yes. **Yes** → write the check

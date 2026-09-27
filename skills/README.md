@@ -43,6 +43,12 @@ off to the right orchestrator, so in practice you rarely need to name a workflow
 | [`project-setup`](./project-setup/SKILL.md) | Setting a repository up for this kit in one pass - `CLAUDE.md`, `REVIEW.md`, `CODEOWNERS`, a committed `.claude/settings.json` (secret deny rules, lockfile protection, the kit enabled for everyone), the quality-check config, the code host's MCP server and the CI reviewer for GitHub or GitLab. Adds to existing files, never overwrites |
 | [`refactor`](./refactor/SKILL.md) | Structure/performance/maintainability improvement with external behavior required to stay 100% identical |
 
+## Personal
+
+| Skill | Use For |
+|-------|---------|
+| [`reflect`](./reflect/SKILL.md) | The user's own working profile - how they decide, design, write, review and want to be worked with - learned from their corrections, Checkpoint choices, rewrites of agent-written code and review comments, approved line by line, kept in their private repository and loaded into every session |
+
 ## Requirements & Design
 
 | Skill | Use For |

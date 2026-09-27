@@ -132,6 +132,29 @@ layout under `plugins/<name>/`.
   binary, then follow [`mcp/README.md`](./plugins/adk-backend/mcp/README.md) or just ask ("add a toolbox connection for my
   orders Postgres database") - the `toolbox-connections` skill handles the rest.
 
+## It learns how you work
+
+The model does not change from working with you; what it reads does. `reflect` keeps a short profile
+of how you work - how you weigh tradeoffs, design, write and review code, and want to be worked with -
+in a **private Git repository of your own**, cloned at `~/.claude/adk-profile/` on each machine and
+loaded into every session from `~/.claude/CLAUDE.md`.
+
+- **Signals** collect as you work: your corrections that are about you rather than the project
+  (the experience log's `Scope: personal`), the reason you give when you choose at a Checkpoint, and
+  anything you state outright.
+- **Your rewrites** are the strongest signal: `reflect` finds the lines you rewrote that the agent
+  wrote (`git blame` against Claude's commit trailers) and reads them for the pattern.
+- **Reflect** ("reflect", or when the session reminds you that signals are waiting) turns them into
+  proposed profile lines, each with its evidence. You approve every one; nothing is written, and
+  nothing is pushed to your other machines, without your yes.
+- **It stays small and current**: a 60-line budget, merged and generalised as it grows; a line needs
+  two independent pieces of evidence (or your word); lines contradicted or unseen for six months are
+  proposed for retirement.
+- **The project wins**: your profile never overrides a project's `CLAUDE.md`, `REVIEW.md` or checks, and
+  nothing from it is ever written to a project.
+
+Start with "set up my profile".
+
 ## skills/ vs agents/
 
 Two models for the same work. A skill runs in the current session, sequentially, reading further

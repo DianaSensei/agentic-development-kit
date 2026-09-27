@@ -79,7 +79,8 @@ fixed).
 to `"Checkpoint"` (e.g. options "Proceed with this fix" / "Need more diagnosis" / "Different approach").
 Never fix code without this confirmation - even when very confident about the root cause. Step 4 is
 gated on this literal `AskUserQuestion` call, so presenting the direction and moving on without asking
-will be caught.
+will be caught. When the user chose between directions and said why, keep the reason, and note the choice in their
+personal profile if they have one (`reflect`'s Note mode) - never ask for a reason just to record it.
 
 ## Step 4 - Implement + Retest (loop until quality is met)
 
@@ -135,7 +136,9 @@ something).
    using the same format as `feature-development` (date, class, source, area, cause, attempts used,
    outcome, the fix or the approaches that did NOT work) - one entry for the bug itself, one per fix-loop
    issue, and one per correction the user made to your work in this run.
-   **Then promote repeats**: any class now in the log twice or more that no check and no `CLAUDE.md`
+   Each entry carries `Scope: project | personal`; a `personal` one is also noted in the user's profile
+   as a signal, if they have one (`reflect`'s Note mode), and never promoted into the project.
+   **Then promote repeats**: any `project` class now in the log twice or more that no check and no `CLAUDE.md`
    line already covers gets one proposal - a **check** in `.claude/quality-check.config.json` when a
    machine can see the mistake in the code (`AskUserQuestion`, `header` `"Check"`), otherwise one
    `CLAUDE.md` line (`header` `"CLAUDE.md"`), never written without a yes. **Yes** → write the check
