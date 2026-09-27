@@ -102,7 +102,8 @@ For each unit, in the plan's order:
 1. Check its output. `open_questions` or `checkpoint.required` → the section above. `test_run_result`
    FAIL → resume the agent with what the failure is, the same way, before applying anything from it.
 2. Check scope: `git diff --name-only <base_commit> <branch>` lists only paths inside the unit's
-   `files`. A path outside is not applied silently: tell the user which, and why the agent said it
+   `files`. The lane guard (`tickets.md` → "Lanes") already denied its edits outside them; this catches
+   what it cannot see, such as a file written from Bash. A path outside is not applied silently: tell the user which, and why the agent said it
    needed it.
 3. Apply it to the working tree, uncommitted, like every other change this workflow makes:
    ```bash

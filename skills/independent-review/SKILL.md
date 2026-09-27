@@ -84,6 +84,13 @@ Skip when Step 2 found nothing. Otherwise, for each item, say met / not met / ca
   code but no test is a suggestion; an AC with neither is blocking.
 - **Scope**: changed files that serve neither the intent nor the plan. Not automatically wrong, but the
   approver should see them listed.
+- **Tickets**, when the plan has a `## Tickets` section: each ticket is what its author was told to
+  build, so hold the diff to it. For each ticket - `interface` kept exactly (a renamed parameter or an
+  extra public function is not what was approved), `follow_pattern` followed (read the cited line),
+  every listed test present, nothing in `must_not` done. Not met is a **suggestion** when the result is
+  equivalent and harmless, **blocking** when it changes an interface other code relies on or does a
+  `must_not`. Run `check_conformance.py` from the kit's `feature-development` scripts if it is on
+  disk; its stray-file and missing-interface lines are evidence, not the verdict.
 
 Whether or not Step 2 found an intent, **check the change's own claims**. The title, description and
 commit messages say what the change does - "adds tests for X", "handles 429", "no behavior change",
@@ -145,6 +152,10 @@ Markdown in this shape; omit a section only when it would be empty, except *Not 
 
 ### Claims
 - "<claim from the title, description or commits>" - met | not met (`path:line`)
+
+### Tickets
+<Only when the plan has `## Tickets`.>
+- <ticket id>: interface <kept | differs: ...>, pattern <followed | differs: ...>, tests <n/n>, must_not <respected | broken: ...>
 
 ### Blocking
 - `path:line` - <what breaks, for which input>
