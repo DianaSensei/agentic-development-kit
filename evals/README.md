@@ -14,6 +14,8 @@ touches `skills/`, `hooks/`, `agents/`, `evals/`, or the manifest.
 |---|---|
 | `routing/question-skips-router` | a description edit that makes a plain question start a code-changing workflow |
 | `routing/improve-that-is-a-bug` | "improve X" on behavior that is wrong today not reaching `bug-fix`; any code edit before the Checkpoint is confirmed - a headless run can never confirm it, so a correct run edits nothing |
+| `routing/typo-takes-quick-path` | a one-word typo fix paying for the full workflow: analyst or architect agents, a plan or intent file, a Checkpoint question. Before proportional routing, the same request stopped at a Checkpoint in 2 of 3 runs; with it, 3 of 3 are fixed on the quick path, self-review included |
+| `routing/auth-migration-takes-full-path` | a small-looking change on an expensive path taking the quick path: lowercasing stored emails is one line, but it is auth, needs a migration, and can collide existing accounts. Must not edit before the Checkpoint, and must raise the collision |
 | `routing/checkpoint-then-apply` | the second half of a workflow: once the person confirms the Checkpoint - replayed from a recorded session that stopped there - `bug-fix` must bound the loop as proposed, add a test and run its self-review |
 | `intent-capture/solution-in-disguise` | intent files drifting from the template (keys, `null` links, sections, order); the originator's solution leaking into *Problem* instead of *Originator's idea* |
 | `learning-loop/reads-known-dead-end` | a bug of a kind the project already hit being diagnosed without the experience log - the entry's recorded dead end is only visible to a run that searched the log. Measured with a no-plugin baseline: 1.00 with the kit, 0.33 without |

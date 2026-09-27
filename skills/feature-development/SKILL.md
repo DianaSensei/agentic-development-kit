@@ -32,6 +32,23 @@ Runs as a single agent, sequentially. Holds no technology-specific knowledge - i
 
 Input: `$ARGUMENTS`
 
+## Depth
+
+`workflow-router` hands off at **light** or **full** depth (its tiers); invoked directly, pick by the same
+rules. Light depth keeps the decision and the checks and drops the ceremony:
+
+| | Light | Full |
+|---|---|---|
+| Step 1 analysis | inline: requirement, 3-6 acceptance criteria, open questions | `business-analyst` agent |
+| Step 2 proposal | inline: the approach, the alternative and why not, the files it touches | `solution-architect` agent, 1-3 proposals |
+| Plan file, intent back-fill | plan only if the user wants one; no back-fill | both |
+| CHECKPOINT | **required** | **required** |
+| Step 3-4 | as written (skills read, tests, checks, fix loop, report) | as written |
+| Step 5 | experience log only | all of it |
+
+Escalate to full depth the moment light depth finds what the tier did not see: an open question that
+reopens the scope, a second service, an expensive path. Say so in one line.
+
 ## Step 0 - Discover Context
 
 Read `CLAUDE.md`, memory/MCP if connected, and the existing code relevant to the request. If
@@ -65,6 +82,10 @@ Full pattern: `references/interview-questions.md` → "Multi-Agent Pre-Discovery
 
 ## Step 1 - Requirements Analysis (`business-analyst`, confirmed with the user here)
 
+**Light depth**: skip the agent. State the requirement, 3-6 acceptance criteria and any open question in
+the conversation, resolve the questions with the user, and go to Step 2. The rest of this step is full
+depth.
+
 Launch the `business-analyst` subagent (Task tool) with the raw request plus whatever Step 0 found. It
 runs on `Read, Grep, Glob, Bash` only - **no `Edit`/`Write`, so this step is architecturally unable to
 touch code**, not merely told not to. It returns `requirement_clarified`, `feasibility_verdict`,
@@ -83,13 +104,17 @@ here in the main thread:
 - Fold the answers back into `business-analyst`'s output before Step 2. Re-invoke it only if the answers
   substantially reopen a `not_feasible_as_stated` verdict.
 
-No intent in Step 0 → back-fill one now, so every plan and changelog has an intent to point back to:
+No intent in Step 0, at full depth → back-fill one now, so every plan and changelog has an intent to point back to:
 write `docs/intents/<feature-slug>.md` from `intent-capture`'s `references/intent-template.md` (in this
 plugin's `skills/`, next to this skill), filled from the confirmed Step 1 output. Status `accepted`, originator the user,
 Decision log line "back-filled from the request; accepted by asking to build it". Problem and outcome
 only - acceptance criteria stay in the plan.
 
 ## Step 2 - Solution Proposal (`solution-architect`, refined and checkpointed here)
+
+**Light depth**: skip the agent and the plan file (unless the user wants it). Present one proposal
+inline - the approach, the strongest alternative and why not, the acceptance criteria, the files it
+touches - then the CHECKPOINT below, which light depth never skips.
 
 1. Launch `solution-architect` (Task tool) with Step 1's finalized output. Also read-only (`Read, Grep,
    Glob` - no `Bash`, no `Edit`/`Write`). Returns one or more `proposals`, each with sequence/flow
@@ -213,6 +238,8 @@ No checkpoint here - go straight to Step 5 (logging is low-risk and easy to amen
 changes something).
 
 ## Step 5 - Knowledge Capture (immediately after Step 4)
+
+Light depth: item 3 (experience log) only; the commit and the conversation are the record.
 
 Templates for both files: `references/report-and-logs.md`.
 

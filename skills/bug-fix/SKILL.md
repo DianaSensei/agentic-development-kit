@@ -147,8 +147,10 @@ something).
    `- Promotion: declined <date>` to the log entry. Method:
    `feature-development`'s `references/report-and-logs.md` (in this plugin's `skills/`) → "Promoting a
    Repeat to CLAUDE.md".
-3. **Postmortem (required, specific to bug-fix)**: create `docs/postmortems/<bug-slug>.md` using the
-   template in `references/postmortem-template.md`.
+3. **Postmortem (required at full depth, specific to bug-fix)**: create `docs/postmortems/<bug-slug>.md`
+   using the template in `references/postmortem-template.md`. At light depth (`workflow-router`'s
+   tiers) the experience-log entry is the record - unless the bug reached users or data, which always
+   gets a postmortem.
 4. Started from an intent → set it `status: done`, `changelog: docs/postmortems/<bug-slug>.md`,
    `updated`, and a Decision log line.
 

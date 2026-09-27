@@ -37,7 +37,8 @@ off to the right orchestrator, so in practice you rarely need to name a workflow
 
 | Skill | Use For |
 |-------|---------|
-| [`workflow-router`](./workflow-router/SKILL.md) | First stop for any "write or change code" request - classifies it as a new feature, a bug fix, or a refactor, then hands off |
+| [`workflow-router`](./workflow-router/SKILL.md) | First stop for any "write or change code" request - classifies it as a new feature, a bug fix, or a refactor, picks the depth the change deserves (quick, light or full), then hands off |
+| [`quick-change`](./quick-change/SKILL.md) | The fast path: a small, local change with nothing to decide, done directly - owning skill read, convention checks, tests and self-review still enforced; no agents, plan or Checkpoint. A Stop hook sends it back if the diff outgrows it |
 | [`feature-development`](./feature-development/SKILL.md) | New capability or an intentional behavior change, start to finish |
 | [`bug-fix`](./bug-fix/SKILL.md) | Current behavior is actually wrong - reproduce, confirm root cause, fix, postmortem |
 | [`project-setup`](./project-setup/SKILL.md) | Setting a repository up for this kit in one pass - `CLAUDE.md`, `REVIEW.md`, `CODEOWNERS`, a committed `.claude/settings.json` (secret deny rules, lockfile protection, the kit enabled for everyone), the quality-check config, the code host's MCP server and the CI reviewer for GitHub or GitLab. Adds to existing files, never overwrites |

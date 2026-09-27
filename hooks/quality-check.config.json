@@ -9,7 +9,8 @@
     "quality_gate": "warn",
     "bulk_read_gate": "warn",
     "review_gate": "warn",
-    "convention_checks": "warn"
+    "convention_checks": "warn",
+    "quick_change_scope": "warn"
   },
 
   "$comment_session_context": "session-context injects the kit's routing/checkpoint/self-check reminders at SessionStart, only in projects that opted in (the plugin enabled in the project's .claude/settings.json, or this file present at .claude/quality-check.config.json). general_guidelines adds one team's engineering/style conventions on top; off unless a project sets it to true.",
@@ -26,6 +27,12 @@
     { "match": "\\.sql$", "skill": "database-skill" },
     { "match": "\\.(tsx|jsx)$", "skill": "tauri-react-skill" }
   ],
+
+  "$comment_quick_change": "The fast path's limits, checked by hooks/quick-change-scope.sh against the finished diff while quick-change runs. sensitive_paths (EREs on repo-relative paths) replaces the built-in list when set - migrations, auth/security/crypto, payments/billing/checkout, CI files, API contracts, dependency manifests, .claude/ and CLAUDE.md.",
+  "quick_change": {
+    "max_files": 3,
+    "max_lines": 60
+  },
 
   "$comment_checks": "The project's own linters, formatters and rule scripts, run by hooks/check-conventions.sh on each file Claude writes (scope file, the default) or by the workflows with the tests (scope project). Each: {name, run, match, scope, timeout}; {file} in run becomes the path. Empty here on purpose: running commands is the project's decision, and only its own .claude/quality-check.config.json is read for checks. project-setup fills it from the checkers the repository already uses - see skills/project-setup/references/conventions.md.",
   "checks": [],

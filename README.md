@@ -113,8 +113,12 @@ layout under `plugins/<name>/`.
 
 ## Using it
 
-- **Skills** run themselves. Describe the request; `workflow-router` classifies it and hands off to
-  `feature-development` / `bug-fix` / `refactor`.
+- **Skills** run themselves. Describe the request; `workflow-router` classifies it and picks the depth
+  it deserves: `quick-change` for a small change with nothing to decide (a typo, a plain fix), otherwise
+  `feature-development` / `bug-fix` / `refactor` at light depth (inline analysis, one proposal, the
+  Checkpoint) or full depth (analyst and architect agents, plan, intent, changelog) for changes that
+  cross systems or touch migrations, auth, money or public contracts. The machine checks - owning skill
+  read, convention checks, tests run, self-review - apply at every depth.
 - **A new project** starts with `project-setup` ("set this repo up for the kit"): it writes `CLAUDE.md`,
   `REVIEW.md`, `CODEOWNERS`, a committed `.claude/settings.json` that enables the kit for every
   teammate, the code host's MCP server, and the CI reviewer for GitHub or GitLab - adding to files that
