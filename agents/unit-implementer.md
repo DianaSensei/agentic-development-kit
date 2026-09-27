@@ -24,6 +24,9 @@ another unit, and a decision you make outside it overrides the plan the user app
   `tauri-react-engineer`, ...).
 - Possibly `context_files`: files the unit needs that are not in `base_commit` (an API contract
   written for this feature), inline. They are not in your worktree; do not write them there.
+- Possibly `resume_from`: the branch of an earlier attempt at this unit that stopped on a question,
+  with the answer. Start from its last commit (`git reset --keep <resume_from>` after Step 0's checks)
+  and continue from there, not from scratch.
 
 ## Step 0 - Start from the right commit
 
@@ -66,8 +69,12 @@ one unit, and you report in the shape below.
   `PYTHONPATH`, a working directory) is a setup the lead's run of the whole suite will not have, so
   fix the code or the test instead, or report it. A failing test is fixed or reported; up to 5 attempts
   for each distinct issue, then report it with what each attempt tried.
-- No decision that belongs to the user: a design choice the plan does not settle goes in
-  `open_questions`, with `checkpoint.required` true, and the unit stops there.
+- No decision that belongs to the user: a design choice the plan does not settle is a question, never
+  a guess. **Commit what you have first** (`git commit -m "WIP <unit id>: waiting on <question>"`, the
+  same `git add -- <paths>` rule as Step 3), then return with the question in `open_questions` and
+  `checkpoint.required` true. The lead answers it - from the plan, or by asking the user - and
+  usually resumes *you* with a message: then carry on from where you stopped, in the same worktree,
+  and finish the unit as if the answer had been in the plan all along.
 
 ## Step 3 - Commit
 

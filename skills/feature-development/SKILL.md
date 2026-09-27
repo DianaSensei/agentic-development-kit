@@ -141,10 +141,11 @@ touches - then the CHECKPOINT below, which light depth never skips.
    `references/specification-template.md`, opening with a line `Intent: docs/intents/<feature-slug>.md`.
    This is the durable record; it does not replace presenting the proposal to the user in conversation.
 4. `solution-architect` may mark one `recommended` - fine to relay, but never choose on the user's behalf.
-5. **Parallel units**: where `task_breakdown` has two or more substantial tasks with no `depends_on`
-   between them and disjoint `files`, list them in the plan under `## Parallel units` (id, task,
-   files) and name them when you present it. The CHECKPOINT then approves running them in parallel
-   (3.1); a plan without the section is built sequentially. Rules: `references/parallel-units.md`.
+5. **Parallel units**: where `task_breakdown` has two or more substantial tasks that can run at the same
+   time - no `depends_on` between them, disjoint `files` - list the plan's units under
+   `## Parallel units` (id, task, files, depends on) and name the waves they form when you present it.
+   The CHECKPOINT then approves building them in waves (3.1); a plan without the section is built
+   sequentially. Rules: `references/parallel-units.md`.
 
 **CHECKPOINT (required)**: present the full proposal, then confirm via `AskUserQuestion` with `header`
 set exactly to `"Checkpoint"` (options: one per proposal, plus "Revise" - free text always available via
@@ -179,12 +180,14 @@ it may go through the Task tool instead of being implemented inline - those agen
 tests for the piece they own. Not required: anything without a matching Tier-2 agent is implemented
 directly under the read-the-`SKILL.md` rule above.
 
-**Parallel units**: when the approved plan has a `## Parallel units` section, build those units first,
-at the same time: one `unit-implementer` per unit, dispatched in a single message, each in its own git
-worktree. Then apply each unit's commit to the working tree, make the shared edits they report, and
-run the full tests before anything else. Preconditions, dispatch prompt, applying and cleaning up:
-`references/parallel-units.md`, read in full before dispatching. A unit that does not apply cleanly is
-built sequentially here instead.
+**Parallel units**: when the approved plan has a `## Parallel units` section, build them in **waves**:
+every unit whose dependencies are done, at the same time - one `unit-implementer` per unit, dispatched
+in a single message, each in its own git worktree (a wave of one unit you build yourself). After each
+wave: apply its units, make the shared edits they report, run the full tests, and snapshot the tree for
+the next wave to start from. A unit that stops on a question is answered - from the plan, or by asking
+the user - and resumed with `SendMessage`, not redone. Waves, snapshots, dispatch prompt, answering and
+resuming, applying and cleaning up: `references/parallel-units.md`, read in full before dispatching. A
+unit that does not apply cleanly is built sequentially here instead.
 
 Two things the dispatch does not do for you:
 

@@ -77,13 +77,16 @@ Then [expected result]
 - [ ] E2E test for complete user flow
 
 ## Parallel units
-Only when two or more units are independent and touch disjoint files
-(`parallel-units.md`); omit the section otherwise.
+Only when two or more units can be built at the same time - no dependency between them, disjoint
+files (`parallel-units.md`); omit the section otherwise.
 
-| Unit | Task | Files |
-|------|------|-------|
-| U1 | [What it builds] | `src/export/`, `tests/export/` |
-| U2 | [What it builds] | `src/import/`, `tests/import/` |
+| Unit | Task | Files | Depends on |
+|------|------|-------|------------|
+| U1 | [What it builds] | `src/export/`, `tests/export/` | - |
+| U2 | [What it builds] | `src/import/`, `tests/import/` | - |
+| U3 | [What it builds on U1] | `src/report/`, `tests/report/` | U1 |
+
+Waves follow from *Depends on*: U1 and U2 in wave 1, U3 in wave 2.
 
 After both: [the shared edits no unit makes, e.g. registering both routes in `src/routes.py`]
 
