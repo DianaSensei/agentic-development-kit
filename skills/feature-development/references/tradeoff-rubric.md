@@ -86,7 +86,8 @@ python3 <this skill's dir>/scripts/check_proposals.py <architect-output.json>   
 python3 <this skill's dir>/scripts/check_proposals.py --table <architect-output.json>  # the CHECKPOINT table
 ```
 
-The first command lists every missing dimension, rating without evidence, recommendation without a
+Run them from the project root: a `path:line` in the evidence that points past the end of a file there
+is rejected. The first command lists every missing dimension, rating without evidence, recommendation without a
 deciding dimension or with its costs hidden, and single proposal with no alternative. With problems,
 resume the architect with the list (`SendMessage`) once. Anything still missing is shown at the
 CHECKPOINT as `unknown`, never filled in by you from memory. The second command prints the table: the

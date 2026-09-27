@@ -62,20 +62,23 @@ below. Between waves:
 One `unit-implementer` per unit, **all in a single message** so they run at the same time. Its
 `subagent_type` is `adk-adlc:unit-implementer` - a plugin's agents carry the plugin's prefix. Each
 prompt carries, with these literal labels: `unit` (id, task, `files`, the acceptance criteria and
-edge cases it owns), `plan_excerpt`, `base_commit`, `skill_paths` (the technical skills that
+edge cases it owns), `ticket` (the unit's ticket from the plan's `## Tickets`), `plan_excerpt`, `base_commit`, `skill_paths` (the technical skills that
 own the unit's files, each with the path of the `SKILL.md` you read: the ones you read for it, and
 any the project's `skill_map` in `.claude/quality-check.config.json` names for those paths),
 `context_files` if any, and
 `specialist` with `specialist_path` when `task_breakdown` assigned the unit to a Tier-2 agent
-that exists. Write project
+that exists. Pick the model by the ticket's tier (`tickets.md` → "Who builds what"): a **tight**
+ticket goes out with the Agent tool's `model` set to `models.build`; a **loose** one with no `model`,
+so it runs on your own. Write project
 paths relative to the repository root: the agent works in its worktree, and an absolute path into
 your tree points it at your copy instead. The agent's
 frontmatter sets `isolation: worktree`; each result names its worktree's path and branch.
 
 ## A unit with a question: answer, then resume
 
-A unit that meets a decision it does not own stops, commits what it has (`WIP <unit>: ...`), and
-returns `checkpoint.required` with the question. Its worktree, branch and context are still there -
+A unit that meets a decision it does not own, or finds its ticket wrong (`plan_mismatch`), stops,
+commits what it has (`WIP <unit>: ...`), and returns `checkpoint.required` with the question or the
+mismatch. Its worktree, branch and context are still there -
 do not redo the unit:
 
 1. **Answer from what is already decided**, when the plan, the intent, `CLAUDE.md` or an earlier answer

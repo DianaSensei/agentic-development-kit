@@ -12,6 +12,7 @@ person with a dimension skipped, a rating nobody can check, or a recommendation 
 """
 
 import json
+import os
 import re
 import sys
 
@@ -29,6 +30,22 @@ MARK = {"good": "✅", "fair": "⚠️", "poor": "❌", "unknown": "❓"}
 EVIDENCE_PREFIXES = ("requirement:", "measured:", "assumption:", "doc:", "plan:")
 PATH_LINE = re.compile(r"[\w./-]+\.\w+:\d+")
 URL = re.compile(r"https?://\S+")
+CITE = re.compile(r"(?<![\w/.-])([\w./-]+\.\w+):(\d+)(?:-(\d+))?")
+
+
+def bad_citations(evidence):
+    """path:line citations in evidence that cannot be right, relative to the working directory (the
+    project root). A path that is not a file here - a doc elsewhere, a file a proposal would add - is
+    not judged; a line past the end of a file that is here is."""
+    out = []
+    for m in CITE.finditer(evidence or ""):
+        path, first, last = m.group(1), int(m.group(2)), int(m.group(3) or m.group(2))
+        if os.path.isfile(path):
+            with open(path, encoding="utf-8", errors="replace") as f:
+                count = sum(1 for _ in f)
+            if max(first, last) > count or first < 1:
+                out.append(f"{m.group(0)} (the file has {count} lines)")
+    return out
 
 
 def load(path):
@@ -106,6 +123,8 @@ def check(data):
             if not evidence_ok(entry.get("evidence")):
                 problems.append(f"{pid}: {d} evidence {entry.get('evidence')!r} is not a path:line, a URL, "
                                 "or requirement:/measured:/doc:/plan:/assumption:")
+            for bad in bad_citations(str(entry.get("evidence", ""))):
+                problems.append(f"{pid}: {d} cites {bad}")
         extra = sorted(set(tradeoffs) - set(DIMENSIONS))
         if extra:
             problems.append(f"{pid}: not rubric dimensions: {', '.join(extra)}")

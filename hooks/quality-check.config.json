@@ -36,6 +36,12 @@
 
   "$comment_tradeoffs": "priorities orders the tradeoff rubric's dimensions for this project's design decisions - feature-development's solution proposals are recommended on the highest one where they differ (skills/feature-development/references/tradeoff-rubric.md). Unset, the rubric's default order applies: correctness_risk, reversibility, convention_fit, native_approach, operational_load, performance_and_scale, cost_to_build. A requirement of the change itself still comes first.",
 
+  "$comment_models": "Who builds what (skills/feature-development/references/tickets.md). plan is the model business-analyst and solution-architect run on - requirements, design and tickets are the senior's work. build is the model a unit-implementer runs on when its ticket is tight (interface, pattern at a path:line, Given/When/Then tests, done_when); a loose ticket runs on the session's model. Values: opus, sonnet, haiku, or inherit (the session's model).",
+  "models": {
+    "plan": "opus",
+    "build": "sonnet"
+  },
+
   "$comment_checks": "The project's own linters, formatters and rule scripts, run by hooks/check-conventions.sh on each file Claude writes (scope file, the default) or by the workflows with the tests (scope project). Each: {name, run, match, scope, timeout}; {file} in run becomes the path. Empty here on purpose: running commands is the project's decision, and only its own .claude/quality-check.config.json is read for checks. project-setup fills it from the checkers the repository already uses - see skills/project-setup/references/conventions.md.",
   "checks": [],
 

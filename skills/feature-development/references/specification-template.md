@@ -81,6 +81,11 @@ The priorities with their sources, then the table from `check_proposals.py --tab
 dimensions in priority order, a column per proposal (`tradeoff-rubric.md`). Kept after the decision, so
 the rejected proposals keep the reasons they lost.
 
+## Tickets
+Written after the CHECKPOINT, for the chosen proposal only: one sub-heading per task with its
+`interface`, `follow_pattern`, `tests`, `must_not`, `done_when`, `stop_if`, and its tier from
+`check_tickets.py` (`tickets.md`).
+
 ## Parallel units
 Only when two or more units can be built at the same time - no dependency between them, disjoint
 files (`parallel-units.md`); omit the section otherwise.
@@ -122,6 +127,7 @@ records what was actually built.
 | Error Handling | Failure cases | Yes |
 | Implementation TODO | Action items | Yes |
 | Tradeoffs | Why this proposal, on the rubric's dimensions | Yes, at full depth |
+| Tickets | What each task builds, exactly, and when to stop | Yes, at full depth, after the CHECKPOINT |
 | Parallel units | Independent units built at the same time | Only when they exist |
 | Out of Scope | Prevent scope creep | Recommended |
 | Open Questions | Track decisions | As needed |

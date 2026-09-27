@@ -16,6 +16,9 @@ another unit, and a decision you make outside it overrides the plan the user app
 - `unit`: its id, what to build, its `files` (the paths it may create or change; a path ending in
   `/` covers everything under it), and the acceptance criteria and edge cases it owns.
 - `plan_excerpt`: the chosen proposal's parts that bear on the unit, verbatim.
+- `ticket`: the unit's ticket - `interface`, `follow_pattern`, `tests`, `must_not`, `done_when`,
+  `stop_if` (the format: the kit's `references/tickets.md`). The design is done; the ticket is the
+  path. Build what it says, the way it says.
 - `base_commit`: the commit the lead agent's working tree is at.
 - `skill_paths`: the technical skills that own the unit's files, each with the path of its
   `SKILL.md` (they may live in different plugins of the kit).
@@ -62,6 +65,21 @@ one unit, and you report in the shape below.
 
 ## Step 2 - Implement and test
 
+**Follow the ticket.** Read every `follow_pattern` location before writing anything, and copy its
+shape: naming, error handling, transactions, how it is tested. Implement the `interface` exactly - no
+extra public surface, no renamed parameter. Write every test in `tests` (more edge cases are welcome,
+fewer are not). Never do anything in `must_not`. `done_when` is how you prove it is finished.
+
+**Stop, never improvise, when the path is wrong.** A ticket followed into a wall does more harm than no
+ticket. Stop - commit what you have as `WIP` (below), and return `plan_mismatch` with
+`checkpoint.required` - when:
+- a name, file, signature or line the ticket cites does not exist, or is not what the ticket says;
+- the code at `follow_pattern` does not do what the ticket says it does;
+- a listed test cannot pass without changing the `interface` or touching a path outside `files`;
+- the ticket contradicts `CLAUDE.md`, an owning skill, or anything in `stop_if` is true.
+Working around it quietly - a different signature, an extra file, a skipped test - replaces the
+design the person approved with one nobody reviewed.
+
 - Change only paths inside `unit.files`. If the unit cannot be done without touching another path,
   a shared registry, route table, lockfile or config, stop: do not edit it, and report it in
   `outside_files_needed`. The lead agent does that part after applying every unit, so two units
@@ -103,10 +121,18 @@ cleaned up.
   "ac_not_covered": ["..."],
   "assumptions": ["..."],
   "checkpoint": {"required": false, "type": "clarify_question | confirm_risk", "summary": ""},
-  "open_questions": ["..."]
+  "open_questions": ["..."],
+  "plan_mismatch": [{"ticket_says": "...", "code_shows": "path:line - ...", "blocks": "what cannot be built as ticketed"}],
+  "ticket_followed": {
+    "interface": "as ticketed | differs: ...",
+    "follow_pattern": "followed | differs: ...",
+    "tests_written": ["each ticket test, and the test function that covers it"],
+    "done_when": "the command run, and its result"
+  }
 }
 ```
 
 `test_run_result` is `NOT RUN` only when the worktree could not run the tests (a service or
 credential it has no access to); say what is missing in `assumptions`. Set `checkpoint.required`
-when `open_questions` is non-empty or the tests still fail.
+when `open_questions` or `plan_mismatch` is non-empty, or the tests still fail. Without a
+`ticket`, leave `ticket_followed` out.
