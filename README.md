@@ -172,7 +172,15 @@ cost to build - each rating with its evidence (`path:line`, a doc, a requirement
 stated assumption). The order that decides between them is set before the proposals are read: the
 change's own requirement, then the project's `tradeoffs.priorities`, then your profile's "How I decide",
 then a default. A script checks the architect's output, so a skipped dimension, an uncited rating or a
-recommendation that hides its costs never reaches the Checkpoint, where you see one table. A missing tool guarantees that; a hook reading transcripts afterwards
+recommendation that hides its costs never reaches the Checkpoint, where you see one table.
+
+After you choose, the architect - the senior - splits the chosen proposal into **tickets**: for each task,
+the exact interface, existing code to copy the pattern from (`path:line`), the tests as Given/When/Then,
+what not to touch, the command that proves it done, and when to stop. A script grades each ticket
+tight or loose. Planning runs on the strongest model (`models.plan`, default `opus`); a tight ticket is
+built by a cheaper one (`models.build`, default `sonnet`), a loose one by your session's model. An
+implementer whose ticket proves wrong - a cited line that is not there, a pattern that does not match -
+stops and reports a `plan_mismatch` instead of improvising around it. A missing tool guarantees that; a hook reading transcripts afterwards
 cannot. Step 3 may dispatch a Tier-2 specialist when one exists for the task. The units the approved
 plan declares are built in waves by their dependencies - every unit whose dependencies are done at the
 same time, by `unit-implementer` agents each in a git worktree of its own - and applied to the working

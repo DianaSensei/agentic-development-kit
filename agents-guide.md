@@ -26,7 +26,7 @@ business-analyst  →  solution-architect  →  Tier-2 specialist(s), per task_b
 | Step | Agent | Role |
 |------|-------|---------|
 | 1 | [`business-analyst`](./agents/business-analyst.md) | Reviews current state, clarifies requirements, assesses feasibility. Completely agnostic - doesn't know/need to know the stack. Output: draft AC/Edge Case/DoD + a preliminary impact assessment. |
-| 2 | [`solution-architect`](./agents/solution-architect.md) | Takes the output from Step 1, identifies the stack (`CLAUDE.md` → memory/MCP → code evidence), produces 1+ proposal(s) complete with diagrams, tradeoffs rated on the fixed rubric with evidence (checked by `check_proposals.py` before you see them), finalized AC-DoD + a `task_breakdown` assigning work to the right Tier-2 agent. Does NOT write code, does NOT finalize a specific storage schema/technology. |
+| 2 | [`solution-architect`](./agents/solution-architect.md) | Takes the output from Step 1, identifies the stack (`CLAUDE.md` → memory/MCP → code evidence), produces 1+ proposal(s) complete with diagrams, tradeoffs rated on the fixed rubric with evidence; after the Checkpoint, one ticket per task of the chosen proposal (checked by `check_tickets.py`) (checked by `check_proposals.py` before you see them), finalized AC-DoD + a `task_breakdown` assigning work to the right Tier-2 agent. Does NOT write code, does NOT finalize a specific storage schema/technology. |
 | 3 | Tier-2 specialist(s) | Each agent in `task_breakdown` implements exactly the assigned piece of work, can run in parallel if independent (`can_run_parallel_with`). |
 
 `solution-architect` **does not use a hardcoded list of agent names** - it reads `agents/*.md` itself

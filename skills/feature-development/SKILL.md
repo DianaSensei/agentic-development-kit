@@ -42,6 +42,7 @@ rules. Light depth keeps the decision and the checks and drops the ceremony:
 | Step 1 analysis | inline: requirement, 3-6 acceptance criteria, open questions | `business-analyst` agent |
 | Step 2 proposal | inline: the approach, the alternative and the rubric dimension it loses on, the files it touches | `solution-architect` agent, 1-3 proposals rated on the tradeoff rubric |
 | Plan file, intent back-fill | plan only if the user wants one; no back-fill | both |
+| Tickets | none - you build it yourself | one per task of the chosen proposal, checked |
 | CHECKPOINT | **required** | **required** |
 | Step 3-4 | as written (skills read, tests, checks, fix loop, report) | as written |
 | Step 5 | experience log only | all of it |
@@ -72,7 +73,7 @@ every file this workflow writes. Check `status` first:
 This skill's own `references/` cover requirement-gathering *method* (not technology) - load each when its
 step is reached: `ears-syntax.md`, `interview-questions.md`, `acceptance-criteria.md`,
 `specification-template.md`, `diagram-guide.md`, `definition-of-done.md`, `report-and-logs.md`,
-`parallel-units.md`, `compare-builds.md`, `tradeoff-rubric.md`.
+`parallel-units.md`, `compare-builds.md`, `tradeoff-rubric.md`, `tickets.md`.
 
 **Optional pre-discovery**: if the feature touches 3+ system layers (auth, DB, UI...), the codebase is
 unfamiliar/undocumented, or technical facts are needed before requirements can be asked intelligently -
@@ -86,7 +87,8 @@ Full pattern: `references/interview-questions.md` → "Multi-Agent Pre-Discovery
 the conversation, resolve the questions with the user, and go to Step 2. The rest of this step is full
 depth.
 
-Launch the `business-analyst` subagent (Task tool) with the raw request plus whatever Step 0 found. It
+Launch the `business-analyst` subagent (Task tool) with the raw request plus whatever Step 0 found, on
+`models.plan` (`references/tickets.md` → "Who builds what"). It
 runs on `Read, Grep, Glob, Bash` only - **no `Edit`/`Write`, so this step is architecturally unable to
 touch code**, not merely told not to. It returns `requirement_clarified`, `feasibility_verdict`,
 `draft_acceptance_criteria`, `draft_edge_cases`, `draft_definition_of_done`,
@@ -123,7 +125,7 @@ CHECKPOINT below, which light depth never skips.
    `tradeoffs.priorities` in `.claude/quality-check.config.json` or `CLAUDE.md`, then the person's "How
    I decide" profile lines, then the default (`references/tradeoff-rubric.md` → "Priorities"). Stated
    before the proposals, the order cannot be bent to fit the favourite.
-1. Launch `solution-architect` (Task tool) with Step 1's finalized output. Also read-only (`Read, Grep,
+1. Launch `solution-architect` (Task tool), on `models.plan`, with Step 1's finalized output. Also read-only (`Read, Grep,
    Glob` - no `Bash`, no `Edit`/`Write`). Returns one or more `proposals`, each with sequence/flow
    diagrams, trade-off analysis, architecture decisions, finalized AC/edge cases/DoD, and a
    `task_breakdown` assigning work to Tier-2 agents where one exists (contract:
@@ -181,9 +183,25 @@ naming the dimensions it traded: `chose "<A>" over "<B>" - reversibility over pe
 "<their words>"`. A choice against the recommendation, or a reordered priority, is always worth that
 signal. Do not ask for a reason just to record one.
 
+**Tickets (full depth)**: the approved path becomes work an implementer follows without redesigning it.
+Resume `solution-architect` (`SendMessage`; a fresh call with the chosen proposal inline if it is gone)
+with `mode: tickets`, the chosen proposal's id, the person's decision notes, and `tickets_path` - the path
+of `references/tickets.md` next to this `SKILL.md`. It returns one ticket per task: the exact
+`interface`, a `follow_pattern` at a `path:line`, the `tests` as Given/When/Then, `must_not`,
+`done_when`, `stop_if`. Save them outside the repository and run `python3 <this skill's
+dir>/scripts/check_tickets.py <file>`: problems go back once, then each ticket is graded **tight** or
+**loose**. Add them to the plan as `## Tickets`, with the tiers. A ticket that changes what was approved -
+a new file, a changed acceptance criterion - goes back to the person, not into the plan. Method, tiers
+and why: `references/tickets.md`.
+
 ## Step 3 - Implement + Test (loop until the quality bar is met)
 
 ### 3.1 Implement
+
+At full depth each task has a ticket: build it as ticketed, yourself or through a unit, and treat a
+ticket that proves wrong - a cited line that is not there, a pattern that does not match, a test that
+cannot pass inside its files - as a `plan_mismatch` to resolve, never a thing to work around
+(`references/tickets.md` → "When the path is wrong").
 
 Before writing any code covered by a technical skill (Java/Spring part → `java-spring-skill`, DB part →
 `database-skill`), you MUST `Read` that skill's full `SKILL.md` first. A name never substitutes for its
@@ -259,7 +277,8 @@ Repeat 3.1 → 3.2 → 3.3 until quality bar, AC, and DoD are all met, OR an iss
 
 Template: `references/report-and-logs.md` → "Final Report Template". At minimum: AC/DoD items met vs. not
 met; risks/issues encountered throughout, including ones already fixed and any raised to the user; files
-changed; fix attempts used per issue, so the user can see the actual difficulty.
+changed; fix attempts used per issue, so the user can see the actual difficulty. At full depth, also each
+ticket's tier and the model that built it, and every `plan_mismatch` with how it was resolved.
 
 No checkpoint here - go straight to Step 5 (logging is low-risk and easy to amend if the user's feedback
 changes something).

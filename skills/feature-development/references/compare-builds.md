@@ -29,6 +29,8 @@ tokens"). The user choosing it approves both candidates' plans at once.
   `-a`, `-b`), the same `files`, acceptance criteria and `skill_paths`, and its own proposal as
   `plan_excerpt`. Tell each which candidate it is and that another agent builds the alternative: it
   builds its proposal faithfully, not a blend.
+- Candidates have no tickets - no proposal is chosen yet - so they run on your model, not
+  `models.build`. The winner's tickets are written after the choice, for whatever is left to build.
 - Questions from a candidate are answered as in `parallel-units.md`; an answer that applies to both goes
   to both.
 
