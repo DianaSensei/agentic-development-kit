@@ -166,7 +166,13 @@ skills as it goes. An agent is a separate subagent with a fixed role.
 
 `feature-development` uses both: Steps 1 and 2 go to `business-analyst` and `solution-architect` as
 subagents precisely because those carry no `Edit`/`Write` tool, so requirements and design happen where
-code is impossible to touch. A missing tool guarantees that; a hook reading transcripts afterwards
+code is impossible to touch. Every proposal is weighed on the same seven dimensions - correctness risk,
+reversibility, performance and scale, operational load, convention fit, the stack's native approach,
+cost to build - each rating with its evidence (`path:line`, a doc, a requirement, a measurement, or a
+stated assumption). The order that decides between them is set before the proposals are read: the
+change's own requirement, then the project's `tradeoffs.priorities`, then your profile's "How I decide",
+then a default. A script checks the architect's output, so a skipped dimension, an uncited rating or a
+recommendation that hides its costs never reaches the Checkpoint, where you see one table. A missing tool guarantees that; a hook reading transcripts afterwards
 cannot. Step 3 may dispatch a Tier-2 specialist when one exists for the task. The units the approved
 plan declares are built in waves by their dependencies - every unit whose dependencies are done at the
 same time, by `unit-implementer` agents each in a git worktree of its own - and applied to the working

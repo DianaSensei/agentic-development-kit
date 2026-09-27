@@ -60,7 +60,8 @@ Then:
 2. Remove every candidate's worktree and branch, chosen or not.
 3. In `docs/plans/<feature-slug>.md`, the chosen proposal gets a line "Chosen after building both: <the
    deciding facts>"; the other stays under its `Rejected:` block with the same facts - the next person
-   to wonder "why not B?" finds the measured answer, not an opinion.
+   to wonder "why not B?" finds the measured answer, not an opinion. In the plan's `## Tradeoffs`
+   table, a rating the build measured takes its result as evidence (`measured: B 12/12 tests, A 10/12`).
 
 ## Report
 

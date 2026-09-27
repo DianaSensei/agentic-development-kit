@@ -40,7 +40,7 @@ rules. Light depth keeps the decision and the checks and drops the ceremony:
 | | Light | Full |
 |---|---|---|
 | Step 1 analysis | inline: requirement, 3-6 acceptance criteria, open questions | `business-analyst` agent |
-| Step 2 proposal | inline: the approach, the alternative and why not, the files it touches | `solution-architect` agent, 1-3 proposals |
+| Step 2 proposal | inline: the approach, the alternative and the rubric dimension it loses on, the files it touches | `solution-architect` agent, 1-3 proposals rated on the tradeoff rubric |
 | Plan file, intent back-fill | plan only if the user wants one; no back-fill | both |
 | CHECKPOINT | **required** | **required** |
 | Step 3-4 | as written (skills read, tests, checks, fix loop, report) | as written |
@@ -72,7 +72,7 @@ every file this workflow writes. Check `status` first:
 This skill's own `references/` cover requirement-gathering *method* (not technology) - load each when its
 step is reached: `ears-syntax.md`, `interview-questions.md`, `acceptance-criteria.md`,
 `specification-template.md`, `diagram-guide.md`, `definition-of-done.md`, `report-and-logs.md`,
-`parallel-units.md`, `compare-builds.md`.
+`parallel-units.md`, `compare-builds.md`, `tradeoff-rubric.md`.
 
 **Optional pre-discovery**: if the feature touches 3+ system layers (auth, DB, UI...), the codebase is
 unfamiliar/undocumented, or technical facts are needed before requirements can be asked intelligently -
@@ -113,14 +113,28 @@ only - acceptance criteria stay in the plan.
 ## Step 2 - Solution Proposal (`solution-architect`, refined and checkpointed here)
 
 **Light depth**: skip the agent and the plan file (unless the user wants it). Present one proposal
-inline - the approach, the strongest alternative and why not, the acceptance criteria, the files it
-touches - then the CHECKPOINT below, which light depth never skips.
+inline - the approach, the strongest alternative and the rubric dimension it loses on
+(`references/tradeoff-rubric.md`, with the evidence: "loses on `reversibility`: it rewrites the
+`orders` table, `db/schema.sql:40`"), the acceptance criteria, the files it touches - then the
+CHECKPOINT below, which light depth never skips.
 
+0. **Priorities first.** Before anyone proposes anything, set the order of the tradeoff dimensions for
+   this change and where each position comes from: a requirement or constraint from Step 1, then
+   `tradeoffs.priorities` in `.claude/quality-check.config.json` or `CLAUDE.md`, then the person's "How
+   I decide" profile lines, then the default (`references/tradeoff-rubric.md` → "Priorities"). Stated
+   before the proposals, the order cannot be bent to fit the favourite.
 1. Launch `solution-architect` (Task tool) with Step 1's finalized output. Also read-only (`Read, Grep,
    Glob` - no `Bash`, no `Edit`/`Write`). Returns one or more `proposals`, each with sequence/flow
    diagrams, trade-off analysis, architecture decisions, finalized AC/edge cases/DoD, and a
    `task_breakdown` assigning work to Tier-2 agents where one exists (contract:
-   `agents/solution-architect.md`).
+   `agents/solution-architect.md`). Pass it `priorities` (step 0) and `rubric_path` - the path of
+   `references/tradeoff-rubric.md` next to this `SKILL.md`.
+
+   **Check what comes back** against the rubric before anyone sees it: save the output to a file outside
+   the repository and run `python3 <this skill's dir>/scripts/check_proposals.py <file>`. Problems
+   (a skipped dimension, a rating without evidence, a recommendation that hides its costs, one proposal
+   with no alternative) go back to the architect once, with `SendMessage`; whatever is still missing is
+   shown at the CHECKPOINT as `unknown`, never filled in by you from memory.
 
    **Pass it the available Tier-2 agents** - name and description of each - in the prompt. A subagent's
    working directory is the user's project, so it cannot find this plugin's `agents/` directory on its
@@ -147,7 +161,9 @@ touches - then the CHECKPOINT below, which light depth never skips.
    The CHECKPOINT then approves building them in waves (3.1); a plan without the section is built
    sequentially. Rules: `references/parallel-units.md`.
 
-**CHECKPOINT (required)**: present the full proposal, then confirm via `AskUserQuestion` with `header`
+**CHECKPOINT (required)**: present the full proposal - at full depth, led by the priorities with their
+sources, the table from `check_proposals.py --table`, and the recommendation with its deciding
+dimension and its costs; the same table goes in the plan as `## Tradeoffs` - then confirm via `AskUserQuestion` with `header`
 set exactly to `"Checkpoint"` (options: one per proposal, plus "Revise" - free text always available via
 "Other"; at full depth, when two proposals are close and building would settle it, also "Build the top
 two and compare" - `references/compare-builds.md` says when, and its cost). Do not proceed to Step 3
@@ -160,8 +176,10 @@ marked (`## ✅ Chosen: <name>`); rejected ones below, each wrapped in
 `docs/intents/<feature-slug>.md` set `status: in-progress`, `plan: docs/plans/<feature-slug>.md`,
 `updated`, and add a Decision log line naming the chosen proposal. When the user said why they chose it,
 keep their reason in their words on that line - and, if they have a personal profile
-(`~/.claude/adk-profile/`), note the choice there as a `checkpoint` signal (`reflect`'s Note mode). Do
-not ask for a reason just to record one.
+(`~/.claude/adk-profile/`), note the choice there as a `checkpoint` signal (`reflect`'s Note mode),
+naming the dimensions it traded: `chose "<A>" over "<B>" - reversibility over performance_and_scale -
+"<their words>"`. A choice against the recommendation, or a reordered priority, is always worth that
+signal. Do not ask for a reason just to record one.
 
 ## Step 3 - Implement + Test (loop until the quality bar is met)
 

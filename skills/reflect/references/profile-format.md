@@ -22,7 +22,7 @@ A project's CLAUDE.md, REVIEW.md and checks override anything here: when they
 conflict, follow the project and say so. -->
 
 ## How I decide
-- Prefer reversible changes over faster ones when the two conflict. _(3 Checkpoints; 2026-09 to 2026-11)_
+- Prefer `reversibility` over `performance_and_scale` when the two conflict. _(3 Checkpoints; 2026-09 to 2026-11)_
 
 ## Design
 - Fail fast at a boundary; no silent retries on money or state changes. _(2 Checkpoints, 1 correction; 2026-10)_
@@ -54,7 +54,7 @@ Append-only. One line per signal, newest last:
 
 ```
 - 2026-09-27 | correction | shop-api | "don't return None on a parse failure, raise ParseError" | experience-log: parse-error-swallowed
-- 2026-09-27 | checkpoint | shop-api | chose "fail fast" over "retry with backoff" - "retries can double-charge" | docs/plans/checkout-timeout.md
+- 2026-09-27 | checkpoint | shop-api | chose "fail fast" over "retry with backoff" - correctness_risk over operational_load - "retries can double-charge" | docs/plans/checkout-timeout.md
 - 2026-09-28 | rewrite | shop-api | agent's `except Exception: return None` -> `except ValueError as e: raise ParseError(text) from e` | a1b2c3d4e5
 - 2026-09-28 | review | shop-api | "prefer a table over prose in PR summaries" | PR #41
 - 2026-09-28 | statement | - | "always show me the recommendation first" | conversation
@@ -62,7 +62,8 @@ Append-only. One line per signal, newest last:
 ```
 
 - `kind`: `correction` (the user said the agent's work was wrong for them), `checkpoint` (a choice
-  between proposals, with their reason in their words), `rewrite` (lines they rewrote that the agent
+  between proposals: the tradeoff-rubric dimensions it traded, when known, and their reason in their
+  words), `rewrite` (lines they rewrote that the agent
   wrote), `review` (their comment on the agent's pull request), `statement` (they stated a preference
   outright).
 - **Describe the pattern, keep code minimal.** At most one short line of code per signal, with
