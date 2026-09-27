@@ -25,7 +25,11 @@ case "${1:-}" in
     trap 'rm -rf "$tmp"' EXIT
     index="$(git rev-parse --git-path index)"
     [ -f "$index" ] && cp "$index" "$tmp/index"
-    GIT_INDEX_FILE="$tmp/index" git add -A -- . ':(exclude).claude/worktrees' ':(exclude).claude/state'
+    # Everything, then drop the kit's own worktrees and state. Excluding them in
+    # the add's pathspec fails outright when .gitignore already ignores them -
+    # the setup the parallel-units reference recommends.
+    GIT_INDEX_FILE="$tmp/index" git -c advice.addEmbeddedRepo=false add -A 2> >(grep -v "embedded git repository" >&2)
+    GIT_INDEX_FILE="$tmp/index" git rm -r -q --cached --ignore-unmatch -- .claude/worktrees .claude/state
     tree="$(GIT_INDEX_FILE="$tmp/index" git write-tree)"
     sha="$(git commit-tree "$tree" -p HEAD -m "adk: snapshot for wave $name (not on any branch)")"
     git update-ref "refs/adk/waves/$name" "$sha"

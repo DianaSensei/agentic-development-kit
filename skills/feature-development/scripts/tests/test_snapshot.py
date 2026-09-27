@@ -67,6 +67,16 @@ class SnapshotTests(unittest.TestCase):
         self.assertNotIn(".claude/worktrees", names)
         self.assertNotIn(".claude/state", names)
 
+    def test_works_when_the_kits_paths_are_gitignored(self):
+        # The recommended setup - and the one a real run failed on.
+        self.write(".gitignore", "build/\n.claude/worktrees/\n.claude/state/\n")
+        self.write(".claude/worktrees/agent-x/src/z.py", "z\n")
+        self.write(".claude/state/reviewed", "h\n")
+        self.write("src/a.py", "a = 5\n")
+        sha = self.snap("take", "1")
+        self.assertEqual(self.git("show", f"{sha}:src/a.py"), "a = 5\n")
+        self.assertNotIn(".claude/", self.git("ls-tree", "-r", "--name-only", sha))
+
     def test_a_worktree_can_start_from_it_and_its_diff_applies_to_the_tree(self):
         self.write("src/a.py", "a = 2\n")
         sha = self.snap("take", "1")

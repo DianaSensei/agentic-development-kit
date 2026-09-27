@@ -36,7 +36,8 @@ below. Between waves:
 
 1. Bring the wave's units back (below), make their `outside_files_needed` edits, and run the whole
    test suite. A failure is fixed now - the next wave builds on this one.
-2. **Snapshot** the working tree for the next wave to start from:
+2. **Snapshot** the working tree when the next wave dispatches agents (a one-unit wave you build
+   yourself needs none):
    `bash <this skill's dir>/scripts/snapshot.sh take <wave number>` prints a commit holding the tree as
    it is, on top of HEAD, on no branch - the user's branch and staging area stay exactly as they were
    - and that sha is the next wave's `base_commit`. A worktree can only start from a commit, and the
