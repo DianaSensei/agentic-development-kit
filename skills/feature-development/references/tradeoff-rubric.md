@@ -33,6 +33,9 @@ Each dimension of each proposal gets:
   - a URL or a named document (the framework's docs, an ADR);
   - `requirement: <AC id or constraint>` from Step 1;
   - `measured: <what and the result>` (a benchmark, or a build compared in `compare-builds.md`);
+  - `plan: <what this proposal itself adds or touches>` - for a fact about the proposal rather than
+    the code: "plan: 3 files, no new dependency", "plan: adds no job, service or config". It must match
+    the proposal's own `task_breakdown`;
   - `assumption: <what is assumed> - confirm by <how>`.
 
 `unknown` is honest and allowed. Its evidence says what would tell, and a decision that hinges on an

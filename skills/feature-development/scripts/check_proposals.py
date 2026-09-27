@@ -26,7 +26,7 @@ DIMENSIONS = [
 ]
 RATINGS = {"good": 3, "fair": 2, "poor": 1, "unknown": None}
 MARK = {"good": "✅", "fair": "⚠️", "poor": "❌", "unknown": "❓"}
-EVIDENCE_PREFIXES = ("requirement:", "measured:", "assumption:", "doc:")
+EVIDENCE_PREFIXES = ("requirement:", "measured:", "assumption:", "doc:", "plan:")
 PATH_LINE = re.compile(r"[\w./-]+\.\w+:\d+")
 URL = re.compile(r"https?://\S+")
 
@@ -105,7 +105,7 @@ def check(data):
                 problems.append(f"{pid}: {d} has no why")
             if not evidence_ok(entry.get("evidence")):
                 problems.append(f"{pid}: {d} evidence {entry.get('evidence')!r} is not a path:line, a URL, "
-                                "or requirement:/measured:/doc:/assumption:")
+                                "or requirement:/measured:/doc:/plan:/assumption:")
         extra = sorted(set(tradeoffs) - set(DIMENSIONS))
         if extra:
             problems.append(f"{pid}: not rubric dimensions: {', '.join(extra)}")

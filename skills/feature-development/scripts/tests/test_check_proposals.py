@@ -74,6 +74,7 @@ class CheckProposals(unittest.TestCase):
         data = output()
         forms = ["src/orders/service.py:42", "https://docs.djangoproject.com/en/5.0/topics/db/",
                  "requirement: AC-2", "measured: p95 180 ms", "doc: ADR-7",
+                 "plan: 3 files, no new dependency",
                  "assumption: the table is small - confirm by SELECT count(*)"]
         for d, e in zip(DIMS, forms):
             data["proposals"][0]["tradeoffs"][d]["evidence"] = e

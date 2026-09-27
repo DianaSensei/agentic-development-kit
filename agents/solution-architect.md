@@ -72,7 +72,9 @@ without calling `solution-architect` again.
      `correctness_risk`, `reversibility`, `performance_and_scale`, `operational_load`,
      `convention_fit`, `native_approach`, `cost_to_build` - rated `good`/`fair`/`poor`/`unknown`,
      with a one-sentence `why` and its `evidence`: a `path:line`, a URL, `requirement: <AC>`,
-     `measured: <result>`, `doc: <name>`, or `assumption: <what> - confirm by <how>`. A dimension
+     `measured: <result>`, `doc: <name>`, `plan: <what this proposal adds or touches>` (a fact
+     about the proposal, matching its own `task_breakdown`), or `assumption: <what> - confirm by
+     <how>`. A dimension
      that does not apply is `good` with the reason, never left out. `unknown` is allowed; a guess
      dressed as a rating is not. Then `tradeoff_summary`: two or three sentences a person reads
      first.
@@ -125,7 +127,7 @@ without calling `solution-architect` again.
       "sequence_diagram_mermaid": "sequenceDiagram ...",
       "flow_diagram_mermaid": "flowchart ...",
       "tradeoffs": {
-        "correctness_risk": {"rating": "good | fair | poor | unknown", "why": "...", "evidence": "path:line | URL | requirement: | measured: | doc: | assumption: ... - confirm by ..."},
+        "correctness_risk": {"rating": "good | fair | poor | unknown", "why": "...", "evidence": "path:line | URL | requirement: | measured: | doc: | plan: | assumption: ... - confirm by ..."},
         "reversibility": {"rating": "...", "why": "...", "evidence": "..."},
         "performance_and_scale": {"rating": "...", "why": "...", "evidence": "..."},
         "operational_load": {"rating": "...", "why": "...", "evidence": "..."},
