@@ -145,6 +145,7 @@ def compute(root):
             "user_corrections": len(re.findall(r"^- Source: user-correction", log, re.M)),
             "repeated_classes": repeated,
             "promoted_to_claude_md": len(re.findall(r"^- Promoted: CLAUDE\.md", log, re.M)),
+            "promoted_to_check": len(re.findall(r"^- Promoted: check\b", log, re.M)),
             "promotions_declined": len(re.findall(r"^- Promotion: declined", log, re.M)),
         },
         "bets": {
@@ -186,6 +187,7 @@ def markdown(m):
         ("Learn", "Experience-log entries", show(l["experience_log_entries"]), f"{l['user_corrections']} of them user corrections"),
         ("Learn", "Mistakes seen twice or more", show(l["repeated_classes"]), "class: count"),
         ("Learn", "Promoted to CLAUDE.md", show(l["promoted_to_claude_md"]), f"{l['promotions_declined']} declined"),
+        ("Learn", "Promoted to a check", show(l["promoted_to_check"]), "a repeated mistake now caught by machine"),
         ("Maintain", "Intents raised by monitoring", show(mt["monitoring_intents"]), ""),
         ("Maintain", "Median days to triage", show(mt["median_days_to_triage"]), "monitoring intent created to accepted or rejected"),
         ("Maintain", "Repeat problems", show(mt["repeat_problems"]), "same source raised or seen again"),

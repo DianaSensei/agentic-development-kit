@@ -1,0 +1,8 @@
+schema_version: "1.1"
+name: fixes-what-the-check-reports
+context:
+  scaffold_script: fixture.sh
+execution:
+  # The edit, the hook's report, reading src/app/log.py, the fix and the
+  # self-review take more than the default 10 turns.
+  max_turns: 25

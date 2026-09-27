@@ -1,7 +1,7 @@
 {
   "name": "adk-architecture",
   "description": "Architecture and cross-cutting skills for the agentic-development-kit ADLC: architecture design, design principles, technical proposals, legacy modernization, code documentation, application security and security audits, and MCP server development.",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "author": {
     "name": "DianaSensei"
   },

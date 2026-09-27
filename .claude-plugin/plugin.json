@@ -1,7 +1,7 @@
 {
   "name": "adk-adlc",
   "description": "An agentic development lifecycle (ADLC) for Claude Code: intents before code, feature/bug-fix/refactor workflows with checkpoints and hook-enforced gates, parallel work in worktrees, an independent reviewer with autonomy tiers and a maintain loop for GitHub Actions and GitLab CI, traces and cost per run, evals and a learning loop. Technology skills come from the adk-backend, adk-desktop and adk-architecture plugins in the same marketplace (agentic-development-kit). Quiet in any project that has not opted in.",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "author": {
     "name": "DianaSensei"
   },

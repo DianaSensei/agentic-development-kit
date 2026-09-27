@@ -98,6 +98,11 @@ before writing any code for that task - don't read one, code some, then read the
 Write a test case that reproduces this exact bug (to guard against recurrence), then re-run ALL
 relevant tests (not just the new one) to confirm nothing else broke.
 
+Also run every `scope: project` entry of `checks` in `.claude/quality-check.config.json` (type
+checker, build-level linters): a failure there is a defect like a failing test, and it goes through the
+fix loop the same way. The file-scope checks already ran on each write (`check-conventions` hook);
+never disable or loosen a check to get past it - a check you believe is wrong is the user's call.
+
 ### 4.3 If Not Yet Resolved (bug still present, or a new issue appeared) - Enter the Fix Loop
 
 For EACH issue/failing test case (the original bug not yet gone, or a new issue introduced by the fix):
@@ -130,11 +135,13 @@ something).
    using the same format as `feature-development` (date, class, source, area, cause, attempts used,
    outcome, the fix or the approaches that did NOT work) - one entry for the bug itself, one per fix-loop
    issue, and one per correction the user made to your work in this run.
-   **Then promote repeats**: any class now in the log twice or more that `CLAUDE.md` doesn't already
-   cover gets one proposed `CLAUDE.md` line, asked via `AskUserQuestion` with `header` `"CLAUDE.md"` -
-   never written without a yes. **Yes** → append it under a `## Common mistakes` heading in the
-   project-root `CLAUDE.md` (create the heading, or the file, if missing) and add `- Promoted: CLAUDE.md`
-   to the log entry. **Not now** → add `- Promotion: declined <date>` to the log entry. Method:
+   **Then promote repeats**: any class now in the log twice or more that no check and no `CLAUDE.md`
+   line already covers gets one proposal - a **check** in `.claude/quality-check.config.json` when a
+   machine can see the mistake in the code (`AskUserQuestion`, `header` `"Check"`), otherwise one
+   `CLAUDE.md` line (`header` `"CLAUDE.md"`), never written without a yes. **Yes** → write the check
+   (log `- Promoted: check <name>`) or append the line under `## Common mistakes` in the project-root
+   `CLAUDE.md`, creating the heading or file if missing (log `- Promoted: CLAUDE.md`). **Not now** → add
+   `- Promotion: declined <date>` to the log entry. Method:
    `feature-development`'s `references/report-and-logs.md` (in this plugin's `skills/`) → "Promoting a
    Repeat to CLAUDE.md".
 3. **Postmortem (required, specific to bug-fix)**: create `docs/postmortems/<bug-slug>.md` using the
