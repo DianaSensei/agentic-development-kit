@@ -216,6 +216,9 @@ def table(data, order):
 
 
 def main(argv):
+    if argv[:1] in (["-h"], ["--help"]):
+        print(__doc__.strip())
+        return 0
     args = [a for a in argv if a != "--table"]
     if len(args) != 1:
         print("usage: check_proposals.py [--table] <output.json>", file=sys.stderr)

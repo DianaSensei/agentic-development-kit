@@ -94,6 +94,23 @@ class CheckConformance(unittest.TestCase):
         code, out = self.run_script(os.path.join(self.root, "docs/plans/order-count.md"))
         self.assertEqual(code, 0, out)
 
+    def test_a_command_line_or_a_file_is_not_an_interface_name(self):
+        # From a headless run: the usage line made the check look for a function called `python3`.
+        tickets = [dict(TICKETS[2], interface=[
+            "`python3 scripts/backfill_order_count.py <db_path>` - exit 0 on success",
+            "writes `scripts/backfill_order_count.py`",
+            "`backfill` - sets every customer's order_count"])]
+        self.build_as_ticketed()
+        self.write(".claude/t.json", json.dumps({"tickets": tickets}))
+        r = subprocess.run([sys.executable, SCRIPT, ".claude/t.json"], capture_output=True, text=True, cwd=self.root)
+        self.assertNotIn("python3", r.stdout.split("problem:")[-1] if "problem:" in r.stdout else "")
+        self.assertIn("| task-5 | 1/1 | backfill (not checkable: 2) | - |", r.stdout)
+
+    def test_help_prints_the_usage(self):
+        r = subprocess.run([sys.executable, SCRIPT, "--help"], capture_output=True, text=True, cwd=self.root)
+        self.assertEqual(r.returncode, 0)
+        self.assertIn("check_conformance.py [--base <commit>]", r.stdout)
+
     def test_base_can_be_a_snapshot(self):
         self.build_as_ticketed()
         self.git("add", "-A")

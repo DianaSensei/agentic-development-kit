@@ -24,8 +24,10 @@ import sys
 
 WORKFLOW_PATHS = re.compile(r"^(docs/(plans|intents|changelog|knowledge)/|\.claude/)")
 CALLABLE = re.compile(r"([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)\s*\(")
-BACKTICKED = re.compile(r"`([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)")
-DOTTED = re.compile(r"\b([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)+)\b")
+IDENTIFIER = re.compile(r"[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*")
+BACKTICKED = re.compile(r"`([^`]+)`")
+FILE_EXTENSIONS = {"py", "js", "ts", "tsx", "jsx", "sql", "sh", "md", "json", "yaml", "yml", "toml", "java",
+                   "kt", "rs", "go", "rb", "php", "cs", "xml", "gradle", "txt", "cfg", "ini"}
 
 
 def load(path):
@@ -61,11 +63,18 @@ def covers(entry, path):
 
 
 def interface_name(entry):
-    """The name to look for: the callable, else the first backticked or dotted name. None: unchecked."""
-    for pattern in (CALLABLE, BACKTICKED, DOTTED):
-        m = pattern.search(entry)
-        if m:
-            return m.group(1).split(".")[-1]
+    """The name to look for, or None when the entry names nothing checkable - a command line, a file.
+
+    A callable (`name(`) first; else the first backticked span that is a bare name, such as
+    `customers.order_count`. A span with a space in it is a command or prose (`python3 x.py <db>`),
+    and a name ending in a file extension is a file: neither is an interface name."""
+    m = CALLABLE.search(entry)
+    if m:
+        return m.group(1).split(".")[-1]
+    for span in BACKTICKED.findall(entry):
+        span = span.strip()
+        if IDENTIFIER.fullmatch(span) and span.rsplit(".", 1)[-1] not in FILE_EXTENSIONS:
+            return span.split(".")[-1]
     return None
 
 
@@ -108,6 +117,9 @@ def check(tickets, changed):
 
 
 def main(argv):
+    if argv[:1] in (["-h"], ["--help"]):
+        print(__doc__.strip())
+        return 0
     base = "HEAD"
     if argv[:1] == ["--base"] and len(argv) >= 2:
         base, argv = argv[1], argv[2:]
