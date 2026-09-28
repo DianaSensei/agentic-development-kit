@@ -26,6 +26,14 @@ Read `CLAUDE.md`/existing conventions. Determine which technologies are ACTUALLY
 - No hardcoded secret/credential/API key.
 - Exceptions handled explicitly, no silently swallowed errors.
 - Comments where genuinely needed for complex logic, no redundant comments.
+- **The tests bite.** A test that ran and passed proves nothing if it would pass against wrong code
+  too - one that asserts whatever the code returns, or only that it does not crash. When the change
+  adds or edits logic in source files, run
+  `python3 <this skill's dir>/scripts/mutate_changed.py --test "<the project's test command>"` from the
+  project root (a quick change: add `--max 5`). It breaks the changed lines one small edit at a time in
+  a temporary copy - never your working tree - and reports each broken version the tests still pass.
+  Each survivor gets the test that catches it, or a line in the report saying why the mutant behaves
+  the same (an equivalent mutant). Skip it only when the project has no tests, and say so.
 - **The report matches what was verified.** Every statement the final report makes about the change
   - what it does, that tests pass, that a case is handled - rests on a line in the diff or a command
   run in this session after the last edit, with its actual result. "Should work", "tests are expected

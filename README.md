@@ -262,6 +262,9 @@ which is why it is written down here.
   assumed. Coverage is deepest for Java/Spring, Rust, and Tauri+React.
 - Mechanically checkable rules are enforced by hooks; judgement-based ones stay with
   `code-review-skill`. Every hook fails open, so none can block work.
+- Tests must bite, not just pass. Before "done", `code-review-skill` breaks the changed lines one small
+  edit at a time in a temporary copy (`scripts/mutate_changed.py`) and runs the tests on each; a broken
+  version the tests still pass gets the test that catches it, or a stated reason it is equivalent.
 - Changes to external behavior wait at a checkpoint for user confirmation. Refactors must preserve
   observable behavior exactly.
 - Secrets never get committed. See each `mcp/*/README.md` for `.env` handling.
