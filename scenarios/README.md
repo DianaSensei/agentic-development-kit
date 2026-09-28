@@ -7,12 +7,12 @@ dispatches units with their lanes and tickets on the right model, and never move
 Each scenario here is a real headless Claude Code session with this plugin loaded, on a small
 repository its fixture builds, followed by a check of what the session did.
 
-| Scenario | What it guards | About |
+| Scenario | What it guards | Last run |
 |---|---|---|
-| `waves-and-resume` | units built in dependency waves; wave 1 dispatched together with lanes and tickets on `models.build`; a unit that meets an open decision asks and is resumed with `SendMessage`, and the result follows the person's answer | $1.30 |
-| `compare-builds` | both proposals built side by side as candidates, the one failing the product team's contract tests reported, B recommended from the facts, nothing applied before the person picks | $0.90 |
-| `rubric-checkpoint` | the architect on `models.plan`, its proposals checked by `check_proposals.py`, all seven rubric dimensions at the Checkpoint, no code before the choice | $2.10 |
-| `tickets-dispatch` | the rules read before dispatch, the wave-2 snapshot, three units with lane and ticket on `sonnet`, conformance checked, tests pass, branch unmoved, nothing left behind | $1.80 |
+| `waves-and-resume` | units built in dependency waves; wave 1 dispatched together with lanes and tickets on `models.build`; a unit that meets an open decision asks and is resumed with `SendMessage`, and the result follows the person's answer | $1.17, 5 min |
+| `compare-builds` | both proposals built side by side as candidates, the one failing the product team's contract tests reported, B recommended from the facts, nothing applied before the person picks | $0.85, 3 min |
+| `rubric-checkpoint` | the architect on `models.plan`, its proposals checked by `check_proposals.py`, all seven rubric dimensions at the Checkpoint, no code before the choice | $2.37, 13 min |
+| `tickets-dispatch` | the rules read before dispatch, the wave-2 snapshot, three units with lane and ticket on `sonnet`, conformance checked, tests pass, branch unmoved, nothing left behind | $1.69, 7 min |
 
 Each came from a live run that found something: a lead dispatching without reading
 `parallel-units.md` and committing on the user's branch, units unable to record their lane, a
@@ -23,7 +23,7 @@ tight ticket built on the session's model. A change that brings one of those bac
 From the repository root, with Claude Code signed in or `ANTHROPIC_API_KEY` set:
 
 ```bash
-python3 scenarios/run.py                          # all four, about $6 and 20 minutes
+python3 scenarios/run.py                          # all four, about $6 and 30 minutes
 python3 scenarios/run.py tickets-dispatch --keep  # one, keeping its repo and transcript
 ```
 
