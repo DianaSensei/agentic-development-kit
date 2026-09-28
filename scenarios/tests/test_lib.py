@@ -55,6 +55,14 @@ class RunTests(unittest.TestCase):
         self.assertEqual(len(run.bash(r"check_conformance")), 1)
         self.assertEqual(run.bash(r"snapshot"), [])
 
+    def test_the_leads_text_spans_every_message(self):
+        run = self.write([
+            {"type": "assistant", "message": {"id": "m1", "content": [{"type": "text", "text": "the table"}]}},
+            {"type": "assistant", "parent_tool_use_id": "x", "message": {"id": "m2", "content": [{"type": "text", "text": "a unit's words"}]}},
+            {"type": "assistant", "message": {"id": "m3", "content": [{"type": "text", "text": "the question"}]}},
+        ])
+        self.assertEqual(run.lead_text(), "the table\nthe question")
+
     def test_reads_and_the_final_result(self):
         run = self.write([
             assistant("m1", ("t1", "Read", {"file_path": "/cache/skills/feature-development/references/parallel-units.md"})),

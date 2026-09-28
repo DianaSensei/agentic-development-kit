@@ -57,6 +57,13 @@ class Run:
     def read(self, suffix):
         return any(str(c["input"].get("file_path", "")).endswith(suffix) for c in self.calls_named("Read"))
 
+    def lead_text(self):
+        """Everything the lead said, in order - a report is often split across messages, and the
+        last one may be only the question."""
+        return "\n".join(c.get("text", "") for e in self.events
+                         if e.get("type") == "assistant" and not e.get("parent_tool_use_id")
+                         for c in e["message"].get("content", []) if c.get("type") == "text")
+
     def final_text(self):
         results = [e for e in self.events if e.get("type") == "result"]
         return results[-1].get("result", "") if results else ""
