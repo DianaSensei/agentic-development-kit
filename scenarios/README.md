@@ -29,6 +29,10 @@ python3 scenarios/run.py                          # all six, about $7.5 and 40 m
 python3 scenarios/run.py tickets-dispatch --keep  # one, keeping its repo and transcript
 ```
 
+A session is stopped, with every agent and command it started, after `--timeout` seconds (default
+2400) or when its transcript has not grown for `--idle` seconds (default 600): a hung session costs ten
+minutes, not the whole budget. The check still runs on what it left, and reports what did not happen.
+
 Before a release that touches `skills/feature-development/`, `agents/`, or the hooks, run all of them.
 The [Scenarios workflow](../.github/workflows/scenarios.yml) runs them by hand from the Actions tab.
 
