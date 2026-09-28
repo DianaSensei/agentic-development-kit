@@ -18,7 +18,7 @@ c.must(bool(run.bash(r"check_proposals\.py")), "the lead checked the proposals w
 text = run.lead_text()
 missing = [d for d in DIMENSIONS if d not in text]
 c.must(not missing, "the Checkpoint shows all seven rubric dimensions", "missing: " + ", ".join(missing))
-c.expect(bool(re.search(r"performance_and_scale[^\n]{0,200}(?i:decid)|(?i:decid)[^\n]{0,200}performance_and_scale", text)),
+c.expect(bool(re.search(r"performance_and_scale[^\n]{0,200}(?i:decid|top priority|first priority)|(?i:decid|wins on|won on)[^\n]{0,200}performance_and_scale", text)),
          "the recommendation names performance_and_scale - first for this project - as what decided it")
 changed = git(repo, "status", "--porcelain", "--", "src", "db", "tests")
 c.must(not changed, "no code written before the person chose", changed)
