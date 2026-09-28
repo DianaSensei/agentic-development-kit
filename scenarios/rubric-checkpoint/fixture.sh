@@ -42,7 +42,9 @@ Order-count tickets drop to near zero within a month.
 | orders | the count comes from them | not yet checked |
 
 ## Constraints
-The dashboard must stay within its latency budget.
+- The dashboard must stay within its latency budget.
+- The count must be exact and current right after every order is placed or cancelled - no staleness window.
+- Schema changes are fine: an index, or a new column or table, if the design needs one.
 
 ## Originator's idea (non-binding)
 none
