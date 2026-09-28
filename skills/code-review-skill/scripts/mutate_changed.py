@@ -140,6 +140,15 @@ def run(cmd, cwd, timeout):
         return "timeout"
 
 
+def not_copied(folder, names):
+    """What the temporary copy leaves out: git's own data, and the unit worktrees under .claude/worktrees/ -
+    only that folder: a project's own folder named worktrees is source like any other."""
+    skip = {".git"} & set(names)
+    if os.path.normpath(folder) == ".claude" and "worktrees" in names:
+        skip.add("worktrees")
+    return skip
+
+
 def main(argv):
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--test", required=True, help="the project's test command, as CLAUDE.md gives it")
@@ -168,8 +177,7 @@ def main(argv):
     tmp = tempfile.mkdtemp(prefix="adk-mutants-")
     try:
         copy = os.path.join(tmp, "tree")
-        shutil.copytree(".", copy, symlinks=True,
-                        ignore=shutil.ignore_patterns(".git", "worktrees") if os.path.isdir(".git") else None)
+        shutil.copytree(".", copy, symlinks=True, ignore=not_copied)
         if run(a.test, copy, a.timeout) != "pass":
             print("The test command fails on the unchanged code: fix the suite before measuring it.")
             return 2

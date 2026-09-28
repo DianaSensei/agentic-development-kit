@@ -86,6 +86,21 @@ class MutateChanged(unittest.TestCase):
         self.assertNotIn("src/shop.py:2 ", out)           # unchanged line
         self.assertNotIn("tests/", out.split("Mutants:")[1])  # test files are never mutated
 
+    def test_a_folder_named_worktrees_is_copied_and_the_kits_own_is_not(self):
+        self.write("src/worktrees/__init__.py", "")
+        self.write("src/worktrees/pricing.py", "def discounted(price, is_member):\n"
+                   "    if is_member and price >= 100:\n        return price - 10\n    return price\n")
+        self.write(".claude/worktrees/agent-u1/marker", "a unit's worktree\n")
+        self.write("tests/test_pricing.py", "import os, unittest\nfrom worktrees.pricing import discounted\n\n\n"
+                   "class P(unittest.TestCase):\n"
+                   "    def test_member_over_100(self):\n        self.assertEqual(discounted(100, True), 90)\n"
+                   "    def test_member_under_100(self):\n        self.assertEqual(discounted(99, True), 99)\n"
+                   "    def test_not_member(self):\n        self.assertEqual(discounted(100, False), 100)\n"
+                   "    def test_units_are_not_copied(self):\n"
+                   "        self.assertFalse(os.path.exists(os.path.join('.claude', 'worktrees')))\n")
+        code, out = self.run_script()
+        self.assertEqual(code, 0, out)
+
     def test_strings_and_comments_are_left_alone(self):
         self.write("src/shop.py", "def total(items):\n    return sum(items)\n\n\n"
                    "def label(x):\n    # compare x == 1 here\n    return 'x == 1 and true'\n")
