@@ -31,8 +31,11 @@ class DispatchGateTests(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def record(self, read):
-        lines = [{"type": "user", "message": {"role": "user", "content": "build it"}}]
+    def record(self, read, skill=None, command=None):
+        lines = [{"type": "user", "message": {"role": "user", "content": command or "build it"}}]
+        if skill:
+            lines.append({"type": "assistant", "message": {"role": "assistant", "content": [
+                {"type": "tool_use", "name": "Skill", "input": {"skill": skill}}]}})
         if read:
             lines.append({"type": "assistant", "message": {"role": "assistant", "content": [
                 {"type": "tool_use", "name": "Read", "input": {"file_path": read}}]}})
@@ -95,6 +98,29 @@ class DispatchGateTests(unittest.TestCase):
     def test_other_agents_are_never_touched(self):
         self.assertEqual(self.run_hook(prompt="anything", agent="adk-adlc:solution-architect"), ("allow", ""))
         self.assertEqual(self.run_hook(prompt="anything", agent="Explore"), ("allow", ""))
+
+    def test_a_code_writing_specialist_goes_through_a_unit_in_the_workflow(self):
+        self.record(read=None, skill="adk-adlc:feature-development")
+        decision, reason = self.run_hook(prompt="implement the order service", agent="adk-backend:java-ecosystem-engineer")
+        self.assertEqual(decision, "deny")
+        self.assertIn("specialist: java-ecosystem-engineer", reason)
+        self.assertIn("unit-implementer", reason)
+        self.record(read=None, command="<command-name>/adk-adlc:feature-development</command-name> add export")
+        self.assertEqual(self.run_hook(prompt="x", agent="adk-desktop:tauri-react-engineer")[0], "deny")
+
+    def test_specialists_outside_the_workflow_and_designers_are_left_alone(self):
+        self.assertEqual(self.run_hook(prompt="x", agent="adk-backend:java-ecosystem-engineer"), ("allow", ""))
+        self.record(read=None, skill="adk-adlc:feature-development")
+        self.assertEqual(self.run_hook(prompt="x", agent="adk-backend:api-spec-designer"), ("allow", ""))
+        self.assertEqual(self.run_hook(prompt="x", agent="adk-backend:data-storage-architect"), ("allow", ""))
+
+    def test_the_routed_list_is_configurable(self):
+        self.record(read=None, skill="adk-adlc:feature-development")
+        os.makedirs(os.path.join(self.project, ".claude"), exist_ok=True)
+        with open(os.path.join(self.project, ".claude", "quality-check.config.json"), "w") as f:
+            json.dump({"dispatch_gate": {"route_through_units": ["go-engineer"]}}, f)
+        self.assertEqual(self.run_hook(prompt="x", agent="team:go-engineer")[0], "deny")
+        self.assertEqual(self.run_hook(prompt="x", agent="adk-backend:java-ecosystem-engineer"), ("allow", ""))
 
     def test_warn_and_off(self):
         self.assertEqual(self.run_hook(mode="warn")[0], "warn")

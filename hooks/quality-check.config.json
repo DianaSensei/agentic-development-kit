@@ -44,6 +44,11 @@
     "build": "sonnet"
   },
 
+  "$comment_dispatch_gate": "route_through_units names the Tier-2 agents that write code: within feature-development, a direct dispatch of one is denied and its task goes through a unit-implementer with `specialist` - so it gets a ticket, a lane, a worktree and the model its tier earns. Designers (api-spec-designer, data-storage-architect) are not listed: they write nothing. Add your own code-writing agents here.",
+  "dispatch_gate": {
+    "route_through_units": ["java-ecosystem-engineer", "tauri-react-engineer"]
+  },
+
   "$comment_checks": "The project's own linters, formatters and rule scripts, run by hooks/check-conventions.sh on each file Claude writes (scope file, the default) or by the workflows with the tests (scope project). Each: {name, run, match, scope, timeout}; {file} in run becomes the path. Empty here on purpose: running commands is the project's decision, and only its own .claude/quality-check.config.json is read for checks. project-setup fills it from the checkers the repository already uses - see skills/project-setup/references/conventions.md.",
   "checks": [],
 

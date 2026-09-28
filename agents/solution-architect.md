@@ -179,7 +179,9 @@ its `task_breakdown`, precise enough that an implementer on a cheaper model buil
 redesigning it. The format and its reasons are the kit's `references/tickets.md` (`tickets_path` in the
 prompt): read it first.
 
-For each task, keeping its `id`, `task`, `files` and `depends_on`:
+One ticket per task, and one more with `"owner": "lead"` for the shared edits the lead makes after
+the units (an export, a registry line, a config key), so every changed path is in some ticket. For
+each, keeping its `id`, `task`, `files` and `depends_on`:
 - `interface`: every function, class, endpoint, column or config key it adds or changes, with the
   exact signature. Empty only with `no_interface_reason`.
 - `follow_pattern`: `{"what", "at": "path:line"}` for existing code whose shape it should copy - a
