@@ -12,7 +12,10 @@ the inline proposal.
 
 ## A ticket
 
-One per `task_breakdown` item of the chosen proposal, same `id`, `files`, `depends_on`:
+One per `task_breakdown` item of the chosen proposal, same `id`, `files`, `depends_on`. The shared edits
+the plan leaves to you after the units - an export, a registry or route line, a config key - get a ticket
+too, with `"owner": "lead"`: you build it yourself, never a unit, and the change has no path that no
+ticket names, so conformance covers all of it.
 
 | Field | What it holds | Example |
 |---|---|---|

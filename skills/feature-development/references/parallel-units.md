@@ -126,7 +126,8 @@ For each unit, in the plan's order:
    the unit's work is in its commit, already applied. They are this workflow's own temporary
    worktree and branch, nothing else; never remove one you did not create.
 
-Then make the edits the units reported in `outside_files_needed` (the shared registry lines),
+Then make the edits the units reported in `outside_files_needed` and the plan's `owner: lead` ticket (the
+shared registry lines),
 run the whole test suite with the project's documented command (Step 3.2 as usual: the units' own
 tests passed in isolation, which says nothing about them together), and continue. Look for
 conventions the units settled differently (an import style, a fixture, a helper each wrote for

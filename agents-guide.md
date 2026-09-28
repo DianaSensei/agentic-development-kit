@@ -29,6 +29,11 @@ business-analyst  →  solution-architect  →  Tier-2 specialist(s), per task_b
 | 2 | [`solution-architect`](./agents/solution-architect.md) | Takes the output from Step 1, identifies the stack (`CLAUDE.md` → memory/MCP → code evidence), produces 1+ proposal(s) complete with diagrams, tradeoffs rated on the fixed rubric with evidence; after the Checkpoint, one ticket per task of the chosen proposal (checked by `check_tickets.py`) (checked by `check_proposals.py` before you see them), finalized AC-DoD + a `task_breakdown` assigning work to the right Tier-2 agent. Does NOT write code, does NOT finalize a specific storage schema/technology. |
 | 3 | Tier-2 specialist(s) | Each agent in `task_breakdown` implements exactly the assigned piece of work, can run in parallel if independent (`can_run_parallel_with`). |
 
+Within `feature-development`, a Tier-2 agent that writes code (`java-ecosystem-engineer`,
+`tauri-react-engineer`) does its task through a `unit-implementer` that reads its file as `specialist`,
+so the task gets a ticket, a lane, its own worktree and a model by its ticket's tier; the dispatch gate
+denies dispatching one directly there. Designers are dispatched directly - they write nothing.
+
 `solution-architect` **does not use a hardcoded list of agent names** - it reads `agents/*.md` itself
 (Step 0.5 in its own file) to find out which Tier-2 agents actually exist and what they do, before
 assigning work. This means adding a new Tier-2 agent to this directory doesn't require editing

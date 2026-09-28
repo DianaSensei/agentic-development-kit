@@ -213,11 +213,20 @@ background knowledge.
 **A read only counts within the SAME request.** For a NEW user request, re-read the skill from scratch
 even if you remember reading it a turn ago - the user may have edited it since.
 
-**Optional Tier-2 dispatch**: where `task_breakdown` assigned a task to a Tier-2 agent that actually
-exists (`java-ecosystem-engineer`, `tauri-react-engineer`, `data-storage-architect`, `api-spec-designer`),
-it may go through the Task tool instead of being implemented inline - those agents write and run their own
-tests for the piece they own. Not required: anything without a matching Tier-2 agent is implemented
-directly under the read-the-`SKILL.md` rule above.
+**Tier-2 specialists**: where `task_breakdown` assigned a task to a Tier-2 agent that exists, how it
+works depends on whether the agent writes code:
+- **Designers** (`api-spec-designer`, `data-storage-architect`) write nothing: dispatch them directly
+  for the contract or the storage design, and materialise what they return (below).
+- **Implementers** (`java-ecosystem-engineer`, `tauri-react-engineer`) are never dispatched directly to
+  write code in this workflow. Their task goes through a `unit-implementer` with `specialist` and
+  `specialist_path` - it reads the specialist's file and works its way, and gets what every unit gets:
+  its ticket, its lane, its own worktree, the model its ticket's tier earns, and the dispatch gate - or
+  you build it yourself, reading the specialist's file as guidance. Dispatched directly, a specialist
+  writes into your working tree with no ticket, no lane and a fixed model; the dispatch gate denies it
+  once this workflow is running.
+
+Anything without a matching Tier-2 agent is implemented directly under the read-the-`SKILL.md` rule
+above.
 
 **Compare builds**: when the user chose "Build the top two and compare" at the CHECKPOINT, build each
 candidate in its own worktree, measure them the same way, and let the user pick - before anything else
