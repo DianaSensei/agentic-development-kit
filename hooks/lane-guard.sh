@@ -22,7 +22,9 @@
 # Guarded: an edit outside the lane, and any edit into the lead's working tree.
 # When the lane cannot be read (a transcript layout this does not know), only the
 # second holds and it says so once; the apply-time scope check is the backstop,
-# as it is for Bash writes, which no edit-tool hook sees.
+# as it is for anything a unit leaves despite the hooks. Shell writes, which no
+# edit-tool hook sees, are lane-check-bash.sh's: it checks the worktree after each
+# Bash call.
 #
 # `mode.lane_guard`: block (default) denies the write with the reason; warn lets
 # it through with the reason; off disables it.
@@ -71,39 +73,15 @@ case "$ABS" in
     ;;
 esac
 
-# The unit's prompt: the first user message of its own transcript.
-AGENT_ID="$(jq_in '.agent_id')"
-TRANSCRIPT="$(jq_in '.transcript_path')"
-SUB=""
-if [ -n "$AGENT_ID" ] && [ -n "$TRANSCRIPT" ]; then
-  SUB="$(dirname "$TRANSCRIPT")/$(jq_in '.session_id')/subagents/agent-$AGENT_ID.jsonl"
-  [ -f "$SUB" ] || SUB="$(find "$(dirname "$TRANSCRIPT")" -name "agent-$AGENT_ID.jsonl" 2>/dev/null | head -n 1)"
-fi
-LANE=""
-if [ -n "$SUB" ] && [ -f "$SUB" ]; then
-  LANE="$(jq -r 'select(.type == "user") | .message.content
-                 | if type == "string" then . else (map(select(.type == "text") | .text) | join("\n")) end' "$SUB" 2>/dev/null \
-          | head -n 400 \
-          | sed -n 's/^[[:space:]`*-]*lane[`*]*:[[:space:]]*//p' | head -n 1 \
-          | jq -r '.[]? // empty' 2>/dev/null)"
-fi
+LANE="$(unit_lane)"
 
 if [ -z "$LANE" ]; then
-  SEEN="$STATE_DIR/lane-unknown-$AGENT_ID"
+  SEEN="$STATE_DIR/lane-unknown-$(jq_in '.agent_id')"
   [ -f "$SEEN" ] && exit 0
   mkdir -p "$STATE_DIR" 2>/dev/null && : > "$SEEN" 2>/dev/null || true
   warn "[lane-guard] Could not read this unit's lane (no \`lane:\` line found in its prompt), so edits are not checked against its files. Stay inside \`unit.files\` anyway: the lead's scope check rejects anything outside them."
 fi
 
-while IFS= read -r entry; do
-  entry="${entry#./}"
-  [ -n "$entry" ] || continue
-  case "$entry" in
-    */) case "$REL" in "$entry"*) exit 0 ;; esac ;;
-    *) [ "$REL" = "$entry" ] && exit 0 ;;
-  esac
-done <<EOF
-$LANE
-EOF
+in_lane "$REL" "$LANE" && exit 0
 
 deny "[lane-guard] \`$REL\` is outside this unit's files ($(printf '%s\n' "$LANE" | sed 's/^/`/; s/$/`/' | paste -sd, - | sed 's/,/, /g')). Another unit may be writing it right now. Do not edit it: report what it needs in \`outside_files_needed\` - the lead makes that change after applying every unit - or, if the unit cannot be built without it, stop with a \`plan_mismatch\`."

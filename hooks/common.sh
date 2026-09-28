@@ -265,3 +265,44 @@ code_change_hash() {
     done
   } | $sum | cut -d' ' -f1
 }
+
+# unit_prompt - the calling subagent's dispatch prompt: the first user message of its own
+# transcript, <session dir>/<session_id>/subagents/agent-<agent_id>.jsonl, next to the
+# session's. Empty when the layout is not found.
+unit_prompt() {
+  local id transcript sub
+  id="$(jq_in '.agent_id')"; transcript="$(jq_in '.transcript_path')"
+  [ -n "$id" ] && [ -n "$transcript" ] || return 0
+  sub="$(dirname "$transcript")/$(jq_in '.session_id')/subagents/agent-$id.jsonl"
+  [ -f "$sub" ] || sub="$(find "$(dirname "$transcript")" -name "agent-$id.jsonl" 2>/dev/null | head -n 1)"
+  [ -n "$sub" ] && [ -f "$sub" ] || return 0
+  jq -r 'select(.type == "user") | .message.content
+         | if type == "string" then . else (map(select(.type == "text") | .text) | join("\n")) end' "$sub" 2>/dev/null \
+    | head -n 400
+}
+
+# prompt_label <label> - the value after the first `<label>:` line of the unit's prompt (markdown
+# bullets, bold or backticks around the label allowed).
+prompt_label() {
+  unit_prompt | sed -n "s/^[[:space:]\`*-]*$1[\`*]*:[[:space:]]*//p" | head -n 1
+}
+
+# unit_lane - the unit's lane, one path per line: its prompt's `lane: [...]` JSON array.
+unit_lane() { prompt_label lane | jq -r '.[]? // empty' 2>/dev/null; }
+
+# in_lane <repo-relative path> <lane> - true when a lane entry is the path, or a directory
+# (ending in /) above it.
+in_lane() {
+  local entry
+  while IFS= read -r entry; do
+    entry="${entry#./}"
+    [ -n "$entry" ] || continue
+    case "$entry" in
+      */) case "$1" in "$entry"*) return 0 ;; esac ;;
+      *) [ "$1" = "$entry" ] && return 0 ;;
+    esac
+  done <<LANE
+$2
+LANE
+  return 1
+}

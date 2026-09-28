@@ -1,0 +1,1 @@
+I've written discounted() in src/shop/pricing.py and a test for it in tests/test_discount.py. Before I commit, run the kit's self-check on this change (code-review-skill) and fix whatever it finds. Don't commit.
