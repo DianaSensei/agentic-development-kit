@@ -14,6 +14,7 @@ on:
       - "skills/intent-capture/scripts/**"
       - "skills/reflect/scripts/**"
       - "skills/feature-development/scripts/**"
+      - "scenarios/**"
       - ".github/workflows/pipeline-tests.yml"
   push:
     branches: [main]
@@ -49,6 +50,8 @@ jobs:
         run: python -m unittest discover -s skills/reflect/scripts/tests -v
       - name: Wave snapshot tests
         run: python -m unittest discover -s skills/feature-development/scripts/tests -v
+      - name: Scenario suite helpers
+        run: python -m unittest discover -s scenarios/tests -v
       - name: Script syntax
         run: for f in ci/*.sh maintain/*.sh codehost/*.sh; do bash -n "$f"; done
       - name: GitLab CI templates
