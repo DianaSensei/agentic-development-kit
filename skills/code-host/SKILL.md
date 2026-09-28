@@ -7,7 +7,7 @@ metadata:
   role: specialist
   scope: implementation
   output-format: code
-  related-skills: independent-review, project-setup, toolbox-connections, mcp-developer
+  related-skills: independent-review, project-setup, toolbox-connections, mcp-developer, worktrees
 ---
 
 # Code Host

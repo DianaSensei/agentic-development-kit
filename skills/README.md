@@ -50,6 +50,12 @@ off to the right orchestrator, so in practice you rarely need to name a workflow
 |-------|---------|
 | [`reflect`](./reflect/SKILL.md) | The user's own working profile - how they decide, design, write, review and want to be worked with - learned from their corrections, Checkpoint choices, rewrites of agent-written code and review comments, approved line by line, kept in their private repository and loaded into every session |
 
+## Workspace
+
+| Skill | Use For |
+|-------|---------|
+| [`worktrees`](./worktrees/SKILL.md) | The user's parallel work organized by task - one folder per task under a root they chose, holding a git worktree of every repository the task touches on one branch. Starts a task across repositories at once, shows every task's state across all projects, syncs each with its base, runs a command in each, removes finished tasks without losing work |
+
 ## Requirements & Design
 
 | Skill | Use For |

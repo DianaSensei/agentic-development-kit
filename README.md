@@ -123,6 +123,10 @@ layout under `plugins/<name>/`.
   `REVIEW.md`, `CODEOWNERS`, a committed `.claude/settings.json` that enables the kit for every
   teammate, the code host's MCP server, and the CI reviewer for GitHub or GitLab - adding to files that
   exist, never overwriting them.
+- **Several tasks, or one task across repositories**, go to `worktrees`: one folder per task under a
+  root you choose once (`~/worktrees/billing-feat-abc/{api,web}`), each repository a git worktree on the
+  task's branch. It starts a task in every repository at once, shows every task's state across your
+  projects, keeps each up to date with its base, and removes finished tasks without losing work.
 - **Ideas not ready to build** go to `intent-capture`, which writes `docs/intents/<slug>.md` - the
   problem, evidence, and desired outcome, no solution. Later, "implement `docs/intents/<slug>.md`" starts
   the workflow from it, and the workflow links the intent to its plan and changelog as it goes.
