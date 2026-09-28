@@ -27,8 +27,10 @@ tokens"). The user choosing it approves both candidates' plans at once.
 - `base_commit` as for parallel units (HEAD, or the current wave's snapshot).
 - One `unit-implementer` (`subagent_type` `adk-adlc:unit-implementer`) per candidate, **in a single message**, each with the same `unit` (id suffixed
   `-a`, `-b`), the same `files`, acceptance criteria and `skill_paths`, and its own proposal as
-  `plan_excerpt`. Tell each which candidate it is and that another agent builds the alternative: it
-  builds its proposal faithfully, not a blend.
+  `plan_excerpt`, with the labels of `parallel-units.md` → "Dispatch" (read it first: the dispatch gate
+  holds a unit until it is) - `lane`, `base_commit` - and `candidate` where a unit would carry its
+  `ticket`. Tell each which candidate it is and that another agent builds the alternative: it builds its
+  proposal faithfully, not a blend.
 - Candidates have no tickets - no proposal is chosen yet - so they run on your model, not
   `models.build`. The winner's tickets are written after the choice, for whatever is left to build.
 - Questions from a candidate are answered as in `parallel-units.md`; an answer that applies to both goes

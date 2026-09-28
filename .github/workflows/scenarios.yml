@@ -1,0 +1,77 @@
+name: Scenarios
+
+# End-to-end runs of the orchestration workflows - real headless sessions with the plugin loaded, on
+# small repositories, then checks of what the workflow did (scenarios/README.md). About $6 and 20
+# minutes for all four, so they run by hand before a release, not on every pull request.
+
+on:
+  workflow_dispatch:
+    inputs:
+      scenarios:
+        description: "Scenario names, space-separated (empty: all)."
+        type: string
+        default: ""
+      model:
+        description: "Model for the session under test (empty: Claude Code's default)."
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: scenarios-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  scenarios:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Check for credentials
+        env:
+          HAS_CREDENTIAL: ${{ secrets.ANTHROPIC_API_KEY != '' || secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
+        run: |
+          if [ "$HAS_CREDENTIAL" != "true" ]; then
+            echo "::error title=No credential::Set ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN as a repository secret."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Claude Code
+        run: npm install --global --no-audit --no-fund @anthropic-ai/claude-code
+
+      - name: Git identity for the fixtures' worktrees
+        run: git config --global user.email scenarios@example.com && git config --global user.name scenarios
+
+      - name: Run
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          MODEL: ${{ inputs.model }}
+          NAMES: ${{ inputs.scenarios }}
+          TMPDIR: ${{ runner.temp }}
+        run: |
+          set -uo pipefail
+          # shellcheck disable=SC2086
+          python3 scenarios/run.py $NAMES 2>&1 | tee "$RUNNER_TEMP/scenarios.log"
+          rc=${PIPESTATUS[0]}
+          { echo '### Scenarios'; echo '```'; grep -E '^(===|PASS|FAIL|WARN|[a-z-]+: (PASS|FAIL)|[0-9]+/[0-9]+ scenarios)' "$RUNNER_TEMP/scenarios.log"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          exit "$rc"
+
+      - name: Keep failed runs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed-scenarios
+          path: ${{ runner.temp }}/adk-scenario-*
+          retention-days: 7

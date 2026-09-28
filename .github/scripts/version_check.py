@@ -26,7 +26,7 @@ MARKETPLACE = ".claude-plugin/marketplace.json"
 
 # Paths that never reach an installed plugin's behavior: the kit's own tests and
 # CI, and repository-level files. Everything else ships.
-DEV_ONLY_PREFIXES = ("evals/", ".github/")
+DEV_ONLY_PREFIXES = ("evals/", "scenarios/", ".github/")
 DEV_ONLY_FILES = {"README.md", "LICENSE", ".gitignore"}
 
 

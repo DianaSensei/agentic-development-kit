@@ -1,0 +1,1 @@
+At the feature-development CHECKPOINT for docs/plans/dedupe.md I chose "Build the top two and compare" (proposals A and B). Continue from Step 3.1 with the comparison, up to the point where I pick a candidate - then stop and ask me.

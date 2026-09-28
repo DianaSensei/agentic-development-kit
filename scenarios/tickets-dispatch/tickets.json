@@ -1,0 +1,273 @@
+{
+ "proposal_id": "proposal-2",
+ "id_mapping": {
+  "task-1": "U1",
+  "task-2": "U2",
+  "task-3": "U3",
+  "task-4": "U4",
+  "task-5": "U5"
+ },
+ "tickets": [
+  {
+   "id": "task-1",
+   "task": "Add `order_count INTEGER NOT NULL DEFAULT 0` to `customers` in db/schema.sql (new/fresh databases only; existing-DB migration is task-5's job)",
+   "files": [
+    "db/schema.sql"
+   ],
+   "depends_on": [],
+   "interface": [
+    "Column customers.order_count INTEGER NOT NULL DEFAULT 0 - declared inside the existing `CREATE TABLE IF NOT EXISTS customers (...)` block, after `name TEXT NOT NULL`. Resulting table: (id INTEGER PRIMARY KEY, name TEXT NOT NULL, order_count INTEGER NOT NULL DEFAULT 0)"
+   ],
+   "follow_pattern": [
+    {
+     "what": "Column declaration style inside the existing CREATE TABLE IF NOT EXISTS block (one column per line, 4-space indent, SQL keywords uppercase, trailing comma on every line except the last)",
+     "at": "db/schema.sql:1-4"
+    },
+    {
+     "what": "NOT NULL column declaration shape to mirror",
+     "at": "db/schema.sql:9"
+    }
+   ],
+   "tests": [
+    "Given a fresh `shop.db.connect()` (in-memory) and a customer made with `orders.create_customer(conn, 'Ada')`, when `SELECT order_count FROM customers WHERE id = ?` runs, then it returns 0 (checked by the done_when command; the permanent test is written in task-4)",
+    "Given the existing suite, when it runs after this change, then `test_place_and_cancel` and `test_dashboard_shows_name` still pass unchanged"
+   ],
+   "must_not": [
+    "Touch any file other than db/schema.sql",
+    "Add any ALTER TABLE, migration, PRAGMA or version table to schema.sql - `shop.db.connect()` runs the whole file via executescript on every connect (src/shop/db.py:10-11), and `ALTER TABLE ADD COLUMN` would fail on the second connect",
+    "Change the `orders` table or add an index (that was the rejected Proposal 1)",
+    "Add a CHECK constraint or trigger (a trigger was considered and not chosen; see plan's Out of Scope)"
+   ],
+   "done_when": "From repo root: `python3 -m unittest discover -s tests -t .` reports OK (2 tests), AND `PYTHONPATH=src python3 -c \"from shop import db, orders; c=db.connect(); i=orders.create_customer(c,'A'); print(c.execute('SELECT order_count FROM customers WHERE id=?',(i,)).fetchone()[0])\"` prints `0`",
+   "stop_if": [
+    "db/schema.sql no longer creates customers with `CREATE TABLE IF NOT EXISTS` at lines 1-4",
+    "`shop.db.connect()` no longer applies db/schema.sql via executescript (src/shop/db.py:10-11), so the new column would never reach new databases",
+    "Something else in the repo already defines or migrates a customers.order_count column"
+   ]
+  },
+  {
+   "id": "task-2",
+   "task": "Atomically increment `customers.order_count` in `place_order` and decrement it in `cancel_order`, inside each function's existing `with conn:` transaction",
+   "files": [
+    "src/shop/orders.py"
+   ],
+   "depends_on": [
+    "task-1"
+   ],
+   "interface": [
+    "shop.orders.place_order(conn, customer_id, total_cents) -> int (unchanged signature and return: the new order's lastrowid). Inside the existing `with conn:` block, after the INSERT, adds: `conn.execute(\"UPDATE customers SET order_count = order_count + 1 WHERE id = ?\", (customer_id,))`. Save the INSERT cursor so the function still returns the INSERT's lastrowid, not the UPDATE's.",
+    "shop.orders.cancel_order(conn, order_id) -> None (unchanged signature and return). Inside the existing `with conn:` block, BEFORE the DELETE, adds: `conn.execute(\"UPDATE customers SET order_count = order_count - 1 WHERE id = (SELECT customer_id FROM orders WHERE id = ?)\", (order_id,))`, then the existing `DELETE FROM orders WHERE id = ?`. If order_id does not exist, the subquery returns NULL, no customer row matches, and nothing is decremented."
+   ],
+   "follow_pattern": [
+    {
+     "what": "One transaction per mutation: every statement of the write goes inside a single `with conn:` block",
+     "at": "src/shop/orders.py:12-16"
+    },
+    {
+     "what": "The existing cancel transaction the decrement joins; keep its docstring and hard-delete semantics",
+     "at": "src/shop/orders.py:20-23"
+    },
+    {
+     "what": "Return the INSERT cursor's lastrowid after the with-block",
+     "at": "src/shop/orders.py:17"
+    }
+   ],
+   "tests": [
+    "(written in task-4, which owns tests/test_orders.py; this task must make them pass) Given a customer with 0 orders, when place_order is called 3 times, then customers.order_count is 3",
+    "(written in task-4) Given a customer with 3 orders, when cancel_order is called on one, then order_count is 2 and still equals COUNT(*) FROM orders for that customer",
+    "(written in task-4) Given two customers, when orders are placed for both and one of A's orders is cancelled, then only A's order_count changes",
+    "(written in task-4) Given an order already cancelled, when cancel_order is called again with the same id (or with an id that never existed), then order_count is unchanged",
+    "(written in task-4) Given place_order is called, when it returns, then the return value is the new order's id (the INSERT's lastrowid)"
+   ],
+   "must_not": [
+    "Touch any file other than src/shop/orders.py (tests are task-4's)",
+    "Change the signature or return value of place_order, cancel_order or create_customer",
+    "Update the counter with Python read-modify-write (SELECT then UPDATE with a computed value) - it must be `order_count = order_count +/- 1` in SQL to avoid lost updates",
+    "Put the counter UPDATE in its own transaction, or outside the existing `with conn:` block",
+    "Change cancel_order from a hard DELETE to a soft-delete or status flag",
+    "Add validation that customer_id exists in place_order (today an unknown customer_id is inserted without error because foreign keys are not enabled; keep that behaviour - the UPDATE just matches 0 rows)",
+    "Add a SQLite trigger instead (not chosen)",
+    "Modify create_customer (the column DEFAULT 0 covers new customers)"
+   ],
+   "done_when": "From repo root: `python3 -m unittest discover -s tests -t .` reports OK, AND `PYTHONPATH=src python3 -c \"from shop import db, orders as o; c=db.connect(); i=o.create_customer(c,'A'); a=o.place_order(c,i,1); o.place_order(c,i,1); o.cancel_order(c,a); o.cancel_order(c,a); o.cancel_order(c,999); print(c.execute('SELECT order_count FROM customers WHERE id=?',(i,)).fetchone()[0])\"` prints `1`",
+   "stop_if": [
+    "customers.order_count does not exist after db.connect() (task-1 not merged, or merged differently)",
+    "A third function or module writes to or deletes from `orders` besides place_order/cancel_order - the plan's consistency invariant assumes these are the only two mutation sites",
+    "place_order or cancel_order are no longer wrapped in `with conn:` (src/shop/orders.py:12, :22), so there is no existing transaction to join",
+    "Keeping the return value of place_order requires changing its signature"
+   ]
+  },
+  {
+   "id": "task-3",
+   "task": "Widen `dashboard.render` to read `order_count` from the customers row it already fetches by primary key, and return it",
+   "files": [
+    "src/shop/dashboard.py"
+   ],
+   "depends_on": [
+    "task-1"
+   ],
+   "interface": [
+    "shop.dashboard.render(conn, customer_id) -> dict with exactly the keys `name` (str) and `order_count` (int). Single query: `SELECT name, order_count FROM customers WHERE id = ?`. Return `{\"name\": row[\"name\"], \"order_count\": row[\"order_count\"]}`."
+   ],
+   "follow_pattern": [
+    {
+     "what": "The existing single PK lookup plus dict return; widen this statement, do not add a second one",
+     "at": "src/shop/dashboard.py:3-4"
+    },
+    {
+     "what": "Rows are sqlite3.Row, so columns are read by name (`row[\"order_count\"]`)",
+     "at": "src/shop/db.py:9"
+    }
+   ],
+   "tests": [
+    "Given a new customer 'Ada' with no orders, when render is called, then it returns {'name': 'Ada', 'order_count': 0}",
+    "Given a customer with 2 orders, when render is called, then order_count is 2",
+    "Given a customer with orders, when render runs under conn.set_trace_callback, then exactly one SQL statement runs and no statement mentions `orders`",
+    "Given the existing tests/test_orders.py::test_dashboard_shows_name assertion, when render is called after this change, then it still passes unchanged"
+   ],
+   "must_not": [
+    "Touch any file other than src/shop/dashboard.py",
+    "Query the `orders` table in render in any form (COUNT, fallback, or consistency check) - this is the hot path with a 50 ms p95 budget and customers with 200k+ orders (CLAUDE.md)",
+    "Add a second SQL statement to render",
+    "Change render's signature or remove/rename the `name` key",
+    "Change what happens for a customer_id with no matching row (today row is None and row[...] raises TypeError; explicitly out of scope)",
+    "Add caching"
+   ],
+   "done_when": "From repo root: `python3 -m unittest discover -s tests -t .` reports OK, AND `PYTHONPATH=src python3 -c \"from shop import db, orders as o, dashboard as d; c=db.connect(); i=o.create_customer(c,'Ada'); print(d.render(c,i))\"` prints `{'name': 'Ada', 'order_count': 0}`",
+   "stop_if": [
+    "render no longer reads the customers row by primary key at src/shop/dashboard.py:3, so there is no existing row read to widen",
+    "customers.order_count does not exist after db.connect() (task-1 not merged)",
+    "A caller of render depends on the returned dict having only the `name` key"
+   ]
+  },
+  {
+   "id": "task-4",
+   "task": "Extend tests/test_orders.py to cover place/cancel counter maintenance, zero orders, some-cancelled, a large count, render's no-orders-query guarantee, and a drift-consistency check",
+   "files": [
+    "tests/test_orders.py"
+   ],
+   "depends_on": [
+    "task-2",
+    "task-3"
+   ],
+   "interface": [
+    "Test helper method on OrdersTest: `_stored_count(self, customer_id) -> int` returns `SELECT order_count FROM customers WHERE id = ?`",
+    "Test helper method on OrdersTest: `_live_count(self, customer_id) -> int` returns `SELECT COUNT(*) FROM orders WHERE customer_id = ?`",
+    "Test helper method on OrdersTest: `assertCountConsistent(self, customer_id)` asserts _stored_count == _live_count (the drift check)",
+    "New test methods on the existing OrdersTest class: test_new_customer_order_count_is_zero, test_place_increments_count, test_cancel_decrements_count, test_cancel_all_returns_to_zero, test_cancel_unknown_or_repeated_order_does_not_change_count, test_counts_are_per_customer, test_place_order_returns_order_id, test_dashboard_order_count_zero, test_dashboard_order_count_some_cancelled, test_dashboard_large_count, test_dashboard_does_not_query_orders"
+   ],
+   "follow_pattern": [
+    {
+     "what": "Test class shape: fresh in-memory db.connect() plus one customer in setUp; add methods to this class, do not create a new one",
+     "at": "tests/test_orders.py:6-9"
+    },
+    {
+     "what": "Direct SQL assertions against the connection",
+     "at": "tests/test_orders.py:14"
+    },
+    {
+     "what": "Dashboard assertion shape",
+     "at": "tests/test_orders.py:17"
+    },
+    {
+     "what": "sys.path/import header; keep it, and add no new imports beyond the stdlib",
+     "at": "tests/test_orders.py:1-3"
+    }
+   ],
+   "tests": [
+    "Given a new customer, when nothing has been ordered, then _stored_count is 0",
+    "Given a customer, when place_order is called 3 times, then _stored_count is 3 and assertCountConsistent holds",
+    "Given 3 placed orders, when one is cancelled, then _stored_count is 2 and assertCountConsistent holds",
+    "Given 2 placed orders, when both are cancelled, then _stored_count is 0",
+    "Given 1 placed order, when it is cancelled twice and cancel_order(conn, 999999) is also called, then _stored_count is 0 (not negative) and assertCountConsistent holds",
+    "Given customers A and B with 2 orders each, when one of A's is cancelled, then A is 1 and B is 2, and both pass assertCountConsistent",
+    "Given place_order returns oid, when `SELECT customer_id FROM orders WHERE id = ?` runs with oid, then it returns self.c (the return value is the order id)",
+    "Given a customer with no orders, when dashboard.render runs, then it returns {'name': 'Ada', 'order_count': 0}",
+    "Given 5 placed orders with 2 cancelled, when dashboard.render runs, then order_count is 3",
+    "Given 1000 placed orders with 250 cancelled (loops over place_order/cancel_order), when dashboard.render runs, then order_count is 750 and assertCountConsistent holds",
+    "Given a customer with 3 orders and `self.conn.set_trace_callback(statements.append)` set just before render (cleared with set_trace_callback(None) after), when render runs, then exactly one statement was recorded and none contains the word 'orders' (case-insensitive)",
+    "Given the existing test_place_and_cancel and test_dashboard_shows_name, when the suite runs, then both pass unmodified"
+   ],
+   "must_not": [
+    "Touch any file other than tests/test_orders.py (no changes to src/, db/ or scripts/)",
+    "Modify or delete the two existing tests",
+    "Add third-party test dependencies (stdlib only, per CLAUDE.md)",
+    "Build a 200k-order fixture or a timing/latency assertion - the large-count case checks correctness, and the no-orders-query trace check stands in for the O(1) guarantee",
+    "Write to `orders` or `customers.order_count` with raw SQL, except as the drift-check read"
+   ],
+   "done_when": "From repo root: `python3 -m unittest discover -s tests -t . -v` reports OK with the 2 existing tests plus the 11 new ones listed in interface (13 in OrdersTest), and finishes in a few seconds",
+   "stop_if": [
+    "Any new test fails in a way that needs changes to src/shop/orders.py or src/shop/dashboard.py - report it as plan_mismatch against task-2/task-3 and do not change them",
+    "The trace-callback test shows render running more than one statement or touching orders (task-3 did not meet its interface)",
+    "`sqlite3.Connection.set_trace_callback` is unavailable in the project's Python"
+   ]
+  },
+  {
+   "id": "task-5",
+   "task": "Create scripts/backfill_order_count.py: on an existing database, add customers.order_count if missing, then set every customer's order_count to their COUNT(*) FROM orders, in one write transaction. Rerunning it is safe. Add its tests.",
+   "files": [
+    "scripts/backfill_order_count.py",
+    "tests/test_backfill_order_count.py"
+   ],
+   "depends_on": [
+    "task-1"
+   ],
+   "interface": [
+    "scripts/backfill_order_count.py, run as `python3 scripts/backfill_order_count.py <db_path>` from the repo root",
+    "has_order_count_column(conn) -> bool - True if `PRAGMA table_info(customers)` lists a column named order_count",
+    "backfill(conn) -> dict with keys `column_added` (bool) and `customers_updated` (int). Steps: (1) if not has_order_count_column(conn), run `ALTER TABLE customers ADD COLUMN order_count INTEGER NOT NULL DEFAULT 0`; (2) run `conn.execute(\"BEGIN IMMEDIATE\")`; (3) run `UPDATE customers SET order_count = 0`; (4) read `SELECT customer_id, COUNT(*) FROM orders GROUP BY customer_id` and apply it with `conn.executemany(\"UPDATE customers SET order_count = ? WHERE id = ?\", ...)`; (5) conn.commit(), or conn.rollback() and re-raise on any exception. customers_updated = number of rows in the customers table.",
+    "main(argv=None) -> int - argv defaults to sys.argv[1:]. Needs exactly one db_path argument. If the argument is missing or os.path.exists(db_path) is False, print usage/error to stderr and return 2 without creating a file. Otherwise conn = shop.db.connect(db_path), result = backfill(conn), print a one-line summary to stdout, close conn, return 0.",
+    "Module footer: `if __name__ == \"__main__\": sys.exit(main())`",
+    "Import header: `sys.path.insert(0, os.path.join(os.path.dirname(__file__), \"..\", \"src\"))` then `from shop import db`"
+   ],
+   "follow_pattern": [
+    {
+     "what": "sys.path insert of ../src so `from shop import db` works outside the package; copy it for the script, and use the same shape in the new test file",
+     "at": "tests/test_orders.py:2-3"
+    },
+    {
+     "what": "Open the database with shop.db.connect(path); on an old DB its CREATE TABLE IF NOT EXISTS is a no-op, so the column is still missing afterwards",
+     "at": "src/shop/db.py:7-12"
+    },
+    {
+     "what": "Pre-feature customers/orders DDL to copy into the test fixture for an 'old' database (i.e. customers without order_count)",
+     "at": "db/schema.sql:1-11"
+    },
+    {
+     "what": "Test class/setUp shape",
+     "at": "tests/test_orders.py:6-9"
+    }
+   ],
+   "tests": [
+    "In tests/test_backfill_order_count.py, loading the script with importlib.util.spec_from_file_location from <repo>/scripts/backfill_order_count.py: Given an old-schema in-memory DB (customers without order_count) with customer A having 3 orders and B having 0, when backfill(conn) runs, then column_added is True, A's order_count is 3, B's is 0, and customers_updated is 2",
+    "Given the same DB, when backfill(conn) runs a second time, then it raises no error, column_added is False, and the counts are unchanged",
+    "Given a current-schema DB from shop.db.connect() where A's order_count was set by hand to 99 with 1 real order, when backfill(conn) runs, then A's order_count is 1 (drift is corrected)",
+    "Given an old-schema DB written to a file in tempfile.TemporaryDirectory(), when main([path]) runs, then it returns 0 and reopening the file shows the correct counts",
+    "Given a path that does not exist, when main([path]) runs, then it returns 2 and the file is still missing",
+    "Given no arguments, when main([]) runs, then it returns 2"
+   ],
+   "must_not": [
+    "Touch db/schema.sql, src/shop/*, or tests/test_orders.py",
+    "Compute counts with a per-customer correlated subquery (`SET order_count = (SELECT COUNT(*) FROM orders WHERE customer_id = customers.id)`) - orders.customer_id has no index (db/schema.sql:6-11), so that is O(customers x orders) on a large database; use the single GROUP BY",
+    "Add an index, a migrations table or schema versioning (not decided in the plan)",
+    "Run ALTER TABLE without checking for the column first (SQLite errors on a duplicate column)",
+    "Create a new database file when the given path does not exist (shop.db.connect would create it silently)",
+    "Add third-party dependencies or an argparse CLI with extra options/flags beyond the single db_path argument",
+    "Rely on the script being run automatically by db.connect() or on import"
+   ],
+   "done_when": "From repo root: `python3 -m unittest discover -s tests -t . -v` reports OK including the 6 new tests in tests/test_backfill_order_count.py, AND `python3 scripts/backfill_order_count.py /nonexistent.db; echo $?` prints an error and `2`",
+   "stop_if": [
+    "db/schema.sql gains anything besides CREATE TABLE IF NOT EXISTS that would fail against an old database when shop.db.connect(path) applies it before the backfill (e.g. an index on customers.order_count)",
+    "The python3 in use cannot run `BEGIN IMMEDIATE` explicitly on a default-isolation sqlite3 connection, so the counts could not be taken and written in one locked transaction",
+    "The test file cannot be discovered by `python3 -m unittest discover -s tests -t .` without changing tests/__init__.py or another file outside this task"
+   ]
+  }
+ ],
+ "open_questions": [
+  "PLAN DEVIATION (task-5 / U5): the approved plan gives U5 only `scripts/backfill_order_count.py`, and U4's tests file (tests/test_orders.py) does not cover the script. Added `tests/test_backfill_order_count.py` to task-5's files; overlaps no other task's files.",
+  "PLAN DEVIATION (task-2, task-3): only task-4 owns tests/test_orders.py, so task-2 and task-3 cannot add tests themselves; their tests entries are written in task-4.",
+  "Detail not in the plan (task-2): cancel_order runs the decrement BEFORE the DELETE via a subquery since cancel_order only receives order_id.",
+  "Deployment ordering, which the plan does not settle: stop the app, run the backfill, deploy new code, start the app - otherwise old code drifts the counts or new code errors on the missing column.",
+  "Still open from the plan: is there a live populated database today; trigger vs Python-level UPDATE."
+ ]
+}
