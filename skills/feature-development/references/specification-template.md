@@ -82,9 +82,9 @@ dimensions in priority order, a column per proposal (`tradeoff-rubric.md`). Kept
 the rejected proposals keep the reasons they lost.
 
 ## Tickets
-Written after the CHECKPOINT, for the chosen proposal only: one sub-heading per task with its
-`interface`, `follow_pattern`, `tests`, `must_not`, `done_when`, `stop_if`, and its tier from
-`check_tickets.py` (`tickets.md`).
+Written after the CHECKPOINT, for the chosen proposal only: the tickets exactly as `check_tickets.py`
+passed them, in one ```` ```json ```` block - `check_conformance.py` and the independent reviewer read
+them from here - then each ticket's tier (`tickets.md`).
 
 ## Parallel units
 Only when two or more units can be built at the same time - no dependency between them, disjoint

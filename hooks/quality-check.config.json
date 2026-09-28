@@ -10,7 +10,9 @@
     "bulk_read_gate": "warn",
     "review_gate": "warn",
     "convention_checks": "warn",
-    "quick_change_scope": "warn"
+    "quick_change_scope": "warn",
+    "lane_guard": "block",
+    "dispatch_gate": "block"
   },
 
   "$comment_session_context": "session-context injects the kit's routing/checkpoint/self-check reminders at SessionStart, only in projects that opted in (the plugin enabled in the project's .claude/settings.json, or this file present at .claude/quality-check.config.json). general_guidelines adds one team's engineering/style conventions on top; off unless a project sets it to true.",

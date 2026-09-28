@@ -143,6 +143,9 @@ def check(data):
 
 
 def main(argv):
+    if argv[:1] in (["-h"], ["--help"]):
+        print(__doc__.strip())
+        return 0
     if len(argv) != 1:
         print("usage: check_tickets.py <tickets.json>", file=sys.stderr)
         return 2

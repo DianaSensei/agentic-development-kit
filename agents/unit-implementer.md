@@ -44,6 +44,12 @@ to the lead's tree bypasses the isolation this agent exists for.
 Run `git status --porcelain` (it must be empty) and `git rev-parse HEAD`. If HEAD is not
 `base_commit`, run `git reset --keep <base_commit>`: the worktree may have branched from the default
 branch, while the lead agent's work is on another.
+
+Your edits are held to your lane: the lead's prompt carries `lane: [...]` - the unit's `files` - and
+the kit's lane guard denies an edit outside those paths, or into the lead's tree, the moment it is
+tried. A denial is not an obstacle to route around (Bash is not a way past it): the file belongs to
+another unit or to the lead, so it goes in `outside_files_needed`, or the unit stops with a
+`plan_mismatch`.
 Your worktree has no untracked or ignored files from the lead's tree: no `node_modules`, no
 virtualenv, no build output. Install what the tests need with the project's own tooling, and never
 commit it.

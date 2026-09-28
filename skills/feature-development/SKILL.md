@@ -190,7 +190,8 @@ of `references/tickets.md` next to this `SKILL.md`. It returns one ticket per ta
 `interface`, a `follow_pattern` at a `path:line`, the `tests` as Given/When/Then, `must_not`,
 `done_when`, `stop_if`. Save them outside the repository and run `python3 <this skill's
 dir>/scripts/check_tickets.py <file>`: a missing interface, pattern or test goes back once (a wording
-fix you may make yourself), then each ticket is graded **tight** or **loose**. Add them to the plan as `## Tickets`, with the tiers. A ticket that changes what was approved -
+fix you may make yourself), then each ticket is graded **tight** or **loose**. Add them to the plan as `## Tickets`: the checked JSON verbatim in a ```` ```json ```` block,
+then the tiers. A ticket that changes what was approved -
 a new file, a changed acceptance criterion - goes back to the person, not into the plan. Method, tiers
 and why: `references/tickets.md`.
 
@@ -224,7 +225,9 @@ in 3.1: `references/compare-builds.md`, read in full first.
 
 **Parallel units**: when the approved plan has a `## Parallel units` section, build them in **waves**:
 every unit whose dependencies are done, at the same time - one `unit-implementer` per unit, dispatched
-in a single message, each in its own git worktree (a wave of one unit you build yourself). After each
+in a single message, each in its own git worktree (a wave of one unit you build yourself), each with its
+`ticket` and, when the ticket is **tight**, the Agent tool's `model` set to `models.build` (default
+`sonnet`; a loose ticket gets no `model`). After each
 wave: apply its units, make the shared edits they report, run the full tests, and snapshot the tree for
 the next wave to start from. A unit that stops on a question is answered - from the plan, or by asking
 the user - and resumed with `SendMessage`, not redone. Waves, snapshots, dispatch prompt, answering and
@@ -253,6 +256,11 @@ criterion, every listed edge case, the Definition of Done, and the **quality bar
 (`references/definition-of-done.md`): tests pass, no open severe defects, coverage adequate for every
 important AC - a token test that skips an AC doesn't count.
 
+At full depth, check **conformance** before calling the tests enough: `check_conformance.py` from the
+project root against the plan's tickets, then your own read of each ticket against its diff - interface,
+pattern, tests, `must_not` (`references/tickets.md` → "Conformance"). A difference is a defect for the
+fix loop, or a `plan_mismatch` resolved after the fact and reported.
+
 Also run every `scope: project` entry of `checks` in `.claude/quality-check.config.json` (type
 checker, build-level linters): a failure there is a defect like a failing test, and it goes through the
 fix loop the same way. The file-scope checks already ran on each write (`check-conventions` hook);
@@ -278,7 +286,8 @@ Repeat 3.1 → 3.2 → 3.3 until quality bar, AC, and DoD are all met, OR an iss
 Template: `references/report-and-logs.md` → "Final Report Template". At minimum: AC/DoD items met vs. not
 met; risks/issues encountered throughout, including ones already fixed and any raised to the user; files
 changed; fix attempts used per issue, so the user can see the actual difficulty. At full depth, also each
-ticket's tier and the model that built it, and every `plan_mismatch` with how it was resolved.
+ticket's tier and the model that built it, every `plan_mismatch` with how it was resolved, and the
+conformance table.
 
 No checkpoint here - go straight to Step 5 (logging is low-risk and easy to amend if the user's feedback
 changes something).

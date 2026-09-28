@@ -85,8 +85,32 @@ it safe to hand the work to a cheaper, faster one. `models` in `.claude/quality-
 - The lead, the self-review and the independent reviewer are not downgraded. Checking the work is the
   senior's job.
 
+## Conformance: did the change do what the tickets said?
+
+The senior's last check before the work is called done, in Step 3.2 after every unit is applied:
+
+```bash
+python3 <this skill's dir>/scripts/check_conformance.py --base <commit the work started from> docs/plans/<feature-slug>.md
+```
+
+The script checks what a machine can: every changed path is in some ticket's `files`, every ticket's
+files changed, every `interface` name present in its files. Then read each ticket against its diff for
+the rest: the signature exactly as ticketed, the `follow_pattern` shape, each listed test, nothing in
+`must_not`. You, not a `models.build` agent: checking the work is the senior's job. A difference is a
+defect for the fix loop, unless it is an improvement the ticket could not foresee - then it is a
+`plan_mismatch` resolved after the fact, and the report says so. The table goes in the Step 4 report.
+
+## Lanes
+
+Every unit prompt carries `lane: [...]`, the unit's `files` as a JSON array (`parallel-units.md` →
+"Dispatch"). The kit's lane guard reads it from the unit's own transcript and denies an edit outside
+those paths - or into your working tree - as it happens. So a unit that needs another file says so in
+`outside_files_needed` or stops with a `plan_mismatch`, instead of editing a file another unit owns.
+Bash writes are not guarded; the scope check when you apply the unit stays.
+
 ## In the plan
 
-The plan gets a `## Tickets` section after the CHECKPOINT: one sub-heading per ticket with its fields,
-and its tier. The Step 4 report names each unit's tier and model, every `plan_mismatch` raised, and
+The plan gets a `## Tickets` section after the CHECKPOINT: the tickets exactly as checked, in one
+```` ```json ```` block (`check_conformance.py` reads them from there), then each ticket's tier. A prose
+summary instead of the JSON loses the fields the conformance check and the independent reviewer need. The Step 4 report names each unit's tier and model, every `plan_mismatch` raised, and
 how it was resolved.

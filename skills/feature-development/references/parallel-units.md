@@ -59,10 +59,17 @@ below. Between waves:
 
 ## Dispatch
 
+The kit's dispatch gate denies a `unit-implementer` dispatch until this file has been read in the
+session, and until the prompt carries `lane`, `base_commit` and `ticket` (or `candidate`). A denial
+names what is missing.
+
 One `unit-implementer` per unit, **all in a single message** so they run at the same time. Its
 `subagent_type` is `adk-adlc:unit-implementer` - a plugin's agents carry the plugin's prefix. Each
 prompt carries, with these literal labels: `unit` (id, task, `files`, the acceptance criteria and
-edge cases it owns), `ticket` (the unit's ticket from the plan's `## Tickets`), `plan_excerpt`, `base_commit`, `skill_paths` (the technical skills that
+edge cases it owns), `lane` (the unit's `files` again, as a JSON array on one line - `lane:
+["src/shop/orders.py", "scripts/"]` - which the lane guard reads), `ticket` (the unit's ticket from the
+plan's `## Tickets`, inline: the plan is usually uncommitted, so it is not in the unit's worktree),
+`plan_excerpt`, `base_commit`, `skill_paths` (the technical skills that
 own the unit's files, each with the path of the `SKILL.md` you read: the ones you read for it, and
 any the project's `skill_map` in `.claude/quality-check.config.json` names for those paths),
 `context_files` if any, and
@@ -102,7 +109,8 @@ For each unit, in the plan's order:
 1. Check its output. `open_questions` or `checkpoint.required` → the section above. `test_run_result`
    FAIL → resume the agent with what the failure is, the same way, before applying anything from it.
 2. Check scope: `git diff --name-only <base_commit> <branch>` lists only paths inside the unit's
-   `files`. A path outside is not applied silently: tell the user which, and why the agent said it
+   `files`. The lane guard (`tickets.md` → "Lanes") already denied its edits outside them; this catches
+   what it cannot see, such as a file written from Bash. A path outside is not applied silently: tell the user which, and why the agent said it
    needed it.
 3. Apply it to the working tree, uncommitted, like every other change this workflow makes:
    ```bash
