@@ -1,0 +1,1 @@
+Build docs/intents/order-count.md with the feature-development workflow at full depth. Take it up to the Step 2 CHECKPOINT and stop there: show me exactly what you would present and ask, then end the turn without choosing for me.
