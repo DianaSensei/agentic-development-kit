@@ -73,7 +73,14 @@ After all: export `word_frequencies`, `top_words`, `slugify`, `summary` from `sr
    "tests": ["Given 'b a b', when summary runs, then it returns 'top: b (2), a (1)'",
              "Given '', when summary runs, then it returns 'top: -'"],
    "must_not": ["reimplement word counting - call top_words"],
-   "done_when": "python3 -m unittest discover -s tests -t . passes", "stop_if": ["top_words does not exist"]}
+   "done_when": "python3 -m unittest discover -s tests -t . passes", "stop_if": ["top_words does not exist"]},
+  {"id": "exports", "owner": "lead", "task": "export the four functions from the package",
+   "files": ["src/textkit/__init__.py"], "depends_on": ["U1", "U2", "U3"],
+   "interface": ["textkit.__all__ lists word_frequencies, top_words, slugify, summary"],
+   "follow_pattern": [], "no_pattern_reason": "the package exports nothing yet",
+   "tests": ["Given the package, when `from textkit import summary, slugify` runs, then both import"],
+   "must_not": ["change any module's behaviour"],
+   "done_when": "python3 -m unittest discover -s tests -t . passes", "stop_if": []}
  ]
 }
 ```

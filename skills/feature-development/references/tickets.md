@@ -109,7 +109,9 @@ Every unit prompt carries `lane: [...]`, the unit's `files` as a JSON array (`pa
 "Dispatch"). The kit's lane guard reads it from the unit's own transcript and denies an edit outside
 those paths - or into your working tree - as it happens. So a unit that needs another file says so in
 `outside_files_needed` or stops with a `plan_mismatch`, instead of editing a file another unit owns.
-Bash writes are not guarded; the scope check when you apply the unit stays.
+A shell command's writes (`sed -i`, a redirect, a generator) cannot be stopped before they happen, so after
+each one the kit checks what changed in the unit's worktree, commits included, and makes the unit undo any
+path outside its lane. The scope check when you apply the unit stays as the last line.
 
 ## In the plan
 

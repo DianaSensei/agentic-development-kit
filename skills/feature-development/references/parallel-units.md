@@ -47,6 +47,13 @@ below. Between waves:
 
 ## Before dispatching
 
+- A run that was stopped mid-wave leaves its worktrees and snapshots behind. If
+  `bash <this skill's dir>/scripts/leftovers.sh list` shows any, tell the user what they hold before
+  you start: a unit with its own commits or uncommitted changes may be work to keep, or a run still
+  going in another session. `leftovers.sh clean` removes only what holds nothing; `clean --all` also
+  removes the rest, keeping uncommitted changes as a patch and a branch with commits of its own - the
+  user's call, never yours.
+
 - `base_commit`: for wave 1, `git rev-parse HEAD` in the working tree; for later waves, the snapshot
   taken after the previous wave.
 - The unit's context that is not at `base_commit`: the plan (just written, usually uncommitted),
@@ -110,7 +117,7 @@ For each unit, in the plan's order:
    FAIL → resume the agent with what the failure is, the same way, before applying anything from it.
 2. Check scope: `git diff --name-only <base_commit> <branch>` lists only paths inside the unit's
    `files`. The lane guard (`tickets.md` → "Lanes") already denied its edits outside them; this catches
-   what it cannot see, such as a file written from Bash. A path outside is not applied silently: tell the user which, and why the agent said it
+   what a unit left despite them - a stray path the after-command check named and the unit did not undo. A path outside is not applied silently: tell the user which, and why the agent said it
    needed it.
 3. Apply it to the working tree, uncommitted, like every other change this workflow makes:
    ```bash

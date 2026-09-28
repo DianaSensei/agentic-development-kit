@@ -92,5 +92,17 @@ if [ -f "$PROFILE/signals.md" ] && [ -n "$(resolve_skill reflect)" ]; then
   [ "${WAITING:-0}" -ge 5 ] && echo "- $WAITING signals about how the user works are waiting in their profile; when a task ends, offer to \`reflect\` on them (they approve each change)."
 fi
 
+# Unit worktrees or wave snapshots a stopped run left behind (feature-development's parallel units).
+# Counting is cheap; deciding what to keep is the user's, with leftovers.sh.
+ROOT="$(git_repo_root)"
+if [ -n "$ROOT" ]; then
+  LEFT="$(git -C "$ROOT" worktree list --porcelain 2>/dev/null | grep -c '^worktree .*/\.claude/worktrees/' || true)"
+  SNAPS="$(git -C "$ROOT" for-each-ref refs/adk/waves/ 2>/dev/null | grep -c . || true)"
+  if [ "${LEFT:-0}" -gt 0 ] || [ "${SNAPS:-0}" -gt 0 ]; then
+    SCRIPT="$(resolve_skill feature-development)"
+    echo "- ${LEFT:-0} unit worktree(s) and ${SNAPS:-0} wave snapshot(s) from an earlier run are in this repository - they may belong to a run still going in another session. Before starting parallel units, or when the user asks, list them with \`bash ${SCRIPT%/SKILL.md}/scripts/leftovers.sh list\` and let the user decide; \`clean\` removes only what holds no work."
+  fi
+fi
+
 # The last conditional above may be false; never let that become the hook's exit code.
 exit 0
