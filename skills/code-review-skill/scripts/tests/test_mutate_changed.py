@@ -4,6 +4,7 @@
 Run: python3 -m unittest discover -s skills/code-review-skill/scripts/tests
 """
 
+import importlib.util
 import os
 import subprocess
 import sys
@@ -159,6 +160,46 @@ class MutateChanged(unittest.TestCase):
         code, out = self.run_script()
         self.assertEqual(code, 0)
         self.assertIn("nothing to mutate", out)
+
+
+class MultilineStringLines(unittest.TestCase):
+    """Which lines are prose: exactly the lines a multi-line string holds, and nothing it shares with code."""
+
+    def setUp(self):
+        spec = importlib.util.spec_from_file_location("mutate_changed", SCRIPT)
+        self.m = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(self.m)
+
+    def lines(self, path, text):
+        return self.m.multiline_string_lines(path, text.splitlines(keepends=True))
+
+    def test_a_docstring_is_every_line_it_spans(self):
+        text = ("def f(a, b):\n"                   # 1
+                '    """First line,\n'              # 2
+                '    and the last one."""\n'        # 3
+                "    return a or b\n"               # 4
+                "\n"                                # 5
+                "\n"                                # 6
+                'NOTE = """\n'                      # 7 - code before the string
+                "text\n"                            # 8
+                "      more text\n"                 # 9 - blank where line 7 has code
+                '"""\n')                            # 10
+        self.assertEqual(self.lines("m.py", text), {2, 3, 8, 9, 10})
+
+    def test_lines_the_string_shares_with_code_stay_in(self):
+        text = ("x = 1\n"                    # 1
+                'msg = """a\n'               # 2 - code before the string
+                "b\n"                        # 3
+                'c""" + suffix\n'            # 4 - code after it
+                "y = 2\n")                   # 5
+        self.assertEqual(self.lines("m.py", text), {3})
+
+    def test_one_line_strings_and_other_languages_are_not_prose(self):
+        self.assertEqual(self.lines("m.py", 'x = "a or b"\ny = 1\n'), set())
+        self.assertEqual(self.lines("m.js", "const s = `a\nb or c\n`;\n"), set())
+
+    def test_code_that_does_not_tokenize_has_no_prose(self):
+        self.assertEqual(self.lines("m.py", 'x = """never closed\nor this\n'), set())
 
 
 if __name__ == "__main__":
