@@ -50,6 +50,9 @@ jobs:
       - name: Install Claude Code
         run: npm install --global --no-audit --no-fund @anthropic-ai/claude-code
 
+      - name: Install Basic Memory (the knowledge-base scenario's MCP server)
+        run: python -m pip install --quiet uv && uv tool install basic-memory
+
       - name: Git identity for the fixtures' worktrees
         run: git config --global user.email scenarios@example.com && git config --global user.name scenarios
 

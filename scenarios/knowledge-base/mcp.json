@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "basic-memory": {
+      "command": "basic-memory",
+      "args": ["mcp"],
+      "env": {
+        "BASIC_MEMORY_CONFIG_DIR": "$WORK/bm-config",
+        "BASIC_MEMORY_HOME": "$WORK/bm-personal",
+        "FASTEMBED_CACHE_PATH": "$HOME/.cache/adk-fastembed"
+      }
+    }
+  }
+}

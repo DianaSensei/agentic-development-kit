@@ -56,6 +56,12 @@ off to the right orchestrator, so in practice you rarely need to name a workflow
 |-------|---------|
 | [`worktrees`](./worktrees/SKILL.md) | The user's parallel work organized by task - one folder per task under a root they chose, holding a git worktree of every repository the task touches on one branch. Starts a task across repositories at once, shows every task's state across all projects, syncs each with its base, runs a command in each, removes finished tasks without losing work |
 
+## Knowledge
+
+| Skill | Use For |
+|-------|---------|
+| [`knowledge-base`](./knowledge-base/SKILL.md) | The system knowledge the code cannot tell - why decisions were made, who owns what, what must stay true, known debt, business rules and agreements between teams - kept in Basic Memory as Markdown notes, personal and team (reviewed in git). Read at every workflow's start for the systems a change touches; written only with the user's yes |
+
 ## Requirements & Design
 
 | Skill | Use For |

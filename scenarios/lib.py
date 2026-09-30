@@ -49,6 +49,10 @@ class Run:
                 out.append(dict(c, denied=err or "[dispatch-gate]" in text or "not found" in text))
         return out
 
+    def mcp(self, server, tool):
+        """The lead's calls to one MCP server's tool, e.g. mcp("basic-memory", "search_notes")."""
+        return self.calls_named(f"mcp__{server}__{tool}")
+
     def bash(self, pattern):
         """The lead's Bash commands matching a regular expression."""
         return [c["input"].get("command", "") for c in self.calls_named("Bash")

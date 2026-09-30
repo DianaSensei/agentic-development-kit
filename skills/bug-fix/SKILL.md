@@ -22,7 +22,7 @@ metadata:
   role: orchestrator
   scope: end-to-end
   output-format: code-and-report
-  related-skills: workflow-router, code-review-skill, test-master, monitoring-expert, legacy-modernizer
+  related-skills: workflow-router, code-review-skill, test-master, monitoring-expert, legacy-modernizer, knowledge-base
 ---
 
 # Bug Fix Workflow
@@ -34,7 +34,8 @@ Input: `$ARGUMENTS`
 
 ## Step 0 - Discover Context
 
-Read `CLAUDE.md`, memory/MCP if connected, and the existing code/logic relevant to the suspected bug
+Read `CLAUDE.md`, the knowledge base if connected (`knowledge-base` → Reading: known debt, rules and
+decisions on the systems the bug is in), and the existing code/logic relevant to the suspected bug
 area. If `workflow-router` already read these in this same session immediately before handing off,
 reuse that - don't re-read from scratch.
 
@@ -131,7 +132,9 @@ something).
 
 ## Step 6 - Knowledge Capture & Postmortem (immediately after Step 5)
 
-1. Memory/MCP (if connected): record the root cause, the fix, and the final outcome.
+1. Knowledge base, if connected: propose the notes this fix produced - debt it exposed and did not pay,
+   a rule the fix settled, a note it proved wrong - and write the ones the user says yes to
+   (`knowledge-base` → Writing).
 2. **Experience log (cumulative, never overwritten)**: append to `docs/knowledge/experience-log.md`
    using the same format as `feature-development` (date, class, source, area, cause, attempts used,
    outcome, the fix or the approaches that did NOT work) - one entry for the bug itself, one per fix-loop

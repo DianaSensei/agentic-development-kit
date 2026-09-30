@@ -127,6 +127,10 @@ layout under `plugins/<name>/`.
   root you choose once (`~/worktrees/billing-feat-abc/{api,web}`), each repository a git worktree on the
   task's branch. It starts a task in every repository at once, shows every task's state across your
   projects, keeps each up to date with its base, and removes finished tasks without losing work.
+- **What the code cannot tell** - why a decision was made, who owns a system, what must stay true, known
+  debt, business rules, agreements between teams - lives in `knowledge-base`: Basic Memory notes, a
+  personal project and a team project reviewed in git. Every workflow reads the notes on the systems it
+  touches before planning, and proposes new ones at the end for your yes.
 - **Ideas not ready to build** go to `intent-capture`, which writes `docs/intents/<slug>.md` - the
   problem, evidence, and desired outcome, no solution. Later, "implement `docs/intents/<slug>.md`" starts
   the workflow from it, and the workflow links the intent to its plan and changelog as it goes.
