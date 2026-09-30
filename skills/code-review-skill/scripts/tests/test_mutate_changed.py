@@ -110,6 +110,40 @@ class MutateChanged(unittest.TestCase):
         self.assertNotIn("== to !=", out)
         self.assertNotIn("and to or", out)
 
+    def test_lines_inside_a_multiline_string_are_left_alone(self):
+        self.write("src/shop.py", "def total(items):\n    return sum(items)\n\n\n"
+                   "def discounted(price, is_member):\n"
+                   '    """Members pay 10 less at 100 or more,\n'
+                   "    and everyone else pays the price as is.\n"
+                   '    """\n'
+                   "    if is_member and price >= 100:\n"
+                   "        return price - 10\n"
+                   "    return price\n")
+        self.write("tests/test_discount.py", "import unittest\nfrom shop import discounted\n\n\n"
+                   "class D(unittest.TestCase):\n"
+                   "    def test_member_over_100(self):\n        self.assertEqual(discounted(100, True), 90)\n"
+                   "    def test_member_under_100(self):\n        self.assertEqual(discounted(99, True), 99)\n"
+                   "    def test_not_member(self):\n        self.assertEqual(discounted(100, False), 100)\n")
+        code, out = self.run_script("--max", "40")
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("everyone else", out)
+        self.assertNotIn("Members pay", out)
+
+    def test_each_mutant_runs_its_own_code_not_a_cached_one(self):
+        # Two mutants a second apart at most, each one byte shorter: Python's bytecode cache
+        # (source mtime in whole seconds, and size) would hand the second one the first one's code.
+        self.write("src/shop.py", "def total(items):\n    return sum(items)\n\n\n"
+                   "def at_least(a, b):\n"
+                   "    unused = a and b\n"
+                   "    return a >= b\n")
+        self.write("tests/test_at_least.py", "import unittest\nfrom shop import at_least\n\n\n"
+                   "class A(unittest.TestCase):\n"
+                   "    def test_equal(self):\n        self.assertIs(at_least(1, 1), True)\n"
+                   "    def test_less(self):\n        self.assertIs(at_least(0, 1), False)\n")
+        code, out = self.run_script("--max", "40")
+        self.assertIn("and to or", out)                  # the unused line: an equivalent mutant
+        self.assertNotIn(">= to >", out, out)            # killed by test_equal, whatever ran before it
+
     def test_the_suite_must_pass_before_it_is_measured(self):
         self.write("src/shop.py", "def total(items):\n    return sum(items) + 1\n")
         code, out = self.run_script()
