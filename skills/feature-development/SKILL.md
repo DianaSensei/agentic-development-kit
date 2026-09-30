@@ -22,7 +22,7 @@ metadata:
   role: orchestrator
   scope: end-to-end
   output-format: code-and-report
-  related-skills: workflow-router, intent-capture, code-review-skill, test-master, ui-ux-design-skill, technical-proposal-writer, reflect
+  related-skills: workflow-router, intent-capture, code-review-skill, test-master, ui-ux-design-skill, technical-proposal-writer, reflect, worktrees
 ---
 
 # Feature Development Workflow

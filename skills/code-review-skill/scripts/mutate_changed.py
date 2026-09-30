@@ -18,12 +18,14 @@ Exit: 0 every mutant killed; 1 a survivor; 2 nothing could be run (usage, or the
 """
 
 import argparse
+import io
 import os
 import re
 import shutil
 import subprocess
 import sys
 import tempfile
+import tokenize
 
 SOURCE = re.compile(r"\.(py|js|jsx|ts|tsx|mjs|cjs|java|kt|kts|go|rs|rb|php|cs|swift|scala|c|cc|cpp|h|hpp)$")
 TEST_PATH = re.compile(r"(^|/)(tests?|__tests__|spec|specs)/|(^|/)test_[^/]*$|_test\.\w+$|\.(test|spec)\.\w+$|Tests?\.(java|kt|cs)$")
@@ -96,6 +98,26 @@ def string_spans(line):
     return spans
 
 
+def multiline_string_lines(path, content):
+    """Line numbers of a Python string that spans lines (a docstring): prose, not code. Its first and last
+    lines count too, unless code shares them - then the string check on that one line applies."""
+    if not path.endswith(".py"):
+        return set()
+    lines = set()
+    try:
+        for tok in tokenize.generate_tokens(io.StringIO("".join(content)).readline):
+            if tok.type == tokenize.STRING and tok.end[0] > tok.start[0]:
+                lines.update(range(tok.start[0] + 1, tok.end[0]))
+                first, last = content[tok.start[0] - 1], content[tok.end[0] - 1]
+                if not first[:tok.start[1]].strip():
+                    lines.add(tok.start[0])       # nothing but the string starts on it
+                if not last[tok.end[1]:].strip():
+                    lines.add(tok.end[0])
+    except (tokenize.TokenError, IndentationError, SyntaxError):
+        return set()                              # not valid Python as it stands: mutate every line
+    return lines
+
+
 def mutants_for(path, number, text):
     """Every single-edit mutant of one line: (label, mutated line)."""
     body = text.rstrip("\n")
@@ -134,10 +156,23 @@ def spread(per_line, limit):
 
 def run(cmd, cwd, timeout):
     try:
-        r = subprocess.run(cmd, shell=True, cwd=cwd, capture_output=True, text=True, timeout=timeout)
+        # No bytecode cache: it is keyed on the source's mtime in whole seconds and its size, so two mutants
+        # written within a second that change the size alike would run the first one's code for both.
+        r = subprocess.run(cmd, shell=True, cwd=cwd, capture_output=True, text=True, timeout=timeout,
+                           env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"))
         return "pass" if r.returncode == 0 else "fail"
     except subprocess.TimeoutExpired:
         return "timeout"
+
+
+def not_copied(folder, names):
+    """What the temporary copy leaves out: git's own data, Python's bytecode caches, and the unit worktrees
+    under .claude/worktrees/ - only that folder: a project's own folder named worktrees is source like any
+    other."""
+    skip = {".git", "__pycache__"} & set(names)
+    if os.path.normpath(folder) == ".claude" and "worktrees" in names:
+        skip.add("worktrees")
+    return skip
 
 
 def main(argv):
@@ -156,8 +191,9 @@ def main(argv):
     for path, numbers in sorted(lines.items()):
         with open(path, encoding="utf-8", errors="replace") as f:
             content = f.readlines()
+        prose = multiline_string_lines(path, content)
         for n in numbers:
-            if n <= len(content):
+            if n <= len(content) and n not in prose:
                 per_line.append([(path, n, label, content[n - 1], new)
                                  for label, new in mutants_for(path, n, content[n - 1])])
     chosen = spread(per_line, a.max)
@@ -168,8 +204,7 @@ def main(argv):
     tmp = tempfile.mkdtemp(prefix="adk-mutants-")
     try:
         copy = os.path.join(tmp, "tree")
-        shutil.copytree(".", copy, symlinks=True,
-                        ignore=shutil.ignore_patterns(".git", "worktrees") if os.path.isdir(".git") else None)
+        shutil.copytree(".", copy, symlinks=True, ignore=not_copied)
         if run(a.test, copy, a.timeout) != "pass":
             print("The test command fails on the unchanged code: fix the suite before measuring it.")
             return 2
