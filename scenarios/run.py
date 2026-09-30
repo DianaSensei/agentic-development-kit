@@ -6,7 +6,9 @@
     options: --model <id>  --keep  --timeout <seconds>  --idle <seconds>
 
 Each scenario directory holds fixture.sh (builds a small repository), prompt.md (what the user says)
-and check.py (asserts on the transcript and the repository afterwards). A scenario is a real headless
+and check.py (asserts on the transcript and the repository afterwards). An optional mcp.json gives the
+session MCP servers - and only those; `$WORK` in it is the run's own directory, next to the repository,
+and `$HOME` the user's home. A scenario is a real headless
 Claude Code session with this plugin loaded - it costs money (about $1-2 each) and takes minutes, so it
 runs before a release and by hand, not on every pull request. See scenarios/README.md.
 
@@ -16,6 +18,7 @@ Either way the check still runs, on what the session left.
 """
 
 import argparse
+import json
 import os
 import shutil
 import signal
@@ -88,6 +91,15 @@ def run_one(name, model, timeout, idle, keep):
 
     cmd = ["claude", "-p", prompt, "--plugin-dir", KIT, "--add-dir", KIT, "--allowedTools", TOOLS,
            "--permission-mode", "acceptEdits", "--output-format", "stream-json", "--verbose"]
+    mcp = os.path.join(src, "mcp.json")
+    if os.path.isfile(mcp):
+        with open(mcp, encoding="utf-8") as f:
+            servers = f.read().replace("$WORK", work).replace("$HOME", os.path.expanduser("~"))
+        with open(os.path.join(work, "mcp.json"), "w", encoding="utf-8") as f:
+            f.write(servers)
+        tools = ",".join([TOOLS] + [f"mcp__{name}" for name in json.loads(servers)["mcpServers"]])
+        cmd[cmd.index("--allowedTools") + 1] = tools
+        cmd += ["--mcp-config", os.path.join(work, "mcp.json"), "--strict-mcp-config"]
     if model:
         cmd += ["--model", model]
     began = time.time()

@@ -22,7 +22,7 @@ metadata:
   role: orchestrator
   scope: end-to-end
   output-format: code-and-report
-  related-skills: workflow-router, intent-capture, code-review-skill, test-master, ui-ux-design-skill, technical-proposal-writer, reflect, worktrees
+  related-skills: workflow-router, intent-capture, code-review-skill, test-master, ui-ux-design-skill, technical-proposal-writer, reflect, worktrees, knowledge-base
 ---
 
 # Feature Development Workflow
@@ -52,7 +52,7 @@ reopens the scope, a second service, an expensive path. Say so in one line.
 
 ## Step 0 - Discover Context
 
-Read `CLAUDE.md`, memory/MCP if connected, and the existing code relevant to the request. If
+Read `CLAUDE.md`, the knowledge base if connected (`knowledge-base` → Reading: the notes on the systems this request touches - decisions, rules, agreements, debt; pass the ones that bear on it to the agents below, cited by title), and the existing code relevant to the request. If
 `workflow-router` just read these before handing off, reuse that rather than re-reading.
 
 **Known dead ends**: search `docs/knowledge/experience-log.md`, if it exists, for entries whose `Area` or
@@ -303,11 +303,14 @@ changes something).
 
 ## Step 5 - Knowledge Capture (immediately after Step 4)
 
-Light depth: item 3 (experience log) only; the commit and the conversation are the record.
+Light depth: items 1 (knowledge base) and 3 (experience log) only; the commit and the conversation are
+the record.
 
 Templates for both files: `references/report-and-logs.md`.
 
-1. Memory/MCP if connected: key decisions and the final outcome.
+1. Knowledge base, if connected: propose the notes this run produced - a decision that binds beyond this
+   change, debt found and not fixed, a rule the user clarified, a note that proved stale - and write the
+   ones the user says yes to (`knowledge-base` → Writing).
 2. `docs/changelog/<feature-slug>.md` - derived from `docs/plans/<feature-slug>.md` (chosen proposal + its
    diagrams, updated if the design shifted during implementation), plus the rationale for choosing it,
    final AC/DoD status, remaining risk, and files changed. This records what was ACTUALLY built (unlike

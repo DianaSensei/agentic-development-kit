@@ -22,7 +22,7 @@ metadata:
   role: orchestrator
   scope: end-to-end
   output-format: code-and-report
-  related-skills: workflow-router, solution-design-principles, code-review-skill, test-master, legacy-modernizer
+  related-skills: workflow-router, solution-design-principles, code-review-skill, test-master, legacy-modernizer, knowledge-base
 ---
 
 # Refactor Workflow
@@ -35,7 +35,8 @@ bundled in."
 
 ## Step 0 - Discover Context
 
-Read `CLAUDE.md`, memory/MCP if connected, and the existing code/logic in the area to be refactored. If
+Read `CLAUDE.md`, the knowledge base if connected (`knowledge-base` → Reading: the debt this refactor may
+pay and the decisions and agreements it must keep), and the existing code/logic in the area to be refactored. If
 `workflow-router` already read these in this same session immediately before handing off, reuse that -
 don't re-read from scratch.
 
@@ -143,7 +144,9 @@ No separate confirmation checkpoint is needed here - proceed straight to Step 7 
 
 ## Step 7 - Knowledge Capture (immediately after Step 6)
 
-1. Memory/MCP (if connected): record the refactor pattern applied and why.
+1. Knowledge base, if connected: propose the notes this refactor changed - debt paid down (`status`), a
+   system note whose interfaces or dependencies moved - and write the ones the user says yes to
+   (`knowledge-base` → Writing).
 2. Changelog file (full depth; at light depth the commit is the record): `docs/changelog/<refactor-slug>.md` - the original pain point, the chosen approach
    (+ reasoning), the behavior preservation checklist, the final outcome (cross-checked against Step 5),
    and the list of files changed. This is the record of what was ACTUALLY refactored - it doesn't

@@ -22,8 +22,9 @@ Unlike `business-analyst` (completely agnostic), you NEED to know the project's 
 technology to route correctly in `task_breakdown`. Determine in priority order:
 1. **`CLAUDE.md`** - if the stack/conventions are already clearly stated there, use it
    directly, highest priority.
-2. **Memory/MCP connected for the project** (if any) - architecture docs, ADRs, prior
-   decisions already saved - use these if they exist.
+2. **Knowledge-base notes in your prompt** (if the lead passed any) - decisions, agreements,
+   rules and known debt for the systems this change touches. A proposal that breaks a decision
+   or agreement says so in its tradeoffs, citing the note's title; known debt in its path is a risk.
 3. **Concrete evidence in code** (config files, dependencies, directory structure) - only
    conclude when there's clear evidence, don't guess.
 Record clearly in the output which source was used to determine the stack, so the
@@ -110,7 +111,7 @@ without calling `solution-architect` again.
 {
   "project_context_detected": {
     "stack_summary": "...",
-    "evidence": "CLAUDE.md line ..., or memory/MCP: ..., or file: ...",
+    "evidence": "CLAUDE.md line ..., or knowledge base: [[<note title>]], or file: ...",
     "confidence": "high (from CLAUDE.md/memory) | medium (from code) | low (unclear, needs user confirmation)"
   },
   "priorities": [

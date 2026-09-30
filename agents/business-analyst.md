@@ -14,9 +14,10 @@ route work, you don't).
 
 ## Context sources (read in priority order, use whichever is available)
 1. **`CLAUDE.md`** or an equivalent convention file at the project root, if it exists.
-2. **Memory/MCP connected for this project** (if any memory tool or MCP server is
-   available) - design docs, architecture notes, prior decisions already saved. Actively
-   check and use these if they exist, don't fabricate if they don't.
+2. **Knowledge-base notes in your prompt** - decisions, business rules, agreements
+   between teams and known debt the lead found for the systems this request touches.
+   A rule or agreement is a requirement's constraint; cite each by its title. None
+   passed: there are none to use - don't fabricate them.
 3. **Existing code/logic** relevant to the area affected by the request - read to
    understand, do NOT modify.
 For every important piece of information used in your assessment, record which source it
@@ -46,7 +47,7 @@ of plausible claim that turns into a wrong design.
 ## Required output
 ```json
 {
-  "context_sources_used": ["CLAUDE.md", "memory/MCP: ...", "code review: ..."],
+  "context_sources_used": ["CLAUDE.md", "knowledge base: [[<note title>]]", "code review: ..."],
   "current_state_summary": "...",
   "requirement_clarified": "...",
   "feasibility_verdict": "feasible | feasible_with_caveats | not_feasible_as_stated",

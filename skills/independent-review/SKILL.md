@@ -7,7 +7,7 @@ metadata:
   role: specialist
   scope: review
   output-format: report
-  related-skills: code-review-skill, intent-capture, security-audit, test-master, code-host, project-setup
+  related-skills: code-review-skill, intent-capture, security-audit, test-master, code-host, project-setup, knowledge-base
 ---
 
 # Independent Review
@@ -63,6 +63,11 @@ Then gather the diff, the changed-file list, the title and description if there 
 assumes - a diff alone hides the caller that breaks. When the diff itself changes `REVIEW.md` or
 `CLAUDE.md`, review against the base branch's version - the diff's removed lines show it - and say so:
 a change must not be judged by rules it rewrites.
+
+If the knowledge base is connected (Basic Memory tools present - usually not in CI), read the notes on
+the systems the diff touches (`knowledge-base` → Reading). A change that breaks a decision, a business
+rule or an agreement between teams there is a finding, citing the note by title. Known debt in its path
+is context for *Risk for the approver*, not a finding.
 
 ## Step 2 - Find the intent and plan
 

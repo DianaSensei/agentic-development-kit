@@ -7,7 +7,7 @@ metadata:
   role: specialist
   scope: documentation
   output-format: document
-  related-skills: feature-development, bug-fix, refactor, code-host
+  related-skills: feature-development, bug-fix, refactor, code-host, knowledge-base
 ---
 
 # Reflect
