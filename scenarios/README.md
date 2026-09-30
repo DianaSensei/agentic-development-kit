@@ -14,6 +14,7 @@ repository its fixture builds, followed by a check of what the session did.
 | `rubric-checkpoint` | the architect on `models.plan`, its proposals checked by `check_proposals.py`, all seven rubric dimensions at the Checkpoint, no code before the choice | $2.37, 13 min |
 | `tickets-dispatch` | the rules read before dispatch, the wave-2 snapshot, three units with lane and ticket on `sonnet`, conformance checked, tests pass, branch unmoved, nothing left behind | $1.69, 7 min |
 | `specialist-routing` | a project's code-writing specialist (`route_through_units`) gets its unit through `unit-implementer` with `specialist` and `specialist_path`, lane and `sonnet` - never dispatched straight to the specialist | $1.13, 6 min |
+| `knowledge-base` | the team's Basic Memory notes on the system are searched before anything is decided; the request (10% off) is raised against the team's rule (a flat 10.00 off) with its source, and the integer-cents decision carried in; no note and no code written without the person. Needs `basic-memory` installed | $0.22, 1 min |
 | `tests-bite` | the self-check runs `mutate_changed.py` on a change whose test is hollow, and the tests written in its place kill every mutant; the rule under test is left as written | $0.16, 2 min |
 
 Each came from a live run that found something: a lead dispatching without reading
@@ -25,7 +26,7 @@ tight ticket built on the session's model. A change that brings one of those bac
 From the repository root, with Claude Code signed in or `ANTHROPIC_API_KEY` set:
 
 ```bash
-python3 scenarios/run.py                          # all six, about $7.5 and 40 minutes
+python3 scenarios/run.py                          # all seven, about $7.7 and 41 minutes
 python3 scenarios/run.py tickets-dispatch --keep  # one, keeping its repo and transcript
 ```
 

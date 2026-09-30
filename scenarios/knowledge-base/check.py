@@ -18,9 +18,9 @@ c.must(bool(re.search(rf"(?is)10\s*%.{{0,400}}({CONFLICT})|({CONFLICT}).{{0,400}
        "the request's 10% is raised against the rule, not silently picked")
 c.expect(bool(re.search(r"(?i)integer cents|Money is integer cents", text)),
          "the integer-cents decision is carried into the analysis")
-c.expect(bool(run.dispatches("business-analyst")) and any(
-    re.search(r"(?i)member discount", str(d["input"].get("prompt", ""))) for d in run.dispatches("business-analyst")),
-    "the notes were passed to the business analyst")
+analysts = run.dispatches("business-analyst")      # none at light depth: the analysis is inline
+c.expect(not analysts or any(re.search(r"(?i)member discount", str(d["input"].get("prompt", ""))) for d in analysts),
+         "a business analyst, when there is one, got the notes in its prompt")
 c.must(not run.mcp("basic-memory", "write_note") and not run.mcp("basic-memory", "edit_note"),
        "no note written without the user's yes")
 c.must(not git(repo, "status", "--porcelain", "--", "src", "tests"), "no code written before the person chose")
