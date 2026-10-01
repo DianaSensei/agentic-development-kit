@@ -196,7 +196,7 @@ class Workspace(unittest.TestCase):
     # -- seeing
     def test_status_tells_each_state_apart(self):
         self.wt("new", "t4", self.repos["api"], self.repos["web"])
-        self.assertEqual({r["state"] for r in self.status("t4").values()}, {"in-base"})
+        self.assertEqual({r["state"] for r in self.status("t4").values()}, {"new"})
         self.write(os.path.join(self.task_path("t4", "api"), "wip.txt"), "w\n")
         self.commit_in("t4", "web")
         s = self.status("t4")
@@ -313,6 +313,201 @@ class Workspace(unittest.TestCase):
         self.assertFalse(os.path.exists(self.task_path("merged")))
         self.assertTrue(os.path.isdir(self.task_path("open")))
         self.assertTrue(os.path.isdir(self.task_path("squashed")))
+
+    # -- the manifest, dependencies, checks
+    def manifest(self, task):
+        return json.loads(self.read(os.path.join(self.task_path(task), "task.json")))
+
+    def tag(self, name, tag):
+        seed = os.path.join(self.base, "seed", name)
+        self.git(seed, "tag", tag)
+        self.git(seed, "push", "-q", "origin", tag)
+
+    def test_a_dependency_is_pinned_not_branched(self):
+        self.tag("web", "v1")
+        self.commit_upstream("web", "later.txt", "l\n")             # main moves on past v1
+        self.wt("new", "t20", self.repos["api"], "--dep", self.repos["web"] + "@v1")
+        web = self.task_path("t20", "web")
+        v1 = self.git(self.repos["web"], "rev-parse", "v1^{commit}")
+        self.assertEqual(self.git(web, "rev-parse", "HEAD"), v1)
+        self.assertEqual(self.git(web, "branch", "--show-current"), "")          # detached
+        self.assertEqual(self.git(self.repos["web"], "branch", "--list", "t20"), "")
+        m = self.manifest("t20")["repositories"]
+        self.assertEqual((m["web"]["role"], m["web"]["ref"], m["web"]["commit"]), ("dependency", "v1", v1))
+        self.assertEqual((m["api"]["role"], m["api"]["base"]), ("edit", "origin/main"))
+        self.assertTrue(m["api"]["url"].endswith("api.git"))
+        claude = self.read(os.path.join(self.task_path("t20"), "CLAUDE.md"))
+        self.assertIn("dependency - do not edit", claude)
+        self.assertIn("Dependencies are pinned", claude)
+
+    def test_a_dependency_by_branch_follows_origin_and_is_left_alone_by_sync(self):
+        self.commit_upstream("web", "fresh.txt", "f\n")                # the local main is now stale
+        self.wt("new", "t21", self.repos["api"], "--dep", self.repos["web"] + "@main")
+        pinned = self.git(self.task_path("t21", "web"), "rev-parse", "HEAD")
+        self.assertEqual(pinned, self.git(self.repos["web"], "rev-parse", "origin/main"))
+        self.commit_upstream("web", "newer.txt", "n\n")
+        out = self.wt("sync", "t21").stdout
+        self.assertIn("web: a dependency, pinned at origin/main", out)
+        self.assertEqual(self.git(self.task_path("t21", "web"), "rev-parse", "HEAD"), pinned)
+        self.wt("pin", "t21", "web", "main")
+        self.assertEqual(self.git(self.task_path("t21", "web"), "rev-parse", "HEAD"),
+                         self.git(self.repos["web"], "rev-parse", "origin/main"))
+        self.assertEqual(self.manifest("t21")["repositories"]["web"]["commit"],
+                         self.git(self.repos["web"], "rev-parse", "origin/main"))
+
+    def test_each_edit_repo_can_have_its_own_base(self):
+        seed = os.path.join(self.base, "seed", "web")
+        self.git(seed, "push", "-q", "origin", "HEAD:release")
+        out = self.wt("new", "t22", self.repos["api"], self.repos["web"] + "@origin/release").stdout
+        self.assertIn("api: t22/api on t22 (base origin/main)", out)
+        self.assertIn("web: t22/web on t22 (base origin/release)", out)
+
+    def test_a_changed_dependency_shows_and_is_not_lost(self):
+        self.wt("new", "t23", self.repos["api"], "--dep", self.repos["web"])
+        web = self.task_path("t23", "web")
+        self.write(os.path.join(web, "build-output.bin"), "b\n")         # untracked: what a build leaves
+        self.assertEqual(self.status("t23")["web"]["state"], "pinned")
+        self.write(os.path.join(web, "README.md"), "edited\n")
+        self.assertEqual(self.status("t23")["web"]["state"], "modified")
+        r = self.wt("remove", "t23", ok=False)
+        self.assertIn("web: a dependency with 1 changed file(s)", r.stderr)
+        self.wt("remove", "t23", "--force")
+        self.assertIn("edited", self.read(os.path.join(self.root, ".removed", "t23", "web.patch")))
+
+    def test_run_skips_dependencies_unless_asked(self):
+        self.wt("new", "t24", self.repos["api"], "--dep", self.repos["web"], "--no-fetch")
+        self.assertNotIn("== web", self.wt("run", "t24", "--", "true").stdout)
+        self.assertIn("== web", self.wt("run", "t24", "--all", "--", "true").stdout)
+
+    def test_check_runs_the_task_as_a_whole_and_records_every_commit(self):
+        self.wt("new", "t25", self.repos["api"], "--dep", self.repos["web"],
+                "--build", "test -f api/README.md && test -f web/README.md",
+                "--test", "echo $ADK_TASK:$COMPOSE_PROJECT_NAME > ran.txt")
+        out = self.wt("check", "t25").stdout
+        self.assertIn("passed", out)
+        self.assertEqual(self.read(os.path.join(self.task_path("t25"), "ran.txt")), "t25:t25\n")
+        lines = self.read(os.path.join(self.task_path("t25"), "checks.jsonl")).splitlines()
+        rec = json.loads(lines[-1])
+        self.assertEqual(rec["result"], "passed")
+        self.assertEqual(rec["repositories"]["api"]["commit"], self.git(self.task_path("t25", "api"), "rev-parse", "HEAD"))
+        self.assertEqual(rec["repositories"]["web"]["role"], "dependency")
+        self.commit_in("t25", "api")
+        st = json.loads(self.wt("status", "t25", "--json").stdout)["tasks"][0]["last_check"]
+        self.assertEqual((st["result"], st["changed_since"]), ("passed", ["api"]))
+        r = self.wt("check", "t25", "--", "exit 3", ok=False)
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("failed", r.stdout)
+
+    def test_check_without_commands_says_where_to_put_them(self):
+        self.wt("new", "t26", self.repos["api"], "--no-fetch")
+        r = self.wt("check", "t26", ok=False)
+        self.assertIn("has no build or test commands", r.stderr)
+        self.assertIn("task.json", r.stderr)
+
+    def test_each_task_has_an_environment_of_its_own(self):
+        self.wt("new", "t27", self.repos["api"], "--no-fetch")
+        self.wt("new", "t28", self.repos["web"], "--no-fetch")
+        a, b = self.manifest("t27")["runtime"]["port_offset"], self.manifest("t28")["runtime"]["port_offset"]
+        self.assertNotEqual(a, b)
+        m = self.manifest("t27")
+        m["env"] = {"MAVEN_OPTS": "-Dmaven.repo.local=${ADK_TASK_CACHE}/m2"}
+        self.write(os.path.join(self.task_path("t27"), "task.json"), json.dumps(m))
+        self.wt("refresh", "t27")
+        env = self.read(os.path.join(self.task_path("t27"), "task.env"))
+        self.assertIn(f"ADK_PORT_OFFSET={a}", env)
+        self.assertIn("-Dmaven.repo.local=" + os.path.join(self.task_path("t27"), ".cache", "m2"), env)
+        out = self.wt("run", "t27", "--", "echo $MAVEN_OPTS").stdout
+        self.assertIn(os.path.join(self.task_path("t27"), ".cache", "m2"), out)
+
+    def test_extras_are_copied_not_linked_and_go_with_the_task(self):
+        data = os.path.join(self.base, "data", "fixtures")
+        self.write(os.path.join(data, "sample.json"), "{}\n")
+        self.wt("new", "t29", self.repos["api"], "--extra", data, "--no-fetch")
+        copied = os.path.join(self.task_path("t29"), "fixtures", "sample.json")
+        self.assertTrue(os.path.isfile(copied))
+        self.assertFalse(os.path.islink(os.path.dirname(copied)))
+        self.assertEqual(self.manifest("t29")["external_paths"], [{"source": data, "destination": "fixtures"}])
+        self.wt("remove", "t29")
+        self.assertFalse(os.path.exists(self.task_path("t29")))
+        self.assertTrue(os.path.isfile(os.path.join(data, "sample.json")))
+        r = self.wt("new", "t30", self.repos["api"], "--extra", data + ":api", "--no-fetch", ok=False)
+        self.assertIn("api: the task folder already uses that name", r.stderr)
+        self.assertFalse(os.path.exists(self.task_path("t30")))
+
+    def test_restore_rebuilds_a_task_from_its_manifest(self):
+        self.tag("web", "v1")
+        self.wt("new", "t31", self.repos["api"], "--dep", self.repos["web"] + "@v1", "--test", "true")
+        self.commit_in("t31", "api")
+        self.git(self.task_path("t31", "api"), "push", "-q", "-u", "origin", "t31")
+        out = self.wt("remove", "t31").stdout
+        kept = os.path.join(self.root, ".removed", "t31", "task.json")
+        self.assertIn(f"wt.py restore {kept}", out)
+        self.wt("restore", kept)
+        api = self.task_path("t31", "api")
+        self.assertTrue(os.path.isfile(os.path.join(api, "change.txt")))             # the pushed branch, picked up
+        self.assertEqual(self.git(self.task_path("t31", "web"), "rev-parse", "HEAD"),
+                         self.git(self.repos["web"], "rev-parse", "v1^{commit}"))
+        self.assertEqual(self.manifest("t31")["test"], ["true"])
+
+    def test_restore_on_another_machine_clones_what_is_missing(self):
+        self.wt("new", "t32", self.repos["api"], "--dep", self.repos["web"], "--no-fetch")
+        manifest = os.path.join(self.base, "shared-task.json")
+        self.write(manifest, self.read(os.path.join(self.task_path("t32"), "task.json")))
+        other = dict(self.env, ADK_WORKTREES_CONFIG=os.path.join(self.base, "other.json"))
+        def wt2(*args, ok=True):
+            r = subprocess.run(["python3", SCRIPT, *args], capture_output=True, text=True, env=other, timeout=60)
+            if ok:
+                self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            return r
+        m = json.loads(self.read(manifest))
+        for r in m["repositories"].values():
+            r["source"] = "/nowhere"                                        # a path from the other machine
+        self.write(manifest, json.dumps(m))
+        wt2("init", "--root", os.path.join(self.base, "root2"))
+        r = wt2("restore", manifest, ok=False)
+        self.assertIn("wt.py init --sources", r.stderr)
+        wt2("init", "--sources", os.path.join(self.base, "src2"))
+        out = wt2("restore", manifest).stdout
+        self.assertIn("cloning", out)
+        self.assertTrue(os.path.isdir(os.path.join(self.base, "src2", "api", ".git")))
+        self.assertTrue(os.path.isdir(os.path.join(self.base, "root2", "t32", "web")))
+
+    def test_an_untouched_task_is_not_pruned_even_after_sync(self):
+        self.wt("new", "fresh", self.repos["api"])
+        self.commit_upstream("api", "u.txt", "u\n")
+        self.wt("sync", "fresh")
+        self.assertEqual(self.status("fresh")["api"]["state"], "new")
+        out = self.wt("prune", "--yes").stdout
+        self.assertIn("kept fresh: nothing done in it yet", out)
+        self.assertTrue(os.path.isdir(self.task_path("fresh")))
+
+    def test_a_missing_base_is_not_taken_for_pushed(self):
+        local = os.path.join(self.base, "code", "tool")
+        self.git(self.base, "init", "-q", "-b", "main", local)
+        self.write(os.path.join(local, "a.txt"), "a\n")
+        self.git(local, "add", "-A")
+        self.git(local, "commit", "-qm", "init")
+        self.wt("new", "t33", local)
+        self.commit_in("t33", "tool")
+        m = self.manifest("t33")
+        m["repositories"]["tool"]["base"] = "gone-branch"
+        self.write(os.path.join(self.task_path("t33"), "task.json"), json.dumps(m))
+        self.assertEqual(self.status("t33")["tool"]["state"], "unknown")
+        r = self.wt("remove", "t33", ok=False)
+        self.assertIn("its base gone-branch is gone", r.stderr)
+
+    def test_a_task_made_by_0_21_is_read_and_migrated(self):
+        self.wt("new", "old", self.repos["api"], "--no-fetch")
+        d = self.task_path("old")
+        m = self.manifest("old")
+        legacy = {"task": "old", "branch": "old", "created": m["created"],
+                  "repos": {"api": {"source": m["repositories"]["api"]["source"], "base": "origin/main"}}}
+        os.remove(os.path.join(d, "task.json"))
+        self.write(os.path.join(d, ".adk-task.json"), json.dumps(legacy))
+        self.assertEqual(self.status("old")["api"]["role"], "edit")
+        self.wt("refresh", "old")
+        self.assertFalse(os.path.exists(os.path.join(d, ".adk-task.json")))
+        self.assertEqual(self.manifest("old")["repositories"]["api"]["role"], "edit")
 
 
 if __name__ == "__main__":

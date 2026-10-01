@@ -54,7 +54,7 @@ off to the right orchestrator, so in practice you rarely need to name a workflow
 
 | Skill | Use For |
 |-------|---------|
-| [`worktrees`](./worktrees/SKILL.md) | The user's parallel work organized by task - one folder per task under a root they chose, holding a git worktree of every repository the task touches on one branch. Starts a task across repositories at once, shows every task's state across all projects, syncs each with its base, runs a command in each, removes finished tasks without losing work |
+| [`worktrees`](./worktrees/SKILL.md) | The user's parallel work organized by task - one folder per task under a root they chose, holding a checkout of every repository the task needs: git worktrees on the task's branch for those it changes, pinned at a tag or commit for those it builds against. A manifest (`task.json`) records roles and versions and rebuilds the workspace elsewhere; `check` builds and tests the task as a whole and records every repository's commit; each task gets its own ports, compose project and cache. Shows every task's state, syncs with bases, removes finished tasks without losing work |
 
 ## Requirements & Design
 
