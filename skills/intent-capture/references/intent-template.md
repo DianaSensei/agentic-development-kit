@@ -3,8 +3,8 @@
 Written to `docs/intents/<slug>.md`. Frontmatter keys are flat and always present, so a status or a
 missing link can be found with `grep` across the whole directory. Leave a key empty rather than
 deleting it or writing `null`. `scripts/check-intent.sh` checks this shape: every key, no extra keys,
-valid `status`/`type`, and every section below, in order. `signal_band` and `resolution` came later, so
-the check accepts an older intent without them.
+valid `status`/`type`, and every section below, in order. `signal_band`, `resolution` and `ticket` came
+later, so the check accepts an older intent without them.
 
 ```markdown
 ---
@@ -14,6 +14,7 @@ type: <feature | bug | refactor | unknown>
 originator: <person's name | monitoring/<alert> | incident/<id>>
 created: <YYYY-MM-DD>
 updated: <YYYY-MM-DD>
+ticket:
 plan:
 changelog:
 superseded_by:
@@ -67,6 +68,7 @@ A solution the originator already had in mind, if any. Input for design, not a d
 | `status: accepted / rejected / superseded`, `superseded_by` | `intent-capture` Decide mode, on a person's decision |
 | `status: in-progress`, `plan` | the orchestrator, once its CHECKPOINT is confirmed |
 | `status: done`, `changelog` | the orchestrator, at knowledge capture |
+| `ticket` | `intent-capture` or the orchestrator, when the request names a tracker ticket - its key (`PROJ-123`) or link; empty when there is none |
 | `signal_band` | `intent-capture`, when a band in `bands.yaml` measures the success signal; a person may add it later |
 | `resolution: met / not-met` | the maintain loop (`maintain/resolve-bets.py`), from `signal_band`, once the intent has been `done` for a while - never guessed |
 

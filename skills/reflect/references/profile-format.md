@@ -48,6 +48,20 @@ Before the Checkpoint, show:
 ## Refactor
 - Order the steps from least impact to most; each step builds and passes on its own. _(statement)_
 
+## Report _(statement; 2026-11)_
+Every report to me, in this order:
+1. Summary, three sentences at most: the problem, its impact, what you propose (or the result).
+2. What I must decide, each with your recommendation - or "nothing".
+3. Details: the evidence (`path:line`), the change and why, the risks, the alternatives in a line each.
+4. The plan or the result: steps, scope, how it was verified.
+
+## Task tracking
+- Read the ticket the request names before anything else; its key goes in the branch, commits and PR. _(statement)_
+- Draft every tracker comment or status change for me to post. _(statement)_
+
+## Documents
+- A large proposal goes in a plan file I can review; a small one stays in the conversation. _(statement)_
+
 ## Not for me
 - ORM lazy loading in request paths - rejected twice, N+1 in production. _(2 Checkpoints)_
 ```
@@ -57,6 +71,16 @@ shaped, and the workflows read them: `feature-development` presents its Checkpoi
 shape, `bug-fix` its diagnosis in the `## Investigation` shape, `refactor` its assessment and step order
 in the `## Refactor` shape. A numbered list is fine there when the order is the point - each item still
 an instruction. A section the profile does not have leaves that workflow's default in place.
+
+Three more sections reach every workflow:
+- `## Report` - the order of every report to the person: each workflow's Checkpoint and final report,
+  an investigation's result, a stop to ask. It sets the order; the workflow-shape sections above set
+  what the details hold.
+- `## Task tracking` - how a tracker ticket is read, linked and updated. A comment or status change on
+  the tracker is publishing: the agent writes one only as this section allows, and otherwise drafts it
+  in the report for the person to post.
+- `## Documents` - which documents the person wants, when (a plan file at light depth or not), where and
+  in which language.
 
 Rules for every line:
 - **One preference, stated as an instruction** the agent can follow, specific enough to be wrong. "Likes

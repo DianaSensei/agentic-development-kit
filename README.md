@@ -131,6 +131,10 @@ layout under `plugins/<name>/`.
   root you choose once (`~/worktrees/billing-feat-abc/{api,web}`), each repository a git worktree on the
   task's branch. It starts a task in every repository at once, shows every task's state across your
   projects, keeps each up to date with its base, and removes finished tasks without losing work.
+- **Reports lead with the decision.** Every Checkpoint opens with a summary in plain words - the
+  problem, the recommendation, its cost and what you must decide - before the evidence and the tables.
+  A ticket the request names (`PROJ-123` or a link) is read first and its key carried into the branch,
+  commits, pull request and plan. A change that makes a README, API document or guide wrong updates it.
 - **Ideas not ready to build** go to `intent-capture`, which writes `docs/intents/<slug>.md` - the
   problem, evidence, and desired outcome, no solution. Later, "implement `docs/intents/<slug>.md`" starts
   the workflow from it, and the workflow links the intent to its plan and changelog as it goes.
@@ -165,7 +169,10 @@ loaded into every session from `~/.claude/CLAUDE.md`.
 - **It shapes the workflows**: `## Feature`, `## Investigation` and `## Refactor` say how you want each
   workflow's analysis laid out - what a feature's Checkpoint shows, how a bug's cause is traced and
   stated, the order a refactor's steps go in - and `## Design` and `## Code style` reach the architect
-  and the code. You can write them out yourself; your word is evidence enough.
+  and the code. `## Report` sets the order of every report to you, `## Task tracking` how tickets are
+  read, linked and updated (a tracker write only as it allows), `## Documents` which documents you get.
+  `## Working with me` can ask to approve every fix you did not spell out. You can write all of them out
+  yourself; your word is evidence enough.
 - **The project wins, then you, then the kit**: your profile never overrides a project's `CLAUDE.md`,
   `REVIEW.md` or checks, and nothing from it is ever written to a project; it does override the kit's
   general heuristics and default formats - an "extract method" rule never splits a function you keep

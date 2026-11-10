@@ -23,6 +23,16 @@ classifying further: "directed change: following your 4 steps". Their plan is th
 no Checkpoint. Classify as below only when the request names just the outcome, or when the user asks for
 the analysis ("look into it first", "propose options").
 
+## A ticket in the request
+
+When the request or its intent names a tracker ticket - a key like `PROJ-123` or a link - read it before
+classifying: description, acceptance criteria, comments. Use the tracker's MCP server when one is
+connected; otherwise ask the person to paste it, never guess what it says. It is input like an intent:
+its problem and criteria feed the workflow's first step. Pass its key on in the handoff; the workflow
+puts it in the branch name, commit messages, the pull request title, the plan and the intent's
+`ticket:`. A comment or status change on the tracker is publishing: only as the person's
+`## Task tracking` allows, otherwise drafted in the report for them to post.
+
 ## Classify by true nature, not by keywords
 
 The deciding question: **is the system's current behavior actually WRONG relative to its intended
@@ -58,6 +68,12 @@ out **quick**, however small the fix: a one-line change in `src/auth/` is still 
 existing data or other callers are affected - a fix that needs a data migration or changes what
 callers receive is not quick either.
 
+**The person may want to approve every fix they did not spell out.** When their profile's
+`## Working with me` says so (for example "a request that names a problem: investigate, report and wait
+for my approval, even for a small fix"), a request that reports a symptom without naming the change is
+never **quick**, however plain the fix: it goes to `bug-fix` at **light** depth, whose Checkpoint is
+that approval. A request that names the exact change ("rename X to Y") stays quick.
+
 When in doubt between two tiers, take the heavier one: an unneeded Checkpoint costs a minute, a
 missed one can cost an incident. The user's words override the tier either way - "full process",
 "just do it" - and `quick-change` says how to handle "just do it" on a risky change.
@@ -69,7 +85,9 @@ tier; only the analysis, documents and agents scale.
 ## Process
 
 1. Read the request and cross-check it against the existing code - a quick read with `Grep` and `Read`
-   yourself, not a subagent and not the depth the target workflow will go to. Whatever gets read stays in the session; the target's Step 0 reuses it
+   yourself, not a subagent and not the depth the target workflow will go to - and the person's
+   profile (loaded from `~/.claude/CLAUDE.md`, or where they say it is checked out), whose
+   `## Working with me` can rule out the quick tier. Whatever gets read stays in the session; the target's Step 0 reuses it
    rather than starting over.
    If the request names an intent (`docs/intents/<slug>.md`, written by `intent-capture`), read it and
    classify from its Problem and Desired outcome. Its `type` is the originator's hint, not the answer -

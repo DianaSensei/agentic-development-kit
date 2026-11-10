@@ -50,6 +50,9 @@ Step 2 traces the cause the way it says and Step 3 states it in its words - for 
 the user's action through the flow and the API to the line, each link with its evidence. The project's
 `CLAUDE.md`, `REVIEW.md` and checks win over it; it wins over this skill's default report.
 
+**A ticket** the request names (a key like `PROJ-123`, or a link) is read and linked as
+`workflow-router` → "A ticket in the request" says - reuse what the router read.
+
 If the request names `docs/intents/<slug>.md` (from `intent-capture`, often raised from monitoring or an
 incident), read it: its Problem and Evidence are Step 1's starting symptoms, and its slug is
 `<bug-slug>`. A `rejected`/`done`/`superseded` intent → stop and tell the user what the file says. Once
@@ -76,10 +79,13 @@ facts needed.
 
 ## Step 3 - Report for User Review/Approval (required CHECKPOINT)
 
-Present, in the profile's `## Investigation` shape when it has one: whether it was reproduced, the root
-cause (if found, with confidence level), the planned fix direction (with the technical skill(s) expected
+Open with a summary in plain words - the cause in one sentence, who it affects, the fix you propose and
+what the person must decide - then the details, in the profile's `## Investigation` shape when it has
+one: whether it was reproduced, the root cause (if found, with confidence level), the planned fix
+direction (with the technical skill(s) expected
 to be referenced - kept abstract, no need to spell out technology detail), related edge cases that must
-not recur, and the Definition of Done (what counts as fixed).
+not recur, and the Definition of Done (what counts as fixed). The profile's `## Report`, when it has
+one, sets this order instead.
 
 **CHECKPOINT**: ask for confirmation of the fix direction via `AskUserQuestion` with `header` set exactly
 to `"Checkpoint"` (e.g. options "Proceed with this fix" / "Need more diagnosis" / "Different approach").
@@ -125,6 +131,8 @@ Repeat 4.1 → 4.2 → 4.3 until the original bug is fixed, all tests pass, and 
 introduced, OR an issue has to be raised to the user (stop the workflow there).
 
 ## Step 5 - Final Report (required)
+
+In the profile's `## Report` order when it has one:
 
 - Whether the original bug is fixed, whether the DoD is met.
 - Risks/issues encountered throughout (including ones already fixed, including any raised to the user).

@@ -58,6 +58,9 @@ through rules out splitting it for the sake of a decomposition heuristic. The pr
 `REVIEW.md` and checks win over it; it wins over this skill's defaults and over
 `solution-design-principles`.
 
+**A ticket** the request names (a key like `PROJ-123`, or a link) is read and linked as
+`workflow-router` → "A ticket in the request" says - reuse what the router read.
+
 ## Step 1 - Pin Down the Pain Point (vague descriptions not accepted)
 
 A refactor request must make concrete WHY it's needed - a generic reason like "the code is ugly" isn't
@@ -108,7 +111,9 @@ A safe refactor requires test coverage of the CURRENT behavior before touching a
    prefer splitting so each step is easy to verify and easy to roll back if something goes wrong. Order
    the steps as the profile's `## Refactor` section says, when it has one.
 
-**CHECKPOINT (required)**: present the proposal, then ask for confirmation via `AskUserQuestion` with
+**CHECKPOINT (required)**: present the proposal, opening with a summary in plain words - the pain point,
+the refactor you propose, its risk and what the person must decide - then the details (the profile's
+`## Report`, when it has one, sets this order instead); then ask for confirmation via `AskUserQuestion` with
 `header` set exactly to `"Checkpoint"` before executing. Step 4 is gated on this literal
 `AskUserQuestion` call, so presenting the proposal and moving straight to execution will be caught. When the user chose between directions and said why, keep the reason, and note the choice in their
 personal profile if they have one (`reflect`'s Note mode) - never ask for a reason just to record it.
@@ -116,7 +121,10 @@ personal profile if they have one (`reflect`'s Note mode) - never ask for a reas
 ## Step 4 - Execute (small steps, continuously verified)
 
 1. Refactor in the SMALL steps defined in Step 3 - do NOT do one large pass and only test at the very
-   end (high risk, hard to pinpoint the source of a failure if one occurs).
+   end (high risk, hard to pinpoint the source of a failure if one occurs). With three or more steps,
+   keep the session's task list (`TodoWrite`, or `TaskCreate`/`TaskUpdate`) one item per step,
+   updated as each starts and ends, so the person can follow; a step that blocks is reported at once,
+   in the profile's `## Report` order when it has one, not saved for the end.
 2. After EVERY small step: re-run all relevant tests (including the characterization tests) - they MUST
    pass 100% before moving to the next small step.
 3. If a step breaks a test: fix it within a reasonable scope, **maximum 3 attempts** for that step
@@ -139,6 +147,8 @@ personal profile if they have one (`reflect`'s Note mode) - never ask for a reas
    for concrete evidence beyond "tests pass" - tests can miss a case.
 
 ## Step 6 - Final Report (required)
+
+In the profile's `## Report` order when it has one:
 
 - How the original pain point was resolved (cross-checked against Step 1).
 - A clear confirmation: did external behavior change at all (must be "No" - if it did, this is a serious

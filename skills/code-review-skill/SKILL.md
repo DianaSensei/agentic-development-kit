@@ -28,6 +28,9 @@ Read `CLAUDE.md`/existing conventions. Determine which technologies are ACTUALLY
 - No hardcoded secret/credential/API key.
 - Exceptions handled explicitly, no silently swallowed errors.
 - Comments where genuinely needed for complex logic, no redundant comments.
+- **The docs are still true.** A README, API document, user guide or `CLAUDE.md` command that the change
+  made wrong is updated in the same change - or, when it is not yours to change, listed in the report as
+  now out of date.
 - **The tests bite.** A test that ran and passed proves nothing if it would pass against wrong code
   too - one that asserts whatever the code returns, or only that it does not crash. When the change
   adds or edits logic in source files, run

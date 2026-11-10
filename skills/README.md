@@ -50,7 +50,7 @@ orchestrator, so in practice you rarely need to name a workflow skill yourself.
 
 | Skill | Use For |
 |-------|---------|
-| [`reflect`](./reflect/SKILL.md) | The user's own working profile - how they decide, design, write, review and want to be worked with - learned from their corrections, Checkpoint choices, rewrites of agent-written code and review comments, approved line by line, kept in their private repository and loaded into every session. Its `## Feature`, `## Investigation` and `## Refactor` sections shape how the workflows lay out their analysis, and it overrides the kit's general heuristics (never a project's rules) |
+| [`reflect`](./reflect/SKILL.md) | The user's own working profile - how they decide, design, write, review and want to be worked with - learned from their corrections, Checkpoint choices, rewrites of agent-written code and review comments, approved line by line, kept in their private repository and loaded into every session. Its `## Feature`, `## Investigation` and `## Refactor` sections shape how the workflows lay out their analysis, `## Report` the order of every report, `## Task tracking` how tickets are read and updated, `## Documents` which documents are written; it overrides the kit's general heuristics (never a project's rules) |
 
 ## Workspace
 

@@ -41,7 +41,7 @@ rules. Light depth keeps the decision and the checks and drops the ceremony:
 |---|---|---|
 | Step 1 analysis | inline: requirement, 3-6 acceptance criteria, open questions | `business-analyst` agent |
 | Step 2 proposal | inline: the approach, the alternative and the rubric dimension it loses on, the files it touches - in the profile's `## Feature` shape when it has one | `solution-architect` agent, 1-3 proposals rated on the tradeoff rubric |
-| Plan file, intent back-fill | plan only if the user wants one; no back-fill | both |
+| Plan file, intent back-fill | plan only if the user wants one, or their profile's `## Documents` asks for one at this size; no back-fill | both |
 | Tickets | none - you build it yourself | one per task of the chosen proposal, checked |
 | CHECKPOINT | **required** | **required** |
 | Step 3-4 | as written (skills read, tests, checks, fix loop, report) | as written |
@@ -66,6 +66,9 @@ written into `~/.claude/CLAUDE.md` directly. Its `## Feature` section sets what 
 `## Design` the order the design is reasoned in, `## Code style` how Step 3 writes code. The project's
 `CLAUDE.md`, `REVIEW.md` and checks win over it; it wins over this skill's default shapes. No profile,
 or no such section → the defaults below.
+
+**A ticket** the request names (a key like `PROJ-123`, or a link) is read and linked as
+`workflow-router` → "A ticket in the request" says - reuse what the router read.
 
 **Starting from an intent**: if the request names `docs/intents/<slug>.md` (written by
 `intent-capture`), read it in full. Its Problem, Desired outcome, Success signal, Non-goals,
@@ -173,10 +176,13 @@ folded in where they fit.
    The CHECKPOINT then approves building them in waves (3.1); a plan without the section is built
    sequentially. Rules: `references/parallel-units.md`.
 
-**CHECKPOINT (required)**: present the full proposal - opening with the profile's `## Feature` items
-when it has that section; at full depth, led by the priorities with their sources, the table from
-`check_proposals.py --table`, and the recommendation with its deciding
-dimension and its costs; the same table goes in the plan as `## Tradeoffs` - then confirm via `AskUserQuestion` with `header`
+**CHECKPOINT (required)**: present the full proposal, opening with a summary in plain words - the
+recommendation, what it changes, the dimension it wins on, what it costs, and what the person must
+decide. Then the details: the profile's `## Feature` items when it has that section; at full depth, the
+table from `check_proposals.py --table` and the priorities with their sources (fixed in step 0, before
+any proposal - showing them after the summary changes the reading order, not when they were set). The
+same table goes in the plan as `## Tradeoffs`. The profile's `## Report`, when it has one, sets this
+order instead. Then confirm via `AskUserQuestion` with `header`
 set exactly to `"Checkpoint"` (options: one per proposal, plus "Revise" - free text always available via
 "Other"; at full depth, when two proposals are close and building would settle it, also "Build the top
 two and compare" - `references/compare-builds.md` says when, and its cost). Do not proceed to Step 3
@@ -207,6 +213,11 @@ a new file, a changed acceptance criterion - goes back to the person, not into t
 and why: `references/tickets.md`.
 
 ## Step 3 - Implement + Test (loop until the quality bar is met)
+
+With three or more tickets or tasks, keep the session's task list (`TodoWrite`, or
+`TaskCreate`/`TaskUpdate`) one item per task, updated as each starts and ends, so the person can follow;
+a task that blocks is reported at once, in the profile's `## Report` order when it has one, not saved
+for the end.
 
 ### 3.1 Implement
 
@@ -303,11 +314,11 @@ Repeat 3.1 → 3.2 → 3.3 until quality bar, AC, and DoD are all met, OR an iss
 
 ## Step 4 - Final Report (required)
 
-Template: `references/report-and-logs.md` → "Final Report Template". At minimum: AC/DoD items met vs. not
-met; risks/issues encountered throughout, including ones already fixed and any raised to the user; files
-changed; fix attempts used per issue, so the user can see the actual difficulty. At full depth, also each
-ticket's tier and the model that built it, every `plan_mismatch` with how it was resolved, and the
-conformance table.
+Template: `references/report-and-logs.md` → "Final Report Template", in the profile's `## Report` order
+when it has one. At minimum: AC/DoD items met vs. not met; risks/issues encountered throughout,
+including ones already fixed and any raised to the user; files changed; fix attempts used per issue, so
+the user can see the actual difficulty. At full depth, also each ticket's tier and the model that built
+it, every `plan_mismatch` with how it was resolved, and the conformance table.
 
 No checkpoint here - go straight to Step 5 (logging is low-risk and easy to amend if the user's feedback
 changes something).

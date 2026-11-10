@@ -66,17 +66,21 @@ of the plan.
 
 1. **Read** the code each step touches - directly, with `Grep` and `Read` - and the owning technical
    skill's `SKILL.md`. Check the plan against what you read: every step's target exists and means what
-   the plan assumes. A mismatch found here stops the run before any edit.
+   the plan assumes. A mismatch found here stops the run before any edit. A ticket the request names is
+   read and linked as `workflow-router` → "A ticket in the request" says.
 2. **Ask only about ambiguity.** A step that reads two ways gets one question, with your reading as the
    default. A clear plan is not restated back.
 3. **Carry out each step in order**: the smallest change that does it, in the file's existing style.
-   After each step, one line: what was done and where. Pause where the plan says to pause.
+   After each step, one line: what was done and where. Pause where the plan says to pause. With three or
+   more steps, keep the session's task list (`TodoWrite`, or `TaskCreate`/`TaskUpdate`) one item per step,
+   updated as each starts and ends, so the person can follow; a step that blocks is reported at once,
+   in the profile's `## Report` order when it has one, not saved for the end.
 4. **Test**: a behavior change gets a test that fails without it, unless the plan says otherwise; then
    run the project's tests and report the result as it is.
 5. **Self-review**: `code-review-skill`'s checklist on the diff.
-6. **Report**: each step - done, or stopped and why; files changed; the test command and its result;
-   "noticed, not touched"; and, only where it matters, a step you would have done differently, one line
-   each.
+6. **Report**, in the profile's `## Report` order when it has one: each step - done, or stopped and
+   why; files changed; the test command and its result; "noticed, not touched"; and, only where it
+   matters, a step you would have done differently, one line each.
 
 A correction the user makes during the run goes to the experience log, as in the other workflows
 (`feature-development`'s `references/report-and-logs.md`); one about how they want a plan carried out

@@ -46,7 +46,9 @@ code, because reading is when a "small" change shows its size.
 3. **No expensive path**: no schema or migration, public API or message contract, auth or security,
    payments or other money, CI or deployment configuration, dependency added or upgraded, and nothing
    under `.claude/` or in `CLAUDE.md`.
-4. **The user asked for this change**, not for an investigation.
+4. **The user asked for this change**, not for an investigation. A reported symptom with a plain fix
+   counts only when the person's profile does not ask to approve such fixes first (`## Working with
+   me`); when it does, the change goes to `bug-fix` at light depth, whose Checkpoint is that approval.
 
 Any one fails → this is not a quick change. Hand it back to `workflow-router` with what you read, and
 say in one line why.
@@ -65,9 +67,9 @@ their call - the checks below still run.
    quality gate wants a test run after your last edit - and report its result as it is.
 4. **Self-review**: `code-review-skill`'s checklist on the diff (the quality gate wants it read after
    your last edit).
-5. **Report** in a few lines: what changed and where, the test command and its result, anything you
-   noticed but left alone. No plan document, intent, changelog or postmortem - a quick change is
-   recorded by its commit.
+5. **Report** in a few lines - in the profile's `## Report` order when it has one: what changed and
+   where, the test command and its result, anything you noticed but left alone. No plan document,
+   intent, changelog or postmortem - a quick change is recorded by its commit.
 
 A user correction during a quick change still goes to the experience log, as in the full workflows
 (`feature-development`'s `references/report-and-logs.md`): the learning loop does not depend on the

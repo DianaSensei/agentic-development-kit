@@ -8,7 +8,7 @@
 
 KEYS="title status type originator created updated plan changelog superseded_by"
 # Added after the first release; intents written before them stay valid without.
-OPTIONAL_KEYS="signal_band resolution"
+OPTIONAL_KEYS="signal_band resolution ticket"
 SECTIONS="Problem|Evidence|Desired outcome|Success signal|Non-goals|Affected systems|Constraints|Originator's idea (non-binding)|Open questions|Decision log"
 STATUSES="draft proposed accepted rejected in-progress done superseded"
 TYPES="feature bug refactor unknown"
@@ -51,7 +51,7 @@ for f in "$@"; do
   [ -z "$resolution" ] || one_of "$resolution" "met not-met" || fail "$f" "resolution '$resolution' is not met or not-met (or empty)"
   [ -z "$resolution" ] || [ "$status" = "done" ] || fail "$f" "resolution is set but status is not done"
   [ -z "$resolution" ] || [ -n "$(val signal_band)" ] || fail "$f" "resolution without the signal_band it was judged by"
-  for k in signal_band resolution; do
+  for k in signal_band resolution ticket; do
     case "$(val "$k")" in null|'~'|'""'|"''") fail "$f" "$k: leave it empty rather than writing a null" ;; esac
   done
 

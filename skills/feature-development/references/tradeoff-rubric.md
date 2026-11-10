@@ -95,8 +95,10 @@ dimensions as rows in priority order, a column per proposal, each cell the ratin
 
 ## At the CHECKPOINT and after
 
-- Show the priorities with their sources, the table, the recommendation with its deciding dimension and
-  costs, then ask.
+- Open with the recommendation in plain words - what it changes, its deciding dimension, its costs - and
+  what the person must decide; then the table and the priorities with their sources. The priorities were
+  fixed before any proposal was read (above); showing them second changes the reading order, not that.
+  Then ask.
 - Put the same table in the plan (`## Tradeoffs`), so the rejected proposals keep their reasons.
 - When the person picks against the recommendation, or reorders the priorities, that is the most
   valuable signal there is about how they decide. Record it as a `checkpoint` signal naming the
