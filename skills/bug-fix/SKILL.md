@@ -44,6 +44,12 @@ out unless you can say what differs this time; name the entries you used in Step
 Step 3 report. Method: `feature-development`'s `references/report-and-logs.md` (in this plugin's
 `skills/`) → "Reading the Log".
 
+**The person's profile** (the working profile `reflect` keeps, or the same sections in
+`~/.claude/CLAUDE.md` - see `feature-development`'s Step 0): when it has an `## Investigation` section,
+Step 2 traces the cause the way it says and Step 3 states it in its words - for example the chain from
+the user's action through the flow and the API to the line, each link with its evidence. The project's
+`CLAUDE.md`, `REVIEW.md` and checks win over it; it wins over this skill's default report.
+
 If the request names `docs/intents/<slug>.md` (from `intent-capture`, often raised from monitoring or an
 incident), read it: its Problem and Evidence are Step 1's starting symptoms, and its slug is
 `<bug-slug>`. A `rejected`/`done`/`superseded` intent → stop and tell the user what the file says. Once
@@ -70,10 +76,10 @@ facts needed.
 
 ## Step 3 - Report for User Review/Approval (required CHECKPOINT)
 
-Present: whether it was reproduced, the root cause (if found, with confidence level), the planned fix
-direction (with the technical skill(s) expected to be referenced - kept abstract, no need to spell out
-technology detail), related edge cases that must not recur, and the Definition of Done (what counts as
-fixed).
+Present, in the profile's `## Investigation` shape when it has one: whether it was reproduced, the root
+cause (if found, with confidence level), the planned fix direction (with the technical skill(s) expected
+to be referenced - kept abstract, no need to spell out technology detail), related edge cases that must
+not recur, and the Definition of Done (what counts as fixed).
 
 **CHECKPOINT**: ask for confirmation of the fix direction via `AskUserQuestion` with `header` set exactly
 to `"Checkpoint"` (e.g. options "Proceed with this fix" / "Need more diagnosis" / "Different approach").

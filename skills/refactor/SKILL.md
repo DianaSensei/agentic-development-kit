@@ -50,6 +50,14 @@ candidate pain point - still held to Step 1's concreteness bar - and its slug is
 `rejected`/`done`/`superseded` intent → stop and tell the user what the file says. Once the Step 3
 CHECKPOINT is confirmed, set its `status: in-progress` and `updated`, with a Decision log line.
 
+**The person's profile** (the working profile `reflect` keeps, or the same sections in
+`~/.claude/CLAUDE.md` - see `feature-development`'s Step 0): its `## Refactor` section shapes Step 1's
+assessment and Step 3's step order (for example least impact first), and its `## Code style` lines bound
+which patterns Step 3 may propose - a profile that keeps a long function whose flow reads straight
+through rules out splitting it for the sake of a decomposition heuristic. The project's `CLAUDE.md`,
+`REVIEW.md` and checks win over it; it wins over this skill's defaults and over
+`solution-design-principles`.
+
 ## Step 1 - Pin Down the Pain Point (vague descriptions not accepted)
 
 A refactor request must make concrete WHY it's needed - a generic reason like "the code is ugly" isn't
@@ -84,20 +92,21 @@ A safe refactor requires test coverage of the CURRENT behavior before touching a
 ## Step 3 - Propose a Refactor Approach
 
 1. Read the existing conventions/architecture, propose the fitting refactor pattern (extract
-   method/class, introduce interface, replace conditional with polymorphism...). If the refactor's scope
-   is large enough to need strangler fig / branch by abstraction (gradually replacing a large
-   module/service that can't be safely changed in one small step) - read `legacy-modernizer` in full
-   (the technical skill specializing in exactly this: facade/routing, dual-write, dependency mapping,
-   in-depth characterization testing) and apply its method within this Step 3/4, instead of reinventing
-   the approach - `legacy-modernizer` does NOT run its own CHECKPOINT/report/changelog; this workflow
-   remains the sole orchestrator.
+   method/class, introduce interface, replace conditional with polymorphism...) - within the profile's
+   `## Code style` lines. If the refactor's scope is large enough to need strangler fig / branch by
+   abstraction (gradually replacing a large module/service that can't be safely changed in one small
+   step) - read `legacy-modernizer` in full (the technical skill specializing in exactly this:
+   facade/routing, dual-write, dependency mapping, in-depth characterization testing) and apply its
+   method within this Step 3/4, instead of reinventing the approach - `legacy-modernizer` does NOT run
+   its own CHECKPOINT/report/changelog; this workflow remains the sole orchestrator.
 2. If more than one direction is reasonable, present multiple proposals with trade-offs (extent of
    change, risk, time) - rated on `feature-development`'s tradeoff rubric (its
    `references/tradeoff-rubric.md`) when the choice is not obvious, similar to `feature-development` Step 2 - but instead of AC/Edge Cases in the
    sense of new behavior, use a "Behavior Preservation Checklist" (the specific behaviors that MUST stay
    identical, cross-checked against the characterization tests from Step 2).
 3. Decide scope: a single-pass refactor (if small) or split into incremental small steps (if large) -
-   prefer splitting so each step is easy to verify and easy to roll back if something goes wrong.
+   prefer splitting so each step is easy to verify and easy to roll back if something goes wrong. Order
+   the steps as the profile's `## Refactor` section says, when it has one.
 
 **CHECKPOINT (required)**: present the proposal, then ask for confirmation via `AskUserQuestion` with
 `header` set exactly to `"Checkpoint"` before executing. Step 4 is gated on this literal

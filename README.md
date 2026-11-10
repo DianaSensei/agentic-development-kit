@@ -11,7 +11,7 @@ project installs only the stacks it uses, and a project in an uncovered stack st
 
 | Plugin | What it carries |
 |---|---|
-| `adk-adlc` | The ADLC core: `workflow-router`, `intent-capture`, `feature-development`, `bug-fix`, `refactor`, `project-setup`, `code-review-skill`, `independent-review`, `test-master`, `code-host`; the hooks; the Tier-1 agents and `unit-implementer`; `ci/`, `codehost/`, `maintain/`, `metrics/`. |
+| `adk-adlc` | The ADLC core: `workflow-router`, `directed-change`, `intent-capture`, `feature-development`, `bug-fix`, `refactor`, `project-setup`, `code-review-skill`, `independent-review`, `test-master`, `code-host`; the hooks; the Tier-1 agents and `unit-implementer`; `ci/`, `codehost/`, `maintain/`, `metrics/`. |
 | `adk-backend` | Java/Spring Boot, databases, messaging (Kafka, RabbitMQ), Redis, Elasticsearch, API contracts, monitoring, the Toolbox MCP server for database connections, and the `java-ecosystem-engineer`, `data-storage-architect` and `api-spec-designer` agents. |
 | `adk-desktop` | Tauri + React, Rust, UI/UX design, and the `tauri-react-engineer` agent. |
 | `adk-architecture` | Architecture design, design principles, technical proposals, legacy modernization, code documentation, application security and security audits, MCP server development. |
@@ -113,6 +113,10 @@ layout under `plugins/<name>/`.
 
 ## Using it
 
+- **Your plan, carried out as given.** When the request already says how - the steps, the approach,
+  the files - `workflow-router` hands it to `directed-change`: your steps in your order, no analyst,
+  architect, alternative proposals or Checkpoint (your plan is the approval), the machine checks still
+  on, and a stop with `path:line` evidence the moment a step does not match the code.
 - **Skills** run themselves. Describe the request; `workflow-router` classifies it and picks the depth
   it deserves: `quick-change` for a small change with nothing to decide (a typo, a plain fix), otherwise
   `feature-development` / `bug-fix` / `refactor` at light depth (inline analysis, one proposal, the
@@ -158,8 +162,14 @@ loaded into every session from `~/.claude/CLAUDE.md`.
 - **It stays small and current**: a 60-line budget, merged and generalised as it grows; a line needs
   two independent pieces of evidence (or your word); lines contradicted or unseen for six months are
   proposed for retirement.
-- **The project wins**: your profile never overrides a project's `CLAUDE.md`, `REVIEW.md` or checks, and
-  nothing from it is ever written to a project.
+- **It shapes the workflows**: `## Feature`, `## Investigation` and `## Refactor` say how you want each
+  workflow's analysis laid out - what a feature's Checkpoint shows, how a bug's cause is traced and
+  stated, the order a refactor's steps go in - and `## Design` and `## Code style` reach the architect
+  and the code. You can write them out yourself; your word is evidence enough.
+- **The project wins, then you, then the kit**: your profile never overrides a project's `CLAUDE.md`,
+  `REVIEW.md` or checks, and nothing from it is ever written to a project; it does override the kit's
+  general heuristics and default formats - an "extract method" rule never splits a function you keep
+  whole on purpose.
 
 Start with "set up my profile".
 

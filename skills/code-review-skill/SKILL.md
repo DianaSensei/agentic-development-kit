@@ -22,7 +22,9 @@ Read `CLAUDE.md`/existing conventions. Determine which technologies are ACTUALLY
 - No significant duplication (DRY), no function/class carrying too many responsibilities.
   When one of these does fire and the fix isn't obvious, read `solution-design-principles` to name the
   principle and the concrete symptom - a finding stated as "changing X breaks unrelated Y" is actionable
-  where "violates SRP" is not.
+  where "violates SRP" is not. The person's `## Code style` (their `reflect` profile, or that section in
+  `~/.claude/CLAUDE.md`) wins over these generic rules: a long function they keep whole because its flow
+  reads straight through is not a finding. The project's `CLAUDE.md` and `REVIEW.md` win over both.
 - No hardcoded secret/credential/API key.
 - Exceptions handled explicitly, no silently swallowed errors.
 - Comments where genuinely needed for complex logic, no redundant comments.

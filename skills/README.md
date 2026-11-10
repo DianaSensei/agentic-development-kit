@@ -30,14 +30,16 @@ The three workflow orchestrators carry hooks in their frontmatter: while one of 
 that file is edited, and a `Stop` gate checks that `code-review-skill` was run on the diff before the
 change is reported done. Both warn by default and can be set to block. See [`hooks/README.md`](../hooks/README.md).
 
-`workflow-router` is the entry point for any code-writing request - it classifies the request and hands
-off to the right orchestrator, so in practice you rarely need to name a workflow skill yourself.
+`workflow-router` is the entry point for any code-writing request - it hands a request that already
+carries the user's plan to `directed-change`, and otherwise classifies it and hands off to the right
+orchestrator, so in practice you rarely need to name a workflow skill yourself.
 
 ## Workflow Orchestrators
 
 | Skill | Use For |
 |-------|---------|
 | [`workflow-router`](./workflow-router/SKILL.md) | First stop for any "write or change code" request - classifies it as a new feature, a bug fix, or a refactor, picks the depth the change deserves (quick, light or full), then hands off |
+| [`directed-change`](./directed-change/SKILL.md) | The user brought the plan - steps, approach, files: carried out as given, in their order, with the machine checks still on and no analyst, architect, proposals or Checkpoint (their plan is the approval). Stops with `path:line` evidence when a step contradicts the code, needs a decision the plan does not make, or carries a risk it does not mention |
 | [`quick-change`](./quick-change/SKILL.md) | The fast path: a small, local change with nothing to decide, done directly - owning skill read, convention checks, tests and self-review still enforced; no agents, plan or Checkpoint. A Stop hook sends it back if the diff outgrows it |
 | [`feature-development`](./feature-development/SKILL.md) | New capability or an intentional behavior change, start to finish |
 | [`bug-fix`](./bug-fix/SKILL.md) | Current behavior is actually wrong - reproduce, confirm root cause, fix, postmortem |
@@ -48,7 +50,7 @@ off to the right orchestrator, so in practice you rarely need to name a workflow
 
 | Skill | Use For |
 |-------|---------|
-| [`reflect`](./reflect/SKILL.md) | The user's own working profile - how they decide, design, write, review and want to be worked with - learned from their corrections, Checkpoint choices, rewrites of agent-written code and review comments, approved line by line, kept in their private repository and loaded into every session |
+| [`reflect`](./reflect/SKILL.md) | The user's own working profile - how they decide, design, write, review and want to be worked with - learned from their corrections, Checkpoint choices, rewrites of agent-written code and review comments, approved line by line, kept in their private repository and loaded into every session. Its `## Feature`, `## Investigation` and `## Refactor` sections shape how the workflows lay out their analysis, and it overrides the kit's general heuristics (never a project's rules) |
 
 ## Workspace
 

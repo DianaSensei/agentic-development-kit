@@ -103,6 +103,16 @@ refactor')"
 
   if [ -n "$WF_PATTERN" ]; then
     WF_START="$(last_line_matching "$TRANSCRIPT" "$(skill_ref_pattern "$WF_PATTERN")")"
+    # A path with no Checkpoint, taken after the gated workflow, ends its scope:
+    # the change moved to quick-change, or to directed-change because the user
+    # brought their own plan - and their plan is the approval.
+    UNGATED="$(jq_cfg '.checkpoint_gate.ungated[]?' 'quick-change
+directed-change')"
+    UG_PATTERN="$(printf '%s' "$UNGATED" | paste -sd'|' -)"
+    if [ -n "$WF_START" ] && [ -n "$UG_PATTERN" ]; then
+      UG_START="$(last_line_matching "$TRANSCRIPT" "$(skill_ref_pattern "$UG_PATTERN")")"
+      [ -n "$UG_START" ] && [ "$UG_START" -gt "$WF_START" ] && WF_START=""
+    fi
     if [ -n "$WF_START" ]; then   # inside a gated workflow
       HEADER="$(jq_cfg '.checkpoint_gate.header' 'Checkpoint')"
       # The exact call the skills are instructed to make: an AskUserQuestion

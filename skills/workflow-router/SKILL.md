@@ -1,19 +1,27 @@
 ---
 name: workflow-router
-description: Use FIRST for any request asking Claude to WRITE OR CHANGE code - new feature, bug fix, refactor, enhancement, "improve", "add capability", etc. Classifies the request as feature-development, bug-fix, or refactor by its true nature (does external behavior change, and if so is it fixing a defect or adding/changing capability?), asking the user only if genuinely ambiguous, and picks the depth the change deserves - quick-change for a small change with nothing to decide, light or full process otherwise - then hands off. Skip when the request type is already obvious. Also the entry point for "implement/build/fix docs/intents/<slug>.md". Do NOT use for no-code-change requests - pure questions/explanations, read-only exploration, or explicit review requests ("review this PR/diff") - handle those directly instead; and not for recording an idea to build later - that is `intent-capture`.
+description: Use FIRST for any request asking Claude to WRITE OR CHANGE code - new feature, bug fix, refactor, enhancement, "improve", "add capability", etc. When the user already gave the plan (steps, approach, files to change), hands off to directed-change without classifying. Otherwise classifies the request as feature-development, bug-fix, or refactor by its true nature (does external behavior change, and if so is it fixing a defect or adding/changing capability?), asking the user only if genuinely ambiguous, and picks the depth the change deserves - quick-change for a small change with nothing to decide, light or full process otherwise - then hands off. Skip when the request type is already obvious. Also the entry point for "implement/build/fix docs/intents/<slug>.md". Do NOT use for no-code-change requests - pure questions/explanations, read-only exploration, or explicit review requests ("review this PR/diff") - handle those directly instead; and not for recording an idea to build later - that is `intent-capture`.
 metadata:
   domain: workflow
   triggers: write code, add feature, fix bug, implement, classify request
   role: orchestrator
   scope: routing
   output-format: handoff
-  related-skills: feature-development, bug-fix, refactor, quick-change, intent-capture, project-setup
+  related-skills: feature-development, bug-fix, refactor, quick-change, directed-change, intent-capture, project-setup
 ---
 
 # Dev Request Router
 
 Classify, then hand off. This skill does no analysis and no implementation itself - that belongs to
 `feature-development` / `bug-fix` / `refactor`.
+
+## First: did the user bring the plan?
+
+If the request already says *how* - ordered steps, a named approach, the files or functions to change -
+the user has done the analysis the workflows exist for. Hand off to `directed-change` without
+classifying further: "directed change: following your 4 steps". Their plan is the approval, so it gets
+no Checkpoint. Classify as below only when the request names just the outcome, or when the user asks for
+the analysis ("look into it first", "propose options").
 
 ## Classify by true nature, not by keywords
 
@@ -67,8 +75,8 @@ tier; only the analysis, documents and agents scale.
    classify from its Problem and Desired outcome. Its `type` is the originator's hint, not the answer -
    a "feature" whose problem is behavior that is wrong today is still a `bug-fix`. Pass the path on in
    the handoff; the target workflow reads it in its Step 0.
-2. Clearly one of the three → pick the tier (above), state both in one sentence and hand off. Don't
-   ask.
+2. The request carries the user's plan → `directed-change` (above). Otherwise, clearly one of the
+   three → pick the tier (above), state both in one sentence and hand off. Don't ask.
 3. Still ambiguous after reading the code → ask exactly one single-select question: is this (a) new
    capability or a spec change, (b) fixing behavior that is currently wrong, or (c) improving code
    without changing external behavior?

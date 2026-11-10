@@ -19,7 +19,8 @@ a project repository.
 # How <name> works
 <!-- Personal preferences, learned from working together and approved one by one.
 A project's CLAUDE.md, REVIEW.md and checks override anything here: when they
-conflict, follow the project and say so. -->
+conflict, follow the project and say so. Anything here overrides the kit's general
+heuristics and default formats (an "extract method" rule, a workflow's default report). -->
 
 ## How I decide
 - Prefer `reversibility` over `performance_and_scale` when the two conflict. _(3 Checkpoints; 2026-09 to 2026-11)_
@@ -34,15 +35,35 @@ conflict, follow the project and say so. -->
 ## Working with me
 - Lead with the recommendation, then the reasons; no survey of options I did not ask for. _(3 corrections)_
 
+## Feature _(statement; 2026-11)_
+Before the Checkpoint, show:
+1. Feasibility, with where it gets hard (`path:line`).
+2. The current flow this change touches.
+3. The current data: how it is stored and which service owns it.
+4. What to do next for this change only.
+
+## Investigation
+- Trace the user's action -> flow -> API -> code, line by line, each link with its evidence. _(2 corrections)_
+
+## Refactor
+- Order the steps from least impact to most; each step builds and passes on its own. _(statement)_
+
 ## Not for me
 - ORM lazy loading in request paths - rejected twice, N+1 in production. _(2 Checkpoints)_
 ```
+
+`## Feature`, `## Investigation` and `## Refactor` are how the person wants each workflow's analysis
+shaped, and the workflows read them: `feature-development` presents its Checkpoint in the `## Feature`
+shape, `bug-fix` its diagnosis in the `## Investigation` shape, `refactor` its assessment and step order
+in the `## Refactor` shape. A numbered list is fine there when the order is the point - each item still
+an instruction. A section the profile does not have leaves that workflow's default in place.
 
 Rules for every line:
 - **One preference, stated as an instruction** the agent can follow, specific enough to be wrong. "Likes
   clean code" is not a preference; "keeps functions under one screen, extracts by responsibility" is.
 - **Evidence in the trailer**: kinds and counts, and the date range - so a reader can judge its weight
-  and `reflect` can age it. The evidence itself stays in `signals.md` and git history.
+  and `reflect` can age it. The evidence itself stays in `signals.md` and git history. A section the
+  person wrote out in one statement carries the trailer once, on its heading, for every line under it.
 - **Work only.** How the person decides, designs, writes, reviews and wants to be worked with. Nothing
   about their life, health, politics or anything else personal, even when a signal mentions it.
 - **Budget: 60 lines** below the header. Loaded in every session, so every line costs tokens everywhere.

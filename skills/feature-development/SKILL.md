@@ -40,7 +40,7 @@ rules. Light depth keeps the decision and the checks and drops the ceremony:
 | | Light | Full |
 |---|---|---|
 | Step 1 analysis | inline: requirement, 3-6 acceptance criteria, open questions | `business-analyst` agent |
-| Step 2 proposal | inline: the approach, the alternative and the rubric dimension it loses on, the files it touches | `solution-architect` agent, 1-3 proposals rated on the tradeoff rubric |
+| Step 2 proposal | inline: the approach, the alternative and the rubric dimension it loses on, the files it touches - in the profile's `## Feature` shape when it has one | `solution-architect` agent, 1-3 proposals rated on the tradeoff rubric |
 | Plan file, intent back-fill | plan only if the user wants one; no back-fill | both |
 | Tickets | none - you build it yourself | one per task of the chosen proposal, checked |
 | CHECKPOINT | **required** | **required** |
@@ -59,6 +59,13 @@ Read `CLAUDE.md`, memory/MCP if connected, and the existing code relevant to the
 cause matches this request - `grep`, not a whole-file read. An approach it lists as "did NOT work" is
 ruled out unless you can say what differs this time; name the entries you used in the plan. Method:
 `references/report-and-logs.md` → "Reading the Log".
+
+**The person's profile**: the working profile `reflect` keeps (loaded from `~/.claude/CLAUDE.md`; on
+disk at `$ADK_PROFILE_DIR/profile.md`, default `~/.claude/adk-profile/profile.md`), or the same sections
+written into `~/.claude/CLAUDE.md` directly. Its `## Feature` section sets what the CHECKPOINT shows,
+`## Design` the order the design is reasoned in, `## Code style` how Step 3 writes code. The project's
+`CLAUDE.md`, `REVIEW.md` and checks win over it; it wins over this skill's default shapes. No profile,
+or no such section → the defaults below.
 
 **Starting from an intent**: if the request names `docs/intents/<slug>.md` (written by
 `intent-capture`), read it in full. Its Problem, Desired outcome, Success signal, Non-goals,
@@ -118,7 +125,9 @@ only - acceptance criteria stay in the plan.
 inline - the approach, the strongest alternative and the rubric dimension it loses on
 (`references/tradeoff-rubric.md`, with the evidence: "loses on `reversibility`: it rewrites the
 `orders` table, `db/schema.sql:40`"), the acceptance criteria, the files it touches - then the
-CHECKPOINT below, which light depth never skips.
+CHECKPOINT below, which light depth never skips. When the profile has a `## Feature` section, the
+proposal follows its shape instead - its items, in its order - with the alternative and the files
+folded in where they fit.
 
 0. **Priorities first.** Before anyone proposes anything, set the order of the tradeoff dimensions for
    this change and where each position comes from: a requirement or constraint from Step 1, then
@@ -130,7 +139,8 @@ CHECKPOINT below, which light depth never skips.
    diagrams, trade-off analysis, architecture decisions, finalized AC/edge cases/DoD, and a
    `task_breakdown` assigning work to Tier-2 agents where one exists (contract:
    `agents/solution-architect.md`). Pass it `priorities` (step 0) and `rubric_path` - the path of
-   `references/tradeoff-rubric.md` next to this `SKILL.md`.
+   `references/tradeoff-rubric.md` next to this `SKILL.md` - and, when the profile has them,
+   `person_notes`: its `## Design` and `## Code style` lines, verbatim.
 
    **Check what comes back** against the rubric before anyone sees it: save the output to a file outside
    the repository and run `python3 <this skill's dir>/scripts/check_proposals.py <file>`. Problems
@@ -163,8 +173,9 @@ CHECKPOINT below, which light depth never skips.
    The CHECKPOINT then approves building them in waves (3.1); a plan without the section is built
    sequentially. Rules: `references/parallel-units.md`.
 
-**CHECKPOINT (required)**: present the full proposal - at full depth, led by the priorities with their
-sources, the table from `check_proposals.py --table`, and the recommendation with its deciding
+**CHECKPOINT (required)**: present the full proposal - opening with the profile's `## Feature` items
+when it has that section; at full depth, led by the priorities with their sources, the table from
+`check_proposals.py --table`, and the recommendation with its deciding
 dimension and its costs; the same table goes in the plan as `## Tradeoffs` - then confirm via `AskUserQuestion` with `header`
 set exactly to `"Checkpoint"` (options: one per proposal, plus "Revise" - free text always available via
 "Other"; at full depth, when two proposals are close and building would settle it, also "Build the top

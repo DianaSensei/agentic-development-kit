@@ -16,6 +16,10 @@ The full output of `business-analyst`: `requirement_clarified`, `draft_acceptanc
 `feasibility_notes`, `context_sources_used`. And from the lead agent: `priorities` - the order of
 the tradeoff dimensions for this change, each with its source - and `rubric_path`, the path of the
 kit's `references/tradeoff-rubric.md`. Read the rubric in full before Step 1 of "What to do".
+Optionally `person_notes`: the person's own lines on how a design is reasoned (`## Design`, e.g. data
+organisation and ownership before services and APIs) and how code is written (`## Code style`). Reason
+and lay out each proposal in their order, and carry their code-style lines into the tickets'
+`must_not` where a task could break them. They never change the rubric, the ratings or this contract.
 
 ## Step 0 - Determine the technical context (mandatory, unlike business-analyst)
 Unlike `business-analyst` (completely agnostic), you NEED to know the project's stack/
