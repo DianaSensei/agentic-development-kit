@@ -70,6 +70,11 @@ or no such section → the defaults below.
 **A ticket** the request names (a key like `PROJ-123`, or a link) is read and linked as
 `workflow-router` → "A ticket in the request" says - reuse what the router read.
 
+**Sources**: every decision this workflow puts to the person names what it rests on, in a form they can
+check - the request, the ticket, a PRD or ADR, the code, official documentation for the version in use -
+`references/sources.md`. Search the project's own documents for this area now (`docs/decisions/`, PRDs,
+specs and design docs under `docs/`, what the ticket links), so the later steps can cite them.
+
 **Starting from an intent**: if the request names `docs/intents/<slug>.md` (written by
 `intent-capture`), read it in full. Its Problem, Desired outcome, Success signal, Non-goals,
 Constraints, and Open questions are the raw request for Step 1, and its slug is `<feature-slug>` for
@@ -83,7 +88,8 @@ every file this workflow writes. Check `status` first:
 This skill's own `references/` cover requirement-gathering *method* (not technology) - load each when its
 step is reached: `ears-syntax.md`, `interview-questions.md`, `acceptance-criteria.md`,
 `specification-template.md`, `diagram-guide.md`, `definition-of-done.md`, `report-and-logs.md`,
-`parallel-units.md`, `compare-builds.md`, `tradeoff-rubric.md`, `tickets.md`.
+`parallel-units.md`, `compare-builds.md`, `tradeoff-rubric.md`, `tickets.md`; and `sources.md`, read in
+Step 0 because every step after it cites by it.
 
 **Optional pre-discovery**: if the feature touches 3+ system layers (auth, DB, UI...), the codebase is
 unfamiliar/undocumented, or technical facts are needed before requirements can be asked intelligently -
@@ -128,20 +134,23 @@ only - acceptance criteria stay in the plan.
 inline - the approach, the strongest alternative and the rubric dimension it loses on
 (`references/tradeoff-rubric.md`, with the evidence: "loses on `reversibility`: it rewrites the
 `orders` table, `db/schema.sql:40`"), the acceptance criteria, the files it touches - then the
-CHECKPOINT below, which light depth never skips. When the profile has a `## Feature` section, the
-proposal follows its shape instead - its items, in its order - with the alternative and the files
-folded in where they fit.
+CHECKPOINT below, which light depth never skips. Every decision in it names its source
+(`references/sources.md`); one with none is a question for the person. When the profile has a
+`## Feature` section, the proposal follows its shape instead - its items, in its order - with the
+alternative and the files folded in where they fit.
 
 0. **Priorities first.** Before anyone proposes anything, set the order of the tradeoff dimensions for
    this change and where each position comes from: a requirement or constraint from Step 1, then
    `tradeoffs.priorities` in `.claude/quality-check.config.json` or `CLAUDE.md`, then the person's "How
    I decide" profile lines, then the default (`references/tradeoff-rubric.md` → "Priorities"). Stated
    before the proposals, the order cannot be bent to fit the favourite.
-1. Launch `solution-architect` (Task tool), on `models.plan`, with Step 1's finalized output. Also read-only (`Read, Grep,
-   Glob` - no `Bash`, no `Edit`/`Write`). Returns one or more `proposals`, each with sequence/flow
-   diagrams, trade-off analysis, architecture decisions, finalized AC/edge cases/DoD, and a
-   `task_breakdown` assigning work to Tier-2 agents where one exists (contract:
-   `agents/solution-architect.md`). Pass it `priorities` (step 0) and `rubric_path` - the path of
+1. Launch `solution-architect` (Task tool), on `models.plan`, with Step 1's finalized output. Also
+   read-only (`Read, Grep, Glob`, plus `WebFetch`/`WebSearch` so a claim about a library or a partner
+   API cites its documentation for the version in use rather than memory - no `Bash`, no
+   `Edit`/`Write`). Returns one or more `proposals`, each with sequence/flow diagrams, trade-off
+   analysis, architecture decisions, finalized AC/edge cases/DoD, and a `task_breakdown` assigning work
+   to Tier-2 agents where one exists (contract: `agents/solution-architect.md`). Pass it `priorities`
+   (step 0) and `rubric_path` - the path of
    `references/tradeoff-rubric.md` next to this `SKILL.md` - and, when the profile has them,
    `person_notes`: its `## Design` and `## Code style` lines, verbatim.
 
@@ -178,11 +187,11 @@ folded in where they fit.
 
 **CHECKPOINT (required)**: present the full proposal, opening with a summary in plain words - the
 recommendation, what it changes, the dimension it wins on, what it costs, and what the person must
-decide. Then the details: the profile's `## Feature` items when it has that section; at full depth, the
-table from `check_proposals.py --table` and the priorities with their sources (fixed in step 0, before
-any proposal - showing them after the summary changes the reading order, not when they were set). The
-same table goes in the plan as `## Tradeoffs`. The profile's `## Report`, when it has one, sets this
-order instead. Then confirm via `AskUserQuestion` with `header`
+decide, each with its source. Then the details: the profile's `## Feature` items when it has that
+section; at full depth, the table from `check_proposals.py --table` and the priorities with their
+sources (fixed in step 0, before any proposal - showing them after the summary changes the reading
+order, not when they were set). The same table goes in the plan as `## Tradeoffs`. The profile's
+`## Report`, when it has one, sets this order instead. Then confirm via `AskUserQuestion` with `header`
 set exactly to `"Checkpoint"` (options: one per proposal, plus "Revise" - free text always available via
 "Other"; at full depth, when two proposals are close and building would settle it, also "Build the top
 two and compare" - `references/compare-builds.md` says when, and its cost). Do not proceed to Step 3
@@ -231,6 +240,10 @@ Before writing any code covered by a technical skill (Java/Spring part → `java
 actual content. Multiple skills in one task → read all of them fully before writing any code for it, not
 read-one-code-some-read-the-next. Once read, follow it exactly rather than improvising from general
 background knowledge.
+
+**A behavior of a library or language** that the code will rely on and the plan did not settle is
+checked against its official documentation for the version in use before the code is written, and named
+in the report with the link and one quoted line (`references/sources.md`) - never written from memory.
 
 **A read only counts within the SAME request.** For a NEW user request, re-read the skill from scratch
 even if you remember reading it a turn ago - the user may have edited it since.

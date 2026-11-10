@@ -73,12 +73,34 @@ class CheckProposals(unittest.TestCase):
     def test_every_evidence_form_is_accepted(self):
         data = output()
         forms = ["src/orders/service.py:42", "https://docs.djangoproject.com/en/5.0/topics/db/",
-                 "requirement: AC-2", "measured: p95 180 ms", "doc: ADR-7",
+                 "requirement: AC-2", "measured: p95 180 ms", "doc: docs/decisions/0007-one-transaction.md",
                  "plan: 3 files, no new dependency",
                  "assumption: the table is small - confirm by SELECT count(*)"]
         for d, e in zip(DIMS, forms):
             data["proposals"][0]["tradeoffs"][d]["evidence"] = e
         self.assertEqual(self.run_script(data)[0], 0)
+
+    def test_a_document_is_cited_by_where_it_is(self):
+        for named in ["doc: ADR-7", "doc: the Django docs", "doc: Spring Boot 3.2 reference"]:
+            data = output()
+            data["proposals"][0]["tradeoffs"]["correctness_risk"]["evidence"] = named
+            code, probs = self.problems(data)
+            self.assertEqual(code, 1, named)
+            self.assertTrue(any("doc: with the document's path or URL" in p for p in probs), probs)
+        for located in ["doc: README.md#setup", "doc: docs/prd/checkout.md - Limits",
+                        "doc: https://docs.spring.io/spring-boot/3.2/reference/data/sql.html"]:
+            data = output()
+            data["proposals"][0]["tradeoffs"]["correctness_risk"]["evidence"] = located
+            self.assertEqual(self.run_script(data)[0], 0, located)
+
+    def test_a_community_source_alone_does_not_decide(self):
+        data = output()
+        data["proposals"][1]["tradeoffs"]["reversibility"]["evidence"] = (
+            "community: https://stackoverflow.com/a/123 (2019): \"drop and recreate is safe\"")
+        code, out = self.run_script(data)
+        self.assertEqual(code, 0, out)
+        self.assertIn("note: reversibility: the top priority where the proposals differ rests on an unknown", out)
+        self.assertIn("_(community source)_", self.run_script(data, "--table")[1])
 
     def test_a_hidden_cost_is_caught(self):
         data = output()

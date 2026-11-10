@@ -135,6 +135,10 @@ layout under `plugins/<name>/`.
   problem, the recommendation, its cost and what you must decide - before the evidence and the tables.
   A ticket the request names (`PROJ-123` or a link) is read first and its key carried into the branch,
   commits, pull request and plan. A change that makes a README, API document or guide wrong updates it.
+- **Every decision names its source**, in a form you can check in a minute: the request, the ticket, a
+  PRD or ADR, the code at `path:line`, or the official documentation for the version in use - with the
+  link, one line quoted and the version. Documentation is fetched in the session, not recalled; a
+  StackOverflow answer or a blog only supports; a decision with no source comes to you as a question.
 - **Ideas not ready to build** go to `intent-capture`, which writes `docs/intents/<slug>.md` - the
   problem, evidence, and desired outcome, no solution. Later, "implement `docs/intents/<slug>.md`" starts
   the workflow from it, and the workflow links the intent to its plan and changelog as it goes.
@@ -189,11 +193,12 @@ skills as it goes. An agent is a separate subagent with a fixed role.
 subagents precisely because those carry no `Edit`/`Write` tool, so requirements and design happen where
 code is impossible to touch. Every proposal is weighed on the same seven dimensions - correctness risk,
 reversibility, performance and scale, operational load, convention fit, the stack's native approach,
-cost to build - each rating with its evidence (`path:line`, a doc, a requirement, a measurement, or a
-stated assumption). The order that decides between them is set before the proposals are read: the
-change's own requirement, then the project's `tradeoffs.priorities`, then your profile's "How I decide",
-then a default. A script checks the architect's output, so a skipped dimension, an uncited rating or a
-recommendation that hides its costs never reaches the Checkpoint, where you see one table.
+cost to build - each rating with its evidence (`path:line`, a document by its path or URL, a
+requirement, a measurement, or a stated assumption; a community answer alone counts as unknown). The
+order that decides between them is set before the proposals are read: the change's own requirement,
+then the project's `tradeoffs.priorities`, then your profile's "How I decide", then a default. A script
+checks the architect's output, so a skipped dimension, an uncited rating or a recommendation that hides
+its costs never reaches the Checkpoint, where you see one table.
 
 After you choose, the architect - the senior - splits the chosen proposal into **tickets**: for each task,
 the exact interface, existing code to copy the pattern from (`path:line`), the tests as Given/When/Then,
@@ -281,6 +286,7 @@ which is why it is written down here.
 
 - Tech-specific detail is detected from real evidence (dependencies, config, existing code), never
   assumed. Coverage is deepest for Java/Spring, Rust, and Tauri+React.
+- Every decision names its source, in the forms of `skills/feature-development/references/sources.md`.
 - Mechanically checkable rules are enforced by hooks; judgement-based ones stay with
   `code-review-skill`. Every hook fails open, so none can block work.
 - Tests must bite, not just pass. Before "done", `code-review-skill` breaks the changed lines one small

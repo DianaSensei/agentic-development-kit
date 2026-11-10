@@ -61,6 +61,12 @@ through rules out splitting it for the sake of a decomposition heuristic. The pr
 **A ticket** the request names (a key like `PROJ-123`, or a link) is read and linked as
 `workflow-router` → "A ticket in the request" says - reuse what the router read.
 
+**Sources**: every decision this workflow puts to the person names what it rests on, in a form they can
+check - the request, the ticket, a PRD or ADR, the code, official documentation for the version in use -
+`feature-development`'s `references/sources.md` (in this plugin's `skills/`). Search the project's own
+documents for this area now (`docs/decisions/`, PRDs, specs and design docs under `docs/`, what the
+ticket links), so the later steps can cite them.
+
 ## Step 1 - Pin Down the Pain Point (vague descriptions not accepted)
 
 A refactor request must make concrete WHY it's needed - a generic reason like "the code is ugly" isn't
@@ -112,11 +118,13 @@ A safe refactor requires test coverage of the CURRENT behavior before touching a
    the steps as the profile's `## Refactor` section says, when it has one.
 
 **CHECKPOINT (required)**: present the proposal, opening with a summary in plain words - the pain point,
-the refactor you propose, its risk and what the person must decide - then the details (the profile's
-`## Report`, when it has one, sets this order instead); then ask for confirmation via `AskUserQuestion` with
-`header` set exactly to `"Checkpoint"` before executing. Step 4 is gated on this literal
-`AskUserQuestion` call, so presenting the proposal and moving straight to execution will be caught. When the user chose between directions and said why, keep the reason, and note the choice in their
-personal profile if they have one (`reflect`'s Note mode) - never ask for a reason just to record it.
+the refactor you propose, its risk and what the person must decide, each with its source - then the
+details (the profile's `## Report`, when it has one, sets this order instead); then ask for confirmation
+via `AskUserQuestion` with `header` set exactly to `"Checkpoint"` before executing. Step 4 is gated on
+this literal `AskUserQuestion` call, so presenting the proposal and moving straight to execution will be
+caught. When the user chose between directions and said why, keep the reason, and note the choice in
+their personal profile if they have one (`reflect`'s Note mode) - never ask for a reason just to record
+it.
 
 ## Step 4 - Execute (small steps, continuously verified)
 

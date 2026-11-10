@@ -52,8 +52,9 @@ of the plan.
   that is not there, a field that means something else, a caller the plan did not count), needs a
   decision the plan does not make, or carries a risk it does not mention (data loss, a migration, auth,
   money, a public contract) → stop before that step. Say what the plan expects, what you found and where
-  (`path:line`), and ask one question with your suggested answer. Steps already done stay done; resume
-  at the stopped step with their answer.
+  - the `path:line` or the document, with the line quoted (`feature-development`'s
+  `references/sources.md`) - and ask one question with your suggested answer. Steps already done stay
+  done; resume at the stopped step with their answer.
 - **Their profile fills what the plan leaves open.** Where the plan is silent on how the code is
   written, their `## Code style` lines decide (the profile `reflect` keeps, or the same section in
   `~/.claude/CLAUDE.md`). The project's `CLAUDE.md`, `REVIEW.md` and checks still come first.

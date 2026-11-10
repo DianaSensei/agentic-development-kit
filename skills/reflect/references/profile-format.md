@@ -62,6 +62,9 @@ Every report to me, in this order:
 ## Documents
 - A large proposal goes in a plan file I can review; a small one stays in the conversation. _(statement)_
 
+## Evidence
+- Every decision with a source I can check: the link, one line quoted, the version. _(statement)_
+
 ## Not for me
 - ORM lazy loading in request paths - rejected twice, N+1 in production. _(2 Checkpoints)_
 ```
@@ -72,7 +75,7 @@ shape, `bug-fix` its diagnosis in the `## Investigation` shape, `refactor` its a
 in the `## Refactor` shape. A numbered list is fine there when the order is the point - each item still
 an instruction. A section the profile does not have leaves that workflow's default in place.
 
-Three more sections reach every workflow:
+Four more sections reach every workflow:
 - `## Report` - the order of every report to the person: each workflow's Checkpoint and final report,
   an investigation's result, a stop to ask. It sets the order; the workflow-shape sections above set
   what the details hold.
@@ -81,6 +84,8 @@ Three more sections reach every workflow:
   in the report for the person to post.
 - `## Documents` - which documents the person wants, when (a plan file at light depth or not), where and
   in which language.
+- `## Evidence` - what the person counts as a source and how strict to be, on top of the kit's rule that
+  every decision names its source (`feature-development`'s `references/sources.md`).
 
 Rules for every line:
 - **One preference, stated as an instruction** the agent can follow, specific enough to be wrong. "Likes

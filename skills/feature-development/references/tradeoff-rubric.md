@@ -30,13 +30,18 @@ Each dimension of each proposal gets:
 - `why`: one sentence, specific to this proposal.
 - `evidence`: what the rating rests on, in one of these forms:
   - a `path:line` in the project;
-  - a URL or a named document (the framework's docs, an ADR);
+  - a URL, or `doc: <path or URL> <section>` for a document (an ADR, a PRD, the framework's docs for the
+    version in use) - a document named with no location cannot be checked, and is rejected;
   - `requirement: <AC id or constraint>` from Step 1;
   - `measured: <what and the result>` (a benchmark, or a build compared in `compare-builds.md`);
   - `plan: <what this proposal itself adds or touches>` - for a fact about the proposal rather than
     the code: "plan: 3 files, no new dependency", "plan: adds no job, service or config". It must match
     the proposal's own `task_breakdown`;
   - `assumption: <what is assumed> - confirm by <how>`.
+
+Quote the line the rating rests on where it fits, and give the version for anything outside the
+project: which source answers which question, how to quote and when to fetch documentation in this
+session - `sources.md`, next to this file.
 
 `unknown` is honest and allowed. Its evidence says what would tell, and a decision that hinges on an
 `unknown` goes to the user as a question, never as a guess. A rating whose evidence is only an assumption

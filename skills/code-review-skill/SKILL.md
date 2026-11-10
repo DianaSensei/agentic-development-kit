@@ -42,7 +42,10 @@ Read `CLAUDE.md`/existing conventions. Determine which technologies are ACTUALLY
 - **The report matches what was verified.** Every statement the final report makes about the change
   - what it does, that tests pass, that a case is handled - rests on a line in the diff or a command
   run in this session after the last edit, with its actual result. "Should work", "tests are expected
-  to pass" and a case you did not exercise are reported as unverified, not as done.
+  to pass" and a case you did not exercise are reported as unverified, not as done. A behavior of a
+  library or language the change relies on, and the code does not make obvious, rests on its official
+  documentation for the version in use - cited with the link and one quoted line - or is reported as
+  unverified (`feature-development`'s `references/sources.md`).
 
 ## Per-Technology Checklist (only apply the part relevant to the change)
 

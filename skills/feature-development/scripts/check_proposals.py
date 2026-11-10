@@ -27,9 +27,14 @@ DIMENSIONS = [
 ]
 RATINGS = {"good": 3, "fair": 2, "poor": 1, "unknown": None}
 MARK = {"good": "✅", "fair": "⚠️", "poor": "❌", "unknown": "❓"}
-EVIDENCE_PREFIXES = ("requirement:", "measured:", "assumption:", "doc:", "plan:")
+EVIDENCE_PREFIXES = ("requirement:", "measured:", "assumption:", "plan:", "community:")
 PATH_LINE = re.compile(r"[\w./-]+\.\w+:\d+")
 URL = re.compile(r"https?://\S+")
+# A document is cited by where it is - a path or a URL - so the person can open it. "doc: ADR-7"
+# only names it (references/sources.md).
+DOC_LOCATION = re.compile(r"https?://\S+|[\w.-]*/[\w./#-]+|[\w-]+\.(?:md|markdown|rst|adoc|txt|pdf|html?)\b", re.I)
+# Evidence a rating cannot be compared on: an assumption, or a community source standing alone.
+UNCOMPARABLE = ("assumption:", "community:")
 CITE = re.compile(r"(?<![\w/.-])([\w./-]+\.\w+):(\d+)(?:-(\d+))?")
 
 
@@ -65,11 +70,13 @@ def evidence_ok(evidence):
     if not isinstance(evidence, str) or not evidence.strip():
         return False
     e = evidence.strip()
+    if e.lower().startswith("doc:"):
+        return bool(DOC_LOCATION.search(e[4:]))
     return e.lower().startswith(EVIDENCE_PREFIXES) or bool(PATH_LINE.search(e)) or bool(URL.search(e))
 
 
 def assumed(entry):
-    return str(entry.get("evidence", "")).strip().lower().startswith("assumption:")
+    return str(entry.get("evidence", "")).strip().lower().startswith(UNCOMPARABLE)
 
 
 def score(entry):
@@ -122,7 +129,8 @@ def check(data):
                 problems.append(f"{pid}: {d} has no why")
             if not evidence_ok(entry.get("evidence")):
                 problems.append(f"{pid}: {d} evidence {entry.get('evidence')!r} is not a path:line, a URL, "
-                                "or requirement:/measured:/doc:/plan:/assumption:")
+                                "doc: with the document's path or URL, "
+                                "or requirement:/measured:/plan:/assumption:/community:")
             for bad in bad_citations(str(entry.get("evidence", ""))):
                 problems.append(f"{pid}: {d} cites {bad}")
         extra = sorted(set(tradeoffs) - set(DIMENSIONS))
@@ -195,7 +203,8 @@ def cell(entry):
         return "❓ missing"
     rating = entry.get("rating", "unknown")
     text = str(entry.get("why", "")).replace("|", "\\|").replace("\n", " ")
-    tag = " _(assumed)_" if assumed(entry) else ""
+    evidence = str(entry.get("evidence", "")).strip().lower()
+    tag = " _(community source)_" if evidence.startswith("community:") else " _(assumed)_" if assumed(entry) else ""
     return f"{MARK.get(rating, '❓')} {rating}{tag} - {text}"
 
 
