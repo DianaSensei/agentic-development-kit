@@ -43,6 +43,11 @@ class SessionContextLeftovers(unittest.TestCase):
     def test_no_notice_when_nothing_is_left(self):
         self.assertNotIn("unit worktree", self.run_hook())
 
+    def test_the_routing_rule_names_the_path_for_the_users_own_plan(self):
+        out = self.run_hook()
+        self.assertIn("`directed-change` when the user already gave the plan", out)
+        self.assertIn("no Checkpoint", out)
+
     def test_a_left_worktree_and_snapshot_are_announced_with_the_way_to_look(self):
         wt = os.path.join(self.repo, ".claude", "worktrees", "agent-u2")
         self.git("worktree", "add", "-q", "-b", "worktree-agent-u2", wt)

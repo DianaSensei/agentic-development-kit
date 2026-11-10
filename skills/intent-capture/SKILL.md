@@ -60,7 +60,8 @@ Press on four things:
 - **Problem, not solution.** "Add a Redis cache" is a solution; "the product page takes seconds to load
   on mobile and users leave" is a problem. When the originator arrives with a solution, ask what it
   fixes, and keep their idea under *Originator's idea (non-binding)* - recorded, but design stays open.
-- **Evidence.** A ticket, a log line, a metric, a customer quote, a count of support requests. None →
+- **Evidence.** A ticket, a log line, a metric, a customer quote, a count of support requests. A tracker
+  ticket the request names also goes in `ticket:` (its key or link), so the work can be traced back. None →
   write "none yet"; never imply evidence exists.
 - **An observable outcome.** How would someone other than the originator tell, after the change, that it
   worked? A target number the originator did not give is "needs confirmation", never an invented one.

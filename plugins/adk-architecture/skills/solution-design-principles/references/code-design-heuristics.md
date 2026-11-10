@@ -225,7 +225,10 @@ invert the dependency (an event/callback) so the call graph becomes a DAG again.
 
 **When NOT to over-apply**: Don't extract a method for a single line of trivial, self-explanatory code
 just to hit a target depth - that's KISS working against SLAP; extract because the extraction earns a
-name that clarifies intent, not to satisfy a rule mechanically.
+name that clarifies intent, not to satisfy a rule mechanically. And in a person's session, their own
+line on decomposition (the `## Code style` of their `reflect` profile) wins over this heuristic: many
+people would rather read one longer function whose flow runs top to bottom than a table of contents of
+small ones.
 
 ## Command-Query Separation & Re-Validation (TOCTOU)
 

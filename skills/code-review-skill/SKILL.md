@@ -22,10 +22,15 @@ Read `CLAUDE.md`/existing conventions. Determine which technologies are ACTUALLY
 - No significant duplication (DRY), no function/class carrying too many responsibilities.
   When one of these does fire and the fix isn't obvious, read `solution-design-principles` to name the
   principle and the concrete symptom - a finding stated as "changing X breaks unrelated Y" is actionable
-  where "violates SRP" is not.
+  where "violates SRP" is not. The person's `## Code style` (their `reflect` profile, or that section in
+  `~/.claude/CLAUDE.md`) wins over these generic rules: a long function they keep whole because its flow
+  reads straight through is not a finding. The project's `CLAUDE.md` and `REVIEW.md` win over both.
 - No hardcoded secret/credential/API key.
 - Exceptions handled explicitly, no silently swallowed errors.
 - Comments where genuinely needed for complex logic, no redundant comments.
+- **The docs are still true.** A README, API document, user guide or `CLAUDE.md` command that the change
+  made wrong is updated in the same change - or, when it is not yours to change, listed in the report as
+  now out of date.
 - **The tests bite.** A test that ran and passed proves nothing if it would pass against wrong code
   too - one that asserts whatever the code returns, or only that it does not crash. When the change
   adds or edits logic in source files, run
@@ -37,7 +42,10 @@ Read `CLAUDE.md`/existing conventions. Determine which technologies are ACTUALLY
 - **The report matches what was verified.** Every statement the final report makes about the change
   - what it does, that tests pass, that a case is handled - rests on a line in the diff or a command
   run in this session after the last edit, with its actual result. "Should work", "tests are expected
-  to pass" and a case you did not exercise are reported as unverified, not as done.
+  to pass" and a case you did not exercise are reported as unverified, not as done. A behavior of a
+  library or language the change relies on, and the code does not make obvious, rests on its official
+  documentation for the version in use - cited with the link and one quoted line - or is reported as
+  unverified (`feature-development`'s `references/sources.md`).
 
 ## Per-Technology Checklist (only apply the part relevant to the change)
 

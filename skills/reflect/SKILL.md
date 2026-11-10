@@ -28,8 +28,10 @@ else `~/.claude/adk-profile`.
   written to a project repository, a pull request or an issue. It holds work style only - never
   anything about the person's life, and never client code, data or credentials beyond a generalised
   line of example.
-- **The project wins.** A preference that conflicts with the project's `CLAUDE.md`, `REVIEW.md` or
-  checks is never applied over them; the agent follows the project and says so.
+- **The project wins; the profile beats the kit's defaults.** A preference that conflicts with the
+  project's `CLAUDE.md`, `REVIEW.md` or checks is never applied over them; the agent follows the project
+  and says so. Over the kit's own general heuristics and default formats - `solution-design-principles`'
+  "extract method", a workflow's default report - the profile wins.
 - **Evidence or nothing.** Every profile line carries the evidence behind it. A guess about the user is
   not a preference.
 
@@ -87,7 +89,9 @@ log entries with `Scope: personal` and for Checkpoint choices. No profile set up
    name the dimensions they traded ("reversibility over performance_and_scale") become "How I decide"
    lines in the tradeoff rubric's words and the context they held in ("Prefer `reversibility` over
    `performance_and_scale`, except on a request path"), because `feature-development` reads those
-   lines to order the next design's priorities.
+   lines to order the next design's priorities. A signal about how the user wants a workflow's analysis
+   shown or staged ("show me the current data first", "trace it to the line", "smallest step first")
+   goes under `## Feature`, `## Investigation` or `## Refactor`, which those workflows read.
 4. **Present** the changes as a table - change, the exact line, the evidence (dates, kinds, one
    example each) - then `AskUserQuestion`, `header` `"Profile"`, `multiSelect`, one option per change
    (rewording comes through "Other"). No changes → say what the evidence was and why nothing reaches a

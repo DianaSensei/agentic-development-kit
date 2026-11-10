@@ -1,0 +1,1 @@
+Users say the quantity in their cart resets when they add a product that is already in it - they add 2, then 3 more, and see 3. Find the cause and fix it. My working profile is checked out at ./profile/profile.md.

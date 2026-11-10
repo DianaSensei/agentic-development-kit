@@ -55,10 +55,11 @@
   "$comment_code_extensions": "What the Stop gate counts as a code change worth reviewing. Documentation-only turns never trigger it.",
   "code_extensions": "\\.(java|kt|kts|rs|ts|tsx|js|jsx|py|go|rb|php|cs|sql|sh|bash|yaml|yml|tf|gradle|xml|toml)$",
 
-  "$comment_checkpoint_gate": "workflows are the skills whose CHECKPOINT this gate enforces - each is instructed to confirm via AskUserQuestion using this exact header before Step 3/4 may write code. Add a workflow name here only if its SKILL.md documents a CHECKPOINT the same way.",
+  "$comment_checkpoint_gate": "workflows are the skills whose CHECKPOINT this gate enforces - each is instructed to confirm via AskUserQuestion using this exact header before Step 3/4 may write code. Add a workflow name here only if its SKILL.md documents a CHECKPOINT the same way. ungated are paths with no Checkpoint: one invoked after a gated workflow ends that workflow's scope - the change moved to quick-change, or to directed-change because the user brought their own plan, which is the approval.",
   "checkpoint_gate": {
     "header": "Checkpoint",
-    "workflows": ["feature-development", "bug-fix", "refactor"]
+    "workflows": ["feature-development", "bug-fix", "refactor"],
+    "ungated": ["quick-change", "directed-change"]
   },
 
   "$comment_quality_gate": "review_skill is the skill Claude is told to run on the diff before it may report done. max_blocks caps how many times one session may be held at the Stop gate, so a stuck loop can never trap a session. require_test_run also wants a Bash command matching test_command (an ERE; the default recognises the common runners - pytest, npm test, go test, cargo test, mvn, gradle, ...) after the last code edit, so a change is never reported done on tests nobody ran; set it false for a project with no tests.",

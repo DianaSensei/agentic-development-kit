@@ -1,19 +1,37 @@
 ---
 name: workflow-router
-description: Use FIRST for any request asking Claude to WRITE OR CHANGE code - new feature, bug fix, refactor, enhancement, "improve", "add capability", etc. Classifies the request as feature-development, bug-fix, or refactor by its true nature (does external behavior change, and if so is it fixing a defect or adding/changing capability?), asking the user only if genuinely ambiguous, and picks the depth the change deserves - quick-change for a small change with nothing to decide, light or full process otherwise - then hands off. Skip when the request type is already obvious. Also the entry point for "implement/build/fix docs/intents/<slug>.md". Do NOT use for no-code-change requests - pure questions/explanations, read-only exploration, or explicit review requests ("review this PR/diff") - handle those directly instead; and not for recording an idea to build later - that is `intent-capture`.
+description: Use FIRST for any request asking Claude to WRITE OR CHANGE code - new feature, bug fix, refactor, enhancement, "improve", "add capability", etc. When the user already gave the plan (steps, approach, files to change), hands off to directed-change without classifying. Otherwise classifies the request as feature-development, bug-fix, or refactor by its true nature (does external behavior change, and if so is it fixing a defect or adding/changing capability?), asking the user only if genuinely ambiguous, and picks the depth the change deserves - quick-change for a small change with nothing to decide, light or full process otherwise - then hands off. Skip when the request type is already obvious. Also the entry point for "implement/build/fix docs/intents/<slug>.md". Do NOT use for no-code-change requests - pure questions/explanations, read-only exploration, or explicit review requests ("review this PR/diff") - handle those directly instead; and not for recording an idea to build later - that is `intent-capture`.
 metadata:
   domain: workflow
   triggers: write code, add feature, fix bug, implement, classify request
   role: orchestrator
   scope: routing
   output-format: handoff
-  related-skills: feature-development, bug-fix, refactor, quick-change, intent-capture, project-setup
+  related-skills: feature-development, bug-fix, refactor, quick-change, directed-change, intent-capture, project-setup
 ---
 
 # Dev Request Router
 
 Classify, then hand off. This skill does no analysis and no implementation itself - that belongs to
 `feature-development` / `bug-fix` / `refactor`.
+
+## First: did the user bring the plan?
+
+If the request already says *how* - ordered steps, a named approach, the files or functions to change -
+the user has done the analysis the workflows exist for. Hand off to `directed-change` without
+classifying further: "directed change: following your 4 steps". Their plan is the approval, so it gets
+no Checkpoint. Classify as below only when the request names just the outcome, or when the user asks for
+the analysis ("look into it first", "propose options").
+
+## A ticket in the request
+
+When the request or its intent names a tracker ticket - a key like `PROJ-123` or a link - read it before
+classifying: description, acceptance criteria, comments. Use the tracker's MCP server when one is
+connected; otherwise ask the person to paste it, never guess what it says. It is input like an intent:
+its problem and criteria feed the workflow's first step. Pass its key on in the handoff; the workflow
+puts it in the branch name, commit messages, the pull request title, the plan and the intent's
+`ticket:`. A comment or status change on the tracker is publishing: only as the person's
+`## Task tracking` allows, otherwise drafted in the report for them to post.
 
 ## Classify by true nature, not by keywords
 
@@ -50,6 +68,12 @@ out **quick**, however small the fix: a one-line change in `src/auth/` is still 
 existing data or other callers are affected - a fix that needs a data migration or changes what
 callers receive is not quick either.
 
+**The person may want to approve every fix they did not spell out.** When their profile's
+`## Working with me` says so (for example "a request that names a problem: investigate, report and wait
+for my approval, even for a small fix"), a request that reports a symptom without naming the change is
+never **quick**, however plain the fix: it goes to `bug-fix` at **light** depth, whose Checkpoint is
+that approval. A request that names the exact change ("rename X to Y") stays quick.
+
 When in doubt between two tiers, take the heavier one: an unneeded Checkpoint costs a minute, a
 missed one can cost an incident. The user's words override the tier either way - "full process",
 "just do it" - and `quick-change` says how to handle "just do it" on a risky change.
@@ -61,14 +85,16 @@ tier; only the analysis, documents and agents scale.
 ## Process
 
 1. Read the request and cross-check it against the existing code - a quick read with `Grep` and `Read`
-   yourself, not a subagent and not the depth the target workflow will go to. Whatever gets read stays in the session; the target's Step 0 reuses it
+   yourself, not a subagent and not the depth the target workflow will go to - and the person's
+   profile (loaded from `~/.claude/CLAUDE.md`, or where they say it is checked out), whose
+   `## Working with me` can rule out the quick tier. Whatever gets read stays in the session; the target's Step 0 reuses it
    rather than starting over.
    If the request names an intent (`docs/intents/<slug>.md`, written by `intent-capture`), read it and
    classify from its Problem and Desired outcome. Its `type` is the originator's hint, not the answer -
    a "feature" whose problem is behavior that is wrong today is still a `bug-fix`. Pass the path on in
    the handoff; the target workflow reads it in its Step 0.
-2. Clearly one of the three → pick the tier (above), state both in one sentence and hand off. Don't
-   ask.
+2. The request carries the user's plan → `directed-change` (above). Otherwise, clearly one of the
+   three → pick the tier (above), state both in one sentence and hand off. Don't ask.
 3. Still ambiguous after reading the code → ask exactly one single-select question: is this (a) new
    capability or a spec change, (b) fixing behavior that is currently wrong, or (c) improving code
    without changing external behavior?

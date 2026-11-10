@@ -11,7 +11,7 @@ project installs only the stacks it uses, and a project in an uncovered stack st
 
 | Plugin | What it carries |
 |---|---|
-| `adk-adlc` | The ADLC core: `workflow-router`, `intent-capture`, `feature-development`, `bug-fix`, `refactor`, `project-setup`, `code-review-skill`, `independent-review`, `test-master`, `code-host`; the hooks; the Tier-1 agents and `unit-implementer`; `ci/`, `codehost/`, `maintain/`, `metrics/`. |
+| `adk-adlc` | The ADLC core: `workflow-router`, `directed-change`, `intent-capture`, `feature-development`, `bug-fix`, `refactor`, `project-setup`, `code-review-skill`, `independent-review`, `test-master`, `code-host`; the hooks; the Tier-1 agents and `unit-implementer`; `ci/`, `codehost/`, `maintain/`, `metrics/`. |
 | `adk-backend` | Java/Spring Boot, databases, messaging (Kafka, RabbitMQ), Redis, Elasticsearch, API contracts, monitoring, the Toolbox MCP server for database connections, and the `java-ecosystem-engineer`, `data-storage-architect` and `api-spec-designer` agents. |
 | `adk-desktop` | Tauri + React, Rust, UI/UX design, and the `tauri-react-engineer` agent. |
 | `adk-architecture` | Architecture design, design principles, technical proposals, legacy modernization, code documentation, application security and security audits, MCP server development. |
@@ -113,6 +113,10 @@ layout under `plugins/<name>/`.
 
 ## Using it
 
+- **Your plan, carried out as given.** When the request already says how - the steps, the approach,
+  the files - `workflow-router` hands it to `directed-change`: your steps in your order, no analyst,
+  architect, alternative proposals or Checkpoint (your plan is the approval), the machine checks still
+  on, and a stop with `path:line` evidence the moment a step does not match the code.
 - **Skills** run themselves. Describe the request; `workflow-router` classifies it and picks the depth
   it deserves: `quick-change` for a small change with nothing to decide (a typo, a plain fix), otherwise
   `feature-development` / `bug-fix` / `refactor` at light depth (inline analysis, one proposal, the
@@ -127,6 +131,14 @@ layout under `plugins/<name>/`.
   root you choose once (`~/worktrees/billing-feat-abc/{api,web}`), each repository a git worktree on the
   task's branch. It starts a task in every repository at once, shows every task's state across your
   projects, keeps each up to date with its base, and removes finished tasks without losing work.
+- **Reports lead with the decision.** Every Checkpoint opens with a summary in plain words - the
+  problem, the recommendation, its cost and what you must decide - before the evidence and the tables.
+  A ticket the request names (`PROJ-123` or a link) is read first and its key carried into the branch,
+  commits, pull request and plan. A change that makes a README, API document or guide wrong updates it.
+- **Every decision names its source**, in a form you can check in a minute: the request, the ticket, a
+  PRD or ADR, the code at `path:line`, or the official documentation for the version in use - with the
+  link, one line quoted and the version. Documentation is fetched in the session, not recalled; a
+  StackOverflow answer or a blog only supports; a decision with no source comes to you as a question.
 - **Ideas not ready to build** go to `intent-capture`, which writes `docs/intents/<slug>.md` - the
   problem, evidence, and desired outcome, no solution. Later, "implement `docs/intents/<slug>.md`" starts
   the workflow from it, and the workflow links the intent to its plan and changelog as it goes.
@@ -158,8 +170,17 @@ loaded into every session from `~/.claude/CLAUDE.md`.
 - **It stays small and current**: a 60-line budget, merged and generalised as it grows; a line needs
   two independent pieces of evidence (or your word); lines contradicted or unseen for six months are
   proposed for retirement.
-- **The project wins**: your profile never overrides a project's `CLAUDE.md`, `REVIEW.md` or checks, and
-  nothing from it is ever written to a project.
+- **It shapes the workflows**: `## Feature`, `## Investigation` and `## Refactor` say how you want each
+  workflow's analysis laid out - what a feature's Checkpoint shows, how a bug's cause is traced and
+  stated, the order a refactor's steps go in - and `## Design` and `## Code style` reach the architect
+  and the code. `## Report` sets the order of every report to you, `## Task tracking` how tickets are
+  read, linked and updated (a tracker write only as it allows), `## Documents` which documents you get.
+  `## Working with me` can ask to approve every fix you did not spell out. You can write all of them out
+  yourself; your word is evidence enough.
+- **The project wins, then you, then the kit**: your profile never overrides a project's `CLAUDE.md`,
+  `REVIEW.md` or checks, and nothing from it is ever written to a project; it does override the kit's
+  general heuristics and default formats - an "extract method" rule never splits a function you keep
+  whole on purpose.
 
 Start with "set up my profile".
 
@@ -172,11 +193,12 @@ skills as it goes. An agent is a separate subagent with a fixed role.
 subagents precisely because those carry no `Edit`/`Write` tool, so requirements and design happen where
 code is impossible to touch. Every proposal is weighed on the same seven dimensions - correctness risk,
 reversibility, performance and scale, operational load, convention fit, the stack's native approach,
-cost to build - each rating with its evidence (`path:line`, a doc, a requirement, a measurement, or a
-stated assumption). The order that decides between them is set before the proposals are read: the
-change's own requirement, then the project's `tradeoffs.priorities`, then your profile's "How I decide",
-then a default. A script checks the architect's output, so a skipped dimension, an uncited rating or a
-recommendation that hides its costs never reaches the Checkpoint, where you see one table.
+cost to build - each rating with its evidence (`path:line`, a document by its path or URL, a
+requirement, a measurement, or a stated assumption; a community answer alone counts as unknown). The
+order that decides between them is set before the proposals are read: the change's own requirement,
+then the project's `tradeoffs.priorities`, then your profile's "How I decide", then a default. A script
+checks the architect's output, so a skipped dimension, an uncited rating or a recommendation that hides
+its costs never reaches the Checkpoint, where you see one table.
 
 After you choose, the architect - the senior - splits the chosen proposal into **tickets**: for each task,
 the exact interface, existing code to copy the pattern from (`path:line`), the tests as Given/When/Then,
@@ -264,6 +286,7 @@ which is why it is written down here.
 
 - Tech-specific detail is detected from real evidence (dependencies, config, existing code), never
   assumed. Coverage is deepest for Java/Spring, Rust, and Tauri+React.
+- Every decision names its source, in the forms of `skills/feature-development/references/sources.md`.
 - Mechanically checkable rules are enforced by hooks; judgement-based ones stay with
   `code-review-skill`. Every hook fails open, so none can block work.
 - Tests must bite, not just pass. Before "done", `code-review-skill` breaks the changed lines one small
