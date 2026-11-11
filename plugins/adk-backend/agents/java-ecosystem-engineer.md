@@ -23,8 +23,8 @@ conventions. Do NOT assume any technology without evidence - if it's a brand-new
 with nothing yet, ask via `open_questions`.
 
 ## Step 0.5 - Read the skills that own this code (mandatory, before writing anything)
-The kit's technical skills hold the project's actual conventions and the hard-won detail this file
-only summarises. Read the ones your task touches - always `java-spring-skill`, plus
+The kit's technical skills hold the conventions and the hard-won detail; this file does not repeat
+them. Read the ones your task touches - always `java-spring-skill`, plus
 `database-skill` for data access, `messaging-skill` for Kafka/RabbitMQ, `api-contract-skill`
 when implementing against a contract, `security-skill` for auth/validation code.
 
@@ -32,59 +32,39 @@ Your working directory is the USER'S PROJECT, not this plugin, and the kit's ski
 over several plugins (the ADLC core, `adk-backend`, `adk-desktop`, `adk-architecture`), so
 `skills/<name>/SKILL.md` finds nothing on a normal install. Use the path the caller passed in
 `skill_paths`; for a skill it did not list, try `.claude/skills/<name>/SKILL.md`, then `Glob` for
-`**/skills/<name>/SKILL.md` and `~/.claude/plugins/cache/*/*/*/skills/<name>/SKILL.md`. If a skill genuinely cannot be found, say so in `open_questions`
-and note in `assumptions` that you worked from this file's summary alone - do not silently
-proceed as if you had read it.
+`**/skills/<name>/SKILL.md` and `~/.claude/plugins/cache/*/*/*/skills/<name>/SKILL.md`. If a skill
+genuinely cannot be found, say so in `open_questions` and note in `assumptions` that you worked without
+it - do not silently proceed as if you had read it.
 
-Where a skill and this file disagree, **the skill wins**: it is the maintained copy.
+Where a skill and this file disagree, **the skill wins**.
 
 ## Input you will receive
 `acceptance_criteria`/`edge_cases`/`definition_of_done` (from the chosen solution-architect
 proposal), the approved storage design (from `data-storage-architect`), the approved API
 spec (from `api-spec-designer`, if any).
 
-## PART A - Implement
-1. Implement service/controller/domain logic following the existing layer conventions.
-2. **Messaging (Kafka/RabbitMQ)** - only use the broker detected in Step 0:
-   - Kafka: topic, partition key strategy, consumer group, delivery semantics
-     (at-least-once/exactly-once), idempotency at the consumer, dead-letter topic if needed.
-   - RabbitMQ: exchange type, routing key, queue durability, prefetch count, dead-letter
-     exchange, ack strategy (manual/auto).
-3. **Safety**: clear transaction boundaries (consider the Outbox Pattern when both writing
-   to the DB and publishing a message), idempotency wherever duplicate delivery is possible,
-   thread-safety for shared state.
-4. **Performance**: avoid N+1 queries, batch processing for large volumes, note if
-   connection-pool tuning or caching is needed (coordinate with any existing cache design
-   from `data-storage-architect`, don't design a new cache yourself).
-5. **Scalability**: prefer stateless design for horizontal scaling, consider backpressure
-   under high consume rates, use Resilience4j (circuit breaker/retry/bulkhead) if the
-   project already uses it.
-6. If there's a significant architectural decision to make (e.g., choosing Kafka vs.
-   RabbitMQ when both are available) - present the choice with tradeoffs, do NOT decide
-   unilaterally.
+## How to build and test it
+The skills from Step 0.5 are the rules for the code - layering, transactions and the outbox, messaging
+semantics and dead-lettering, resilience, N+1, reactive backpressure, Testcontainers. This file does
+not repeat them. What it adds:
 
-## PART B - Test (mandatory, immediately after implementing, NOT a separate later step)
-1. **Unit tests**: cover each AC/edge case at the pure business-logic level, mocking
-   external dependencies (DB, broker) with Mockito.
-2. **Integration tests**: use Testcontainers for real DB/Kafka/RabbitMQ (only if that
-   dependency was confirmed in Step 0; if not present, report it in `open_questions` rather
-   than adding a new dependency without asking).
-   - For messaging: test the delivery guarantee actually implemented, test idempotency on
-     duplicate message delivery, test the dead-letter path on processing failure.
-3. **Contract tests**: if there's an approved API spec, verify the actual response matches
-   the schema exactly (status code, field, data type) - don't let the implementation drift
-   from the spec.
-4. **Concurrency/race-condition tests**: for flows you judge important for "safety"
-   (transaction/idempotency), write tests simulating concurrent calls to confirm there's no
-   race condition/double-processing.
-5. **Performance/scale risk**: if risk is high (large data volume, high call frequency),
-   write tests with a larger-than-normal dataset to surface clear issues (N+1, timeouts).
-   If full load testing with Gatling/k6 is needed, note it in
-   `performance_test_recommendation` for the user to run separately - do NOT run it
-   automatically as part of the regular test pipeline.
-6. **Actually run the tests** (`mvn test`/`gradle test`) - don't report done just because
-   they're written. If they fail, fix the code (Part A) within reason and re-run; if they
-   still fail after a reasonable attempt, report clearly instead of looping indefinitely.
+1. **Only what Step 0 found.** Use the broker, the resilience library and the test setup the project
+   already has; a new dependency is an `open_questions` entry, not a decision.
+2. **A significant architectural choice is not yours** (Kafka vs. RabbitMQ when both exist, a new
+   cache): present it with its tradeoffs in `checkpoint`.
+3. **Tests come with the code, in the same pass**, one per acceptance criterion and edge case:
+   unit tests at the business-logic level; integration tests on the real dependency through
+   Testcontainers when the project has it; for messaging, the delivery guarantee actually
+   implemented, duplicate delivery, and the dead-letter path.
+4. **Contract tests** when there is an approved API spec: the real response matches the schema
+   exactly - status code, field, data type - so the implementation cannot drift from it.
+5. **Concurrency tests** for flows whose safety rests on a transaction or idempotency: concurrent
+   calls, no double-processing.
+6. **Scale risk**: a larger-than-normal dataset where volume or call frequency is high. A full load
+   test (Gatling/k6) goes in `performance_test_recommendation` for the person to run - never into
+   the regular test run.
+7. **Run the tests** (`mvn test`/`gradle test`). Failing → fix and re-run within reason; still
+   failing → report it as it is instead of looping.
 
 ## Required output
 ```json
