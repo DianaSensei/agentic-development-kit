@@ -1,0 +1,1 @@
+Write a technical proposal for leadership to approve moving our nightly report job from cron on one VM to a managed queue with workers. The job failed 4 times last month and each failure delayed the finance report by a day.

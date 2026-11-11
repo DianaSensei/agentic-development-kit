@@ -38,6 +38,22 @@ touches `skills/`, `hooks/`, `agents/`, `evals/`, or the manifest.
 Graders are deterministic (`regex`, `tool_used`, `file_exists`) wherever the question allows, and an
 `llm` judge only for "did the review name this specific defect", with a short PASS/FAIL rubric.
 
+## What a skill is worth
+
+The stack plugins carry their own cases under `plugins/<plugin>/evals/value/`, one per knowledge skill
+whose value over a bare model is in question (`elasticsearch-skill`, `redis-skill`, `ui-ux-design-skill`,
+`code-documenter`, `technical-proposal-writer`, `mcp-developer`). They are not regression tests and CI
+does not run them: each asks for something the skill is specific about and is run with and without the
+plugin, so the score difference `Δ` says what the skill adds. A `Δ` near zero over several runs is
+evidence the skill can go; a clear positive one is the reason it stays.
+
+```bash
+claude plugin eval plugins/adk-backend --trust-plugin --scaffold \
+  --ablation with-without --model claude-sonnet-5 --judge-model claude-haiku-4-5 --no-publish --runs 3
+```
+
+Repeat for `plugins/adk-desktop` and `plugins/adk-architecture`.
+
 ## Run it
 
 From the repository root. Each case runs 3 times by default:
