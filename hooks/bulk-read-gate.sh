@@ -40,7 +40,10 @@
 
 . "${0%/*}/common.sh" || exit 0
 
-MODE="$(mode_of bulk_read_gate warn)"
+# ADK_BULK_READ_GATE is the person's own switch, across every project: someone who
+# wants the file itself in front of the model - to trace it line by line and quote
+# it - sets it to "off" in their user settings' env. A summary is not evidence.
+MODE="${ADK_BULK_READ_GATE:-$(mode_of bulk_read_gate warn)}"
 [ "$MODE" = "off" ] && exit 0
 
 # Inside a subagent - either field being present is enough to say so.
