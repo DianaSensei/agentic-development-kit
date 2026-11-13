@@ -141,6 +141,9 @@ bundled default entirely (not merged field-by-field).
 - `quality_gate.review_skill`, `.max_blocks`, `.require_changelog`, `.require_experience_log`.
   The artifact checks are off by default: a small refactor legitimately produces neither file.
 - `write_lint.secret_patterns`, `.placeholder_patterns` - POSIX ERE, matched case-insensitively.
+- `ADK_BULK_READ_GATE` (environment, e.g. `"env": {"ADK_BULK_READ_GATE": "off"}` in
+  `~/.claude/settings.json`) - overrides `mode.bulk_read_gate` for one person in every project, for
+  someone who wants whole files read and quoted rather than summarised.
 - `bulk_read_gate.line_threshold` - lines above which a whole-file `Read` is redirected to
   `bulk-reader`. `.exclude` - EREs (repo-relative path) for files that must always be read whole
   regardless of length, e.g. a lockfile you're diffing rather than summarizing. `SKILL.md` ships in
