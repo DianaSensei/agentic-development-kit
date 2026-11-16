@@ -15,13 +15,6 @@ hooks:
           command: "\"${CLAUDE_PLUGIN_ROOT}/hooks/quality-gate.sh\""
           timeout: 30
           statusMessage: "Quality gate..."
-metadata:
-  domain: workflow
-  triggers: follow my plan, my steps, do exactly this, here is the approach, carry out these steps
-  role: orchestrator
-  scope: implementation
-  output-format: code
-  related-skills: workflow-router, quick-change, code-review-skill, reflect, feature-development, bug-fix, refactor
 ---
 
 # Directed Change

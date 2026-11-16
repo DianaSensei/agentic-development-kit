@@ -1,13 +1,6 @@
 ---
 name: java-spring-skill
 description: In-depth Java + Spring ecosystem knowledge (Spring Boot 3.x, Java 21) - Spring MVC/WebFlux, Spring Data JPA, Spring Security 6 (JWT/OAuth2), Spring Cloud (Config/Eureka/Gateway)/Resilience4j, package structure (package-by-layer vs. package-by-feature, Spring Modulith, cross-module transactions), Java code style/formatting (Google Java Style, Spotless/Checkstyle), plus unit + integration testing (JUnit5, Mockito, Testcontainers). Does NOT cover Kafka/RabbitMQ (see `messaging-skill`), API contract design (see `api-contract-skill`), or DB schema design (see `database-skill`). Use when implementing Java/Spring business logic.
-metadata:
-  domain: java-backend
-  triggers: Spring WebFlux, Java microservices, reactive Java, package by feature, package by layer, modular monolith, code format, lazy collection, optimistic locking, pessimistic locking, distributed lock, multiple instances, horizontal scaling, race condition, bulk update, JOIN FETCH, aggregate root, nested relationship, delta update, IDOR, scoped repository query
-  role: engineer
-  scope: implementation
-  output-format: code
-  related-skills: database-skill, messaging-skill, api-contract-skill, test-master, code-review-skill, architecture-designer, solution-design-principles
 ---
 
 # Java + Spring Ecosystem

@@ -1,13 +1,6 @@
 ---
 name: code-host
 description: Connects Claude Code to the project's code host - GitHub or GitLab - through the vendor's MCP server, and defines the code-host operations the kit's SDLC uses (read a pull/merge request and its diff, post a review finding on a line, keep one summary comment up to date, find or open a pull/merge request) with each provider's tool for each. Use when the user asks to connect GitHub or GitLab, set up the GitHub or GitLab MCP server, or make the kit work with their code host; and read by other skills (independent-review, project-setup) before they touch a pull or merge request. Not for databases (toolbox-connections) or for writing a new MCP server (mcp-developer).
-metadata:
-  domain: platform
-  triggers: connect github, connect gitlab, github mcp, gitlab mcp, code host, merge request, pull request tools, source control provider
-  role: specialist
-  scope: implementation
-  output-format: code
-  related-skills: independent-review, project-setup, toolbox-connections, mcp-developer, worktrees
 ---
 
 # Code Host

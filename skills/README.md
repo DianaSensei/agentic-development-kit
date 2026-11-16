@@ -114,15 +114,10 @@ orchestrator, so in practice you rarely need to name a workflow skill yourself.
 - **`references/` is progressive disclosure** - a skill's `SKILL.md` stays lean; deep detail (code
   patterns, decision tables, troubleshooting trees) lives in `references/*.md`, loaded only when the
   matching step is actually reached, listed in each skill's Reference Guide table.
-- **`metadata:` on every skill** - a fixed block after `description`, present on every skill in all four plugins. Claude Code
-  does not read it; it exists so the library can be audited mechanically. `related-skills` in
-  particular is checked both ways: every name must resolve to a skill in one of the kit's four plugins, and every
-  skill must be reachable from at least one other, so a skill cannot silently fall out of the graph.
-  The vocabulary is closed - `domain` (`workflow`, `requirements`, `software-design`,
-  `api-architecture`, `java-backend`, `language`, `desktop-app`, `design`, `database`, `messaging`,
-  `quality`, `security`, `devops`, `platform`, `specialized`), `role` (`orchestrator`, `architect`,
-  `expert`, `engineer`, `specialist`), plus `scope` and `output-format`. Reuse an existing value
-  rather than coining a new one.
+- **Frontmatter is what Claude Code reads** - `name`, `description`, and where a skill needs them
+  `hooks`, `argument-hint`, `allowed-tools`. Nothing else goes there: a field no tool reads and no
+  check enforces drifts unseen. How skills relate is stated where it is used - each skill's
+  `## Boundaries` and the skills it tells the reader to read.
 - **Soft references to skills outside this plugin** - a `SKILL.md` may name a skill this plugin does
   not ship (see `ui-ux-design-skill` → the design-taste family) only as an *if present* instruction
   that no-ops when the skill is absent. It must never be a `dependencies` entry and never a step the

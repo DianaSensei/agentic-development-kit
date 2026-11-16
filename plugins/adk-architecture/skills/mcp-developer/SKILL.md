@@ -1,13 +1,6 @@
 ---
 name: mcp-developer
 description: Use when building, debugging, or extending an MCP (Model Context Protocol) server or client - protocol lifecycle and JSON-RPC 2.0 message shapes, version negotiation, choosing and configuring stdio vs Streamable HTTP transport, OAuth 2.1 authorization for remote servers, and debugging protocol-compliance failures. Covers the protocol itself; the SDKs' concrete APIs change too fast to snapshot, so those come from the live SDK docs at implementation time.
-metadata:
-  domain: api-architecture
-  triggers: MCP server, MCP client, Model Context Protocol, JSON-RPC, MCP authorization, Streamable HTTP, MCP Inspector, protocol version negotiation
-  role: specialist
-  scope: implementation
-  output-format: code
-  related-skills: rust-engineer, java-spring-skill, security-skill, security-audit, toolbox-connections
 ---
 
 # MCP Developer

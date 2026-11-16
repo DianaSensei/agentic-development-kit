@@ -1,13 +1,6 @@
 ---
 name: reflect
 description: Keeps a personal profile of how the user works - how they weigh tradeoffs, design, write code, review and want to be worked with - learned from their corrections, Checkpoint choices, rewrites of agent-written code and review comments, and loaded into every session from their own private repository. Sets the profile up on a machine, notes a signal as it happens, and consolidates signals into profile changes the user approves one by one. Use when the user says "reflect", "learn from this", "remember that I prefer...", "what do you know about how I work", "set up my profile", or after a workflow's knowledge capture when new signals are waiting. Not for a project's conventions (CLAUDE.md, REVIEW.md and checks - the workflows' learning loop owns those) and never for anything outside work style.
-metadata:
-  domain: workflow
-  triggers: reflect, learn my style, remember my preference, personal profile, how I work, what do you know about me
-  role: specialist
-  scope: documentation
-  output-format: document
-  related-skills: feature-development, bug-fix, refactor, code-host
 ---
 
 # Reflect

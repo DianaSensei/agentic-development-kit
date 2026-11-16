@@ -1,13 +1,6 @@
 ---
 name: ui-ux-design-skill
 description: In-depth UI/UX design knowledge - usability, accessibility, and consistency principles, and responsive/cross-platform design for desktop apps. Use when a feature has a UI component that needs design before implementation; coordinates with `tauri-react-skill` for the actual build.
-metadata:
-  domain: design
-  triggers: a11y, WCAG, responsive design, cross-platform layout, interaction design, information hierarchy, design consistency, user flow
-  role: specialist
-  scope: design
-  output-format: document
-  related-skills: tauri-react-skill, feature-development, api-contract-skill, code-review-skill
 ---
 
 # UI/UX Design

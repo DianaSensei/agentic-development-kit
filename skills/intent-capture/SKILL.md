@@ -1,13 +1,6 @@
 ---
 name: intent-capture
 description: Captures an idea, problem, or request that is NOT yet being built as a version-controlled `docs/intents/<slug>.md` - the problem, who it hurts and the evidence, the desired outcome and how success would be observed, non-goals, affected systems, constraints, open questions - with no solution design and no code. Use when the user has an idea, a pain point, user complaints, or an alert/incident worth following up, or says "capture/record/write up this idea", "write an intent", "add this to the backlog", "we should...", "what if we..."; also to review the intent backlog or record a decision on one ("what intents are open", "accept/reject intent X"). Do NOT use when the user wants the change built now - that goes to `workflow-router`, which takes an existing intent as its input; and not for a document arguing an already-chosen technical approach to approvers - that is `technical-proposal-writer`.
-metadata:
-  domain: requirements
-  triggers: capture idea, write intent, backlog, problem statement, triage intents, ý tưởng
-  role: specialist
-  scope: documentation
-  output-format: document
-  related-skills: workflow-router, feature-development, bug-fix, refactor, technical-proposal-writer
 ---
 
 # Intent Capture

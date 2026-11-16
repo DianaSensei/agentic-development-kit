@@ -1,13 +1,6 @@
 ---
 name: api-contract-skill
 description: In-depth API contract design knowledge - REST (OpenAPI 3.x/3.1), GraphQL, RPC (gRPC/Protobuf), and asynchronous message contracts for Kafka/RabbitMQ/Pub-Sub under the AsyncAPI 3.x standard (the same role as OpenAPI, but for messages instead of REST). Covers design principles, security (OWASP API Security Top 10), naming/versioning, and standardized error format (RFC 7807). Use before implementation, to finalize the communication contract before writing code.
-metadata:
-  domain: api-architecture
-  triggers: API design, REST API, event schema, API versioning
-  role: architect
-  scope: design
-  output-format: specification
-  related-skills: architecture-designer, messaging-skill, java-spring-skill, tauri-react-skill, code-review-skill
 ---
 
 # API & Message Contract Design

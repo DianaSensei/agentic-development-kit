@@ -1,13 +1,6 @@
 ---
 name: project-setup
 description: Sets up a project repository for this kit and the AI-native SDLC in one pass - a one-page CLAUDE.md built from the repo's real commands and layout, a REVIEW.md the independent reviewer reads, a CODEOWNERS for the policy files, a committed .claude/settings.json (secret-file deny rules, lockfile protection, the kit enabled for every teammate), a quality-check config whose skill_map matches the stack and whose checks run the project's own linters and rules on every file Claude writes, the code host's MCP server in .mcp.json, and the independent-review CI job for GitHub Actions or GitLab CI. Detects what exists first, shows the plan, never overwrites - existing files only receive additions. Use when the user asks to set up, bootstrap, onboard, or "install the kit into" a project, or to add the playbook files (CLAUDE.md, REVIEW.md, CODEOWNERS, settings) to a repo. Not for configuring Claude Code's own personal settings (that is update-config) and not for writing application code.
-metadata:
-  domain: workflow
-  triggers: set up project, bootstrap repo, onboard repository, add CLAUDE.md, add REVIEW.md, install kit in project
-  role: specialist
-  scope: end-to-end
-  output-format: document
-  related-skills: workflow-router, intent-capture, independent-review, code-review-skill, code-host
 ---
 
 # Project Setup
