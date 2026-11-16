@@ -103,6 +103,7 @@ orchestrator, so in practice you rarely need to name a workflow skill yourself.
 
 | Skill | Use For |
 |-------|---------|
+| [`task-tracker`](./task-tracker/SKILL.md) | The ticket a change belongs to on GitHub Issues, GitLab Issues or Jira (and Confluence pages): connect, read, and at a workflow's milestones comment and move the status as far as the person's `## Task tracking` allows - never to Done, never creating a ticket |
 | [`code-host`](./code-host/SKILL.md) | Connecting the project's GitHub or GitLab through the vendor's MCP server, and the code-host operations the SDLC uses (read a pull/merge request, post a finding on a line, keep one summary comment, open a request) with each provider's tool for each |
 | [`mcp-developer`](../plugins/adk-architecture/skills/mcp-developer/SKILL.md) | Building a new MCP server/client - protocol lifecycle, transports, OAuth 2.1 authorization (SDK APIs come from live docs, not a snapshot here) |
 | [`toolbox-connections`](../plugins/adk-backend/skills/toolbox-connections/SKILL.md) | Configure `adk-backend`'s bundled toolbox MCP - add/remove a database connection or a custom query/tool |

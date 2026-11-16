@@ -47,7 +47,7 @@ Mọi đề xuất bắt đầu từ phần dữ liệu, không bắt đầu t�
 ## Task tracking _(statement; 2026-11)_
 - Yêu cầu có ticket (key hoặc link): đọc ticket trước (mô tả, AC, comment), coi là đầu vào; key nằm trong tên nhánh, commit, PR và plan. Không đọc được thì hỏi, không đoán.
 - Việc nhiều bước: giữ task list để tôi thấy tiến độ. Bị chặn thì báo ngay theo khung Report, không chờ đến cuối.
-- Ở mỗi mốc (chờ duyệt, bắt đầu, xong): soạn comment theo khung Report và status đề xuất; tôi duyệt rồi mới đăng.
+- Ở mỗi mốc (chờ duyệt, bắt đầu, xong) của ticket tôi đã duyệt làm: tự comment theo khung Report và chuyển status (In Progress, In Review). Không tạo ticket, không sửa mô tả/AC/assignee/priority, không chuyển Done.
 - Vấn đề ngoài phạm vi: soạn ticket nháp (tiêu đề, vấn đề, evidence, đề xuất) để tôi duyệt; không tự tạo.
 
 ## Documents _(statement; 2026-11)_
