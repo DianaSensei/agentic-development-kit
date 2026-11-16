@@ -16,13 +16,6 @@ hooks:
           command: "\"${CLAUDE_PLUGIN_ROOT}/hooks/quality-gate.sh\""
           timeout: 30
           statusMessage: "Quality gate..."
-metadata:
-  domain: workflow
-  triggers: add capability, build feature, implement requirement, behavior change, feature request
-  role: orchestrator
-  scope: end-to-end
-  output-format: code-and-report
-  related-skills: workflow-router, intent-capture, code-review-skill, test-master, ui-ux-design-skill, technical-proposal-writer, reflect, worktrees
 ---
 
 # Feature Development Workflow

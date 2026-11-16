@@ -1,13 +1,6 @@
 ---
 name: monitoring-expert
 description: Sets up continuous production observability - structured logging pipelines, Prometheus/Grafana metrics and dashboards, distributed tracing, and alerting rules - plus application profiling and capacity forecasting from real production trends. Use when adding observability to a service, debugging production issues via logs/metrics/traces, profiling CPU/memory bottlenecks, or forecasting capacity needs. For a one-off load test gating a merge or release as part of the QA test lifecycle (pass/fail, defect report), use `test-master` instead - this skill's load-testing content targets capacity/production-readiness validation, not CI gating.
-metadata:
-  domain: devops
-  triggers: monitoring, DataDog, APM, performance testing, load testing, capacity planning
-  role: specialist
-  scope: implementation
-  output-format: code
-  related-skills: java-spring-skill, architecture-designer, test-master
 ---
 
 # Monitoring Expert

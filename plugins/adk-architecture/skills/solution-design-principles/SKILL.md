@@ -1,13 +1,6 @@
 ---
 name: solution-design-principles
 description: Provides the foundational engineering principles for designing sound solutions - SOLID and code-design heuristics (DRY/KISS/YAGNI, coupling/cohesion, Law of Demeter, Composed Method/Single Level of Abstraction, Command-Query Separation and TOCTOU-safe re-validation), the Well-Architected operational pillars (reliability, security, cost, performance, operational excellence), 12-Factor/cloud-native application practices, and environment-portability principles for systems that must run across VM and cloud (ports & adapters, config/secrets abstraction, consistent identity and observability). Use to evaluate whether a design or existing code follows sound engineering principles, to establish team design standards, or to audit a solution proposal for principle violations before implementation. Not for choosing an architecture pattern or deployment topology (that's architecture-designer), and not for writing language-specific implementation code.
-metadata:
-  domain: software-design
-  triggers: design principles, best practices, separation of concerns, twelve factor, technical debt, code smell, single responsibility, open closed, liskov substitution, interface segregation, dependency inversion, design review, vendor lock-in, hybrid, ports and adapters, hexagonal architecture, method decomposition, nested calls, call depth, SLAP, CQS, race condition, circular dependency, feature envy, message chain, wrong abstraction, reuse trap, shared function, flag parameter, fan-in, God function, encapsulate invariants not cost, leaky abstraction, hidden cost, getter performance
-  role: expert
-  scope: design
-  output-format: document
-  related-skills: architecture-designer, java-spring-skill, code-review-skill, refactor, security-skill, monitoring-expert
 ---
 
 # Solution Design Principles

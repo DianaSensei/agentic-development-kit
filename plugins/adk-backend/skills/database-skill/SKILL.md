@@ -1,13 +1,6 @@
 ---
 name: database-skill
 description: "In-depth database design and server-side optimization knowledge - RDBMS (Oracle, PostgreSQL, MySQL) and NoSQL (document: MongoDB; key-value: DynamoDB/ScyllaDB Alternator; column-based: Cassandra/ScyllaDB CQL). Transaction isolation, concurrency control/locking, indexing/EXPLAIN, query optimization, schema/data-model design, advanced PostgreSQL/MySQL tuning (JSONB, extensions, VACUUM, replication), partition/shard key design, migration. Use when a feature needs schema design/changes or query optimization against a server-based database."
-metadata:
-  domain: database
-  triggers: slow query, EXPLAIN ANALYZE, index design, partition key, wide-column, document database, key-value database
-  role: specialist
-  scope: design-and-optimization
-  output-format: analysis-and-code
-  related-skills: java-spring-skill, elasticsearch-skill, tauri-react-skill, test-master, code-review-skill
 ---
 
 # Database - RDBMS vs. NoSQL (Document / Key-Value / Column-based)

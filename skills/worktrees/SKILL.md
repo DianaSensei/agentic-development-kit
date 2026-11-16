@@ -1,13 +1,6 @@
 ---
 name: worktrees
 description: Organizes the user's parallel work in git worktrees by task - one folder per task under a root the user chose (~/worktrees/billing-feat-abc/{api,web}), holding a worktree of every repository the task touches, all on the task's branch. Starts a task across one or several repositories at once, shows every task's state across all projects (uncommitted, unpushed, pushed, already in its base), keeps each up to date with its base, runs a command in each, and removes finished tasks without losing work. Use when the user wants to start work without disturbing their current checkout, work on a change that spans repositories, switch between tasks, or see or clean up their worktrees and stale branches. Not for the unit worktrees feature-development creates under .claude/worktrees/ (its own, cleaned by its leftovers.sh), and not for opening pull requests (code-host).
-metadata:
-  domain: workflow
-  triggers: worktree, git worktree, new task folder, multi-repo change, several repositories, parallel branches, switch task, clean up worktrees, stale branches
-  role: specialist
-  scope: implementation
-  output-format: report
-  related-skills: feature-development, code-host, workflow-router, project-setup
 ---
 
 # Worktrees

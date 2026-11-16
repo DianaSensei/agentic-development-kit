@@ -1,13 +1,6 @@
 ---
 name: security-skill
 description: Writes secure code while a feature is being built - authentication/authorization, input validation and sanitization, password hashing (bcrypt/argon2), parameterized queries, CORS/CSP headers, JWT/session handling, OWASP Top 10 prevention. Produces secure CODE. Use when implementing any of those controls, or hardening code being written. To audit existing code or infrastructure for vulnerabilities instead, use `security-audit`.
-metadata:
-  domain: security
-  triggers: secure coding, OAuth, JWT, password hashing, input validation, OWASP prevention, CSP, CORS, session management
-  role: specialist
-  scope: implementation
-  output-format: code
-  related-skills: security-audit, code-review-skill, architecture-designer, api-contract-skill
 ---
 
 # Secure Code

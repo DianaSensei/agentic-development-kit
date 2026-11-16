@@ -1,13 +1,6 @@
 ---
 name: independent-review
 description: Reviews a pull request or branch diff as an INDEPENDENT reviewer - a session that did not write the code - against the change's own intent and plan (`docs/intents/`, `docs/plans/`), for correctness using `code-review-skill`'s checklist, and ends with a risk summary for the human who approves. Read-only - never edits, pushes, or approves. Runs in CI through this kit's review pipeline (GitHub Actions or GitLab CI, `ci/review.sh`), or locally when the user explicitly asks for an independent review or a check of a PR/branch against its intent or plan. Do NOT use as the self-check at the end of your own change - that is `code-review-skill`; and not for a generic "review this" with no independence or intent angle - the built-in `code-review` covers that.
-metadata:
-  domain: quality
-  triggers: independent review, review PR against intent, review against plan, CI review, second reviewer
-  role: specialist
-  scope: review
-  output-format: report
-  related-skills: code-review-skill, intent-capture, security-audit, test-master, code-host, project-setup
 ---
 
 # Independent Review

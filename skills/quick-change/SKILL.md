@@ -19,13 +19,6 @@ hooks:
           command: "\"${CLAUDE_PLUGIN_ROOT}/hooks/quality-gate.sh\""
           timeout: 30
           statusMessage: "Quality gate..."
-metadata:
-  domain: workflow
-  triggers: quick fix, small change, typo, rename, tweak, just do it
-  role: orchestrator
-  scope: implementation
-  output-format: code
-  related-skills: workflow-router, code-review-skill, feature-development, bug-fix, refactor
 ---
 
 # Quick Change

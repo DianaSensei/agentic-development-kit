@@ -1,13 +1,6 @@
 ---
 name: architecture-designer
 description: Designs system architecture, from a single service's high-level design to distributed microservices decomposition. Produces architecture diagrams, ADRs, service boundary designs, deployment-topology decisions (VM/IaaS vs. cloud-native vs. hybrid vs. multi-cloud), and - for distributed systems - communication, data-ownership, and resilience strategies, each with explicit trade-offs. Use for new system design, architecture review, pattern selection (monolith/microservices/serverless/event-driven), monolith decomposition, choosing where a system or component runs (VM, cloud, hybrid), or documenting decisions as ADRs.
-metadata:
-  domain: api-architecture
-  triggers: design pattern, scalability, technical design, infrastructure, service boundaries, domain-driven design, event sourcing, CQRS, saga pattern, distributed tracing, service mesh, virtual machine, PaaS, hybrid cloud, on-premise, deployment topology
-  role: expert
-  scope: design
-  output-format: document
-  related-skills: security-skill, monitoring-expert, database-skill, legacy-modernizer, java-spring-skill, solution-design-principles
 ---
 
 # Architecture Designer

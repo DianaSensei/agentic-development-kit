@@ -1,13 +1,6 @@
 ---
 name: technical-proposal-writer
 description: Writes and structures technical proposal documents (RFCs, đề xuất kỹ thuật, đề xuất giải pháp, đề xuất dự án) that argue for a technical decision to stakeholders or approvers - problem/context, goals, proposed solution, alternatives considered, risks, implementation plan, timeline and resources. Use whenever the user asks to write, draft, or review a technical proposal, RFC, design doc meant for approval, project proposal, or any "đề xuất" document - in Vietnamese or English - especially when it needs to persuade a reader (lead, leadership, another team) to approve a course of action, not just describe how a system works.
-metadata:
-  domain: requirements
-  triggers: decision document, persuasive writing, kế hoạch triển khai
-  role: specialist
-  scope: documentation
-  output-format: document
-  related-skills: architecture-designer, api-contract-skill, code-documenter
 ---
 
 # Technical Proposal Writer

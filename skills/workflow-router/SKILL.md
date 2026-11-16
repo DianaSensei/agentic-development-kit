@@ -1,13 +1,6 @@
 ---
 name: workflow-router
 description: Use FIRST for any request asking Claude to WRITE OR CHANGE code - new feature, bug fix, refactor, enhancement, "improve", "add capability", etc. When the user already gave the plan (steps, approach, files to change), hands off to directed-change without classifying. Otherwise classifies the request as feature-development, bug-fix, or refactor by its true nature (does external behavior change, and if so is it fixing a defect or adding/changing capability?), asking the user only if genuinely ambiguous, and picks the depth the change deserves - quick-change for a small change with nothing to decide, light or full process otherwise - then hands off. Skip when the request type is already obvious. Also the entry point for "implement/build/fix docs/intents/<slug>.md". Do NOT use for no-code-change requests - pure questions/explanations, read-only exploration, or explicit review requests ("review this PR/diff") - handle those directly instead; and not for recording an idea to build later - that is `intent-capture`.
-metadata:
-  domain: workflow
-  triggers: write code, add feature, fix bug, implement, classify request
-  role: orchestrator
-  scope: routing
-  output-format: handoff
-  related-skills: feature-development, bug-fix, refactor, quick-change, directed-change, intent-capture, project-setup
 ---
 
 # Dev Request Router

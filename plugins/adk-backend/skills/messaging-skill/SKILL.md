@@ -1,13 +1,6 @@
 ---
 name: messaging-skill
 description: In-depth broker knowledge for asynchronous messaging - Apache Kafka (topic/partition design, consumer groups, delivery semantics, idempotency, schema evolution, dead-letter topics, consumer lag) and RabbitMQ (exchange types, routing, queue durability, dead-letter exchange, prefetch, quorum and priority queues), plus how to choose between them. Use when a feature publishes or consumes messages through a broker. If the request only says "async processing" with no technology named, check the project's actual dependency first rather than defaulting to either.
-metadata:
-  domain: messaging
-  triggers: Kafka, RabbitMQ, topic, partition, consumer group, offset, consumer lag, rebalance, idempotent producer, dead letter topic, event streaming, replay, exchange, routing key, fanout, dead letter exchange, prefetch, quorum queue, task queue, delivery semantics
-  role: specialist
-  scope: implementation
-  output-format: code
-  related-skills: api-contract-skill, java-spring-skill, test-master, monitoring-expert, redis-skill
 ---
 
 # Messaging - Kafka & RabbitMQ

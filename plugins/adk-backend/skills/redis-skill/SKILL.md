@@ -1,13 +1,6 @@
 ---
 name: redis-skill
 description: In-depth Redis knowledge - caching, distributed locks, lightweight queues, ranking/leaderboards. Use when the feature needs a cache, a distributed lock, a queue that can tolerate minimal loss, or a leaderboard. If strong durability/delivery guarantees are needed (retry, dead-letter, replay), see `messaging-skill` instead of Redis.
-metadata:
-  domain: database
-  triggers: cache invalidation, cache-aside, TTL, Redlock, sorted set, session store, rate limiting, hot key, eviction policy, Redis Streams
-  role: specialist
-  scope: implementation
-  output-format: code
-  related-skills: database-skill, java-spring-skill, messaging-skill, test-master, monitoring-expert
 ---
 
 # Redis - Multi-Purpose by Use Case

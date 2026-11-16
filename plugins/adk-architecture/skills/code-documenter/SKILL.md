@@ -1,13 +1,6 @@
 ---
 name: code-documenter
 description: Generates, formats, and validates technical documentation - inline documentation (docstrings/comments), API specs (OpenAPI/Swagger, JSDoc-style annotations), documentation sites, and user guides - for any language or framework. Use when adding documentation to functions or classes, creating API documentation, building documentation sites, or writing tutorials and user guides.
-metadata:
-  domain: quality
-  triggers: API docs, doc site
-  role: specialist
-  scope: implementation
-  output-format: code
-  related-skills: legacy-modernizer, code-review-skill, api-contract-skill
 ---
 
 # Code Documenter
