@@ -134,7 +134,9 @@ layout under `plugins/<name>/`.
 - **Reports lead with the decision.** Every Checkpoint opens with a summary in plain words - the
   problem, the recommendation, its cost and what you must decide - before the evidence and the tables.
   A ticket the request names (`PROJ-123` or a link) is read first and its key carried into the branch,
-  commits, pull request and plan. A change that makes a README, API document or guide wrong updates it.
+  commits, pull request and plan. `task-tracker` reads and updates it on GitHub Issues, GitLab Issues
+  or Jira (Confluence pages too): a comment at each milestone and the status moved to In Progress, then
+  In Review - only as far as your `## Task tracking` allows, never to Done, never a ticket created. A change that makes a README, API document or guide wrong updates it.
 - **Every decision names its source**, in a form you can check in a minute: the request, the ticket, a
   PRD or ADR, the code at `path:line`, or the official documentation for the version in use - with the
   link, one line quoted and the version. Documentation is fetched in the session, not recalled; a

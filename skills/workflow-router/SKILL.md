@@ -19,8 +19,9 @@ the analysis ("look into it first", "propose options").
 ## A ticket in the request
 
 When the request or its intent names a tracker ticket - a key like `PROJ-123` or a link - read it before
-classifying: description, acceptance criteria, comments. Use the tracker's MCP server when one is
-connected; otherwise ask the person to paste it, never guess what it says. It is input like an intent:
+classifying: description, acceptance criteria, comments - through `task-tracker`, which knows each
+tracker's tools (GitHub Issues, GitLab Issues, Jira). Not connected → ask the person to paste it, never
+guess what it says. It is input like an intent:
 its problem and criteria feed the workflow's first step. Pass its key on in the handoff; the workflow
 puts it in the branch name, commit messages, the pull request title, the plan and the intent's
 `ticket:`. A comment or status change on the tracker is publishing: only as the person's

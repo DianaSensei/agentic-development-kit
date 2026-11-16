@@ -52,7 +52,9 @@ through rules out splitting it for the sake of a decomposition heuristic. The pr
 `solution-design-principles`.
 
 **A ticket** the request names (a key like `PROJ-123`, or a link) is read and linked as
-`workflow-router` → "A ticket in the request" says - reuse what the router read.
+`workflow-router` → "A ticket in the request" says - reuse what the router read. Its milestones -
+waiting for approval at the CHECKPOINT, started once approved, done at the final report - go to the
+ticket as `task-tracker` says.
 
 **Sources**: every decision this workflow puts to the person names what it rests on, in a form they can
 check - the request, the ticket, a PRD or ADR, the code, official documentation for the version in use -

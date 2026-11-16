@@ -61,7 +61,8 @@ of the plan.
 1. **Read** the code each step touches - directly, with `Grep` and `Read` - and the owning technical
    skill's `SKILL.md`. Check the plan against what you read: every step's target exists and means what
    the plan assumes. A mismatch found here stops the run before any edit. A ticket the request names is
-   read and linked as `workflow-router` → "A ticket in the request" says.
+   read and linked as `workflow-router` → "A ticket in the request" says; its started and done
+   milestones go to the ticket as `task-tracker` says.
 2. **Ask only about ambiguity.** A step that reads two ways gets one question, with your reading as the
    default. A clear plan is not restated back.
 3. **Carry out each step in order**: the smallest change that does it, in the file's existing style.
